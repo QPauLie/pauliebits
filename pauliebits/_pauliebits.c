@@ -5256,7 +5256,7 @@ register_abc(void)
 }
 
 static PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT, "_pauliebits", 0, -1, module_functions,
+    PyModuleDef_HEAD_INIT, "pauliebits", 0, -1, module_functions,
 };
 
 PyMODINIT_FUNC
