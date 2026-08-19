@@ -1,8 +1,8 @@
 from random import random, randrange
 from time import perf_counter
 
-from bitarray import bitarray, decodetree
-from bitarray.util import huffman_code
+from pauliebits import pauliebits, decodetree
+from pauliebits.util import huffman_code
 
 
 N = 100_000
@@ -19,7 +19,7 @@ print('decodetree(code):  %9.6f ms' % (1000.0 * (perf_counter() - t0)))
 print(tree.nodes())
 plain = [randrange(N) for _ in range(100)]
 
-a = bitarray()
+a = pauliebits()
 a.encode(code, plain)
 
 # decode using the code dictionary

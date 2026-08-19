@@ -3,7 +3,7 @@ import datetime
 import zlib
 from pprint import pprint
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 from puff import Puff
 
@@ -101,8 +101,8 @@ def print_dot(*args):
     sys.stdout.flush()
 
 def decompress_file(infile, outfile, opts):
-    # read input file and store content in little endian bitarray
-    input_bits = bitarray(0, 'little')
+    # read input file and store content in little endian pauliebits
+    input_bits = pauliebits(0, 'little')
     with open(infile, "rb") as fi:
         input_bits.fromfile(fi)
 

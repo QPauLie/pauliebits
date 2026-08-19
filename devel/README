@@ -1,11 +1,11 @@
 This directory contains files that are relevant for development
-of bitarray, as well as additional tests and verifications.
+of pauliebits, as well as additional tests and verifications.
 
 
 copy_n.py
-    Illustrate how copy_n() in _bitarray.c works.  This is essentially
+    Illustrate how copy_n() in _pauliebits.c works.  This is essentially
     a Python implementation of copy_n() with output of the different stages
-    of the bitarray we copy into.
+    of the pauliebits we copy into.
 
 
 random/
@@ -13,7 +13,7 @@ random/
 
 
 resize/
-    Things to study the bitarray resize function, including the growth
+    Things to study the pauliebits resize function, including the growth
     pattern it creates and tests for the current implementation.
 
 
@@ -23,7 +23,7 @@ shift_r8.c
 
 test_debug.py
     Tests for internal C code which is exposed in debug builds.
-    These tests will only work when bitarray is compiled in debug mode.
+    These tests will only work when pauliebits is compiled in debug mode.
 
 
 test_sum_indices.py
@@ -32,11 +32,11 @@ test_sum_indices.py
 
 
 test_random.py
-    * statistical tests for random functions in bitarray.util
+    * statistical tests for random functions in pauliebits.util
     * verification of some statistical equations
     * verification of code used in random_k() and random_p()
 
 
 tricks.py
     Some little tricks and verifications for some code which is used
-    mostly in the C implementation of bitarray.
+    mostly in the C implementation of pauliebits.

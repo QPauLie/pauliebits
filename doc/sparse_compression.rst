@@ -1,15 +1,15 @@
-Compression of sparse bitarrays
+Compression of sparse pauliebitss
 ===============================
 
-In a ``bitarray`` object, each byte in memory represents eight bits.
+In a ``pauliebits`` object, each byte in memory represents eight bits.
 While this representation is very compact and efficient when dealing with
 most data, there are situations when this representation is inefficient.
-One such situation is a sparsely populated bitarray.
-That is, a bitarray in which only a few bits are 1, but most bits are 0.
+One such situation is a sparsely populated pauliebits.
+That is, a pauliebits in which only a few bits are 1, but most bits are 0.
 In this situation, one might consider using a data structure which stores
-the indices of the 1 bits and not use the ``bitarray`` object at all.
-However, having all of bitarray's functionality is very convenient.
-It may be desirable to convert ``bitarray`` objects into a more compact
+the indices of the 1 bits and not use the ``pauliebits`` object at all.
+However, having all of pauliebits's functionality is very convenient.
+It may be desirable to convert ``pauliebits`` objects into a more compact
 (index-based) format when storing objects on disk or sending them over the
 network.
 This is the use case of the utility functions ``sc_encode()``
@@ -18,8 +18,8 @@ The lower the population count, the more efficient the compression will be:
 
 .. code-block:: python
 
-    >>> from bitarray import bitarray
-    >>> from bitarray.util import zeros, sc_encode, sc_decode
+    >>> from pauliebits import pauliebits
+    >>> from pauliebits.util import zeros, sc_encode, sc_decode
     >>> a = zeros(1 << 24, 'little')  # 16 mbits
     >>> a[0xaa] = a[0xbbcc] = a[0xddeeff] = 1
     >>> blob = sc_encode(a)
@@ -31,32 +31,32 @@ The lower the population count, the more efficient the compression will be:
 How it works
 ------------
 
-Consider a ``bitarray`` of length 256, that is 32 bytes of memory.
+Consider a ``pauliebits`` of length 256, that is 32 bytes of memory.
 If we represent this object by the indices of 1 bits, using one byte each,
 the object will be represented more efficiently when the population (number
 of 1 bits) is less than 32.  Based on the population, the
 function ``sc_encode()`` chooses to represent the object as either raw bytes
 or as bytes of indices of 1 bits.  These are the block types 0 and 1.
 
-Next, we consider a ``bitarray`` of length 65536.  When each section of 256
+Next, we consider a ``pauliebits`` of length 65536.  When each section of 256
 bits has a population below 32, it would be stored as 256 blocks of type 1.
 That is, we need 256 block headers and one (index) byte for each 1 bit.
 However, when the total population is below 256, we could also introduce
 a new block type 2 in which each index is represented by two bytes and
-represent the entire bitarray as a single block (of type 2).
+represent the entire pauliebits as a single block (of type 2).
 This saves us the 256 block headers (of type 1).
-Similarly, with even less populated bitarrays, it will become more efficient
+Similarly, with even less populated pauliebitss, it will become more efficient
 to move to blocks representing each index using 3 or more bytes.
 
-The encoding algorithm starts at the front of the ``bitarray``, inspects
+The encoding algorithm starts at the front of the ``pauliebits``, inspects
 the population and decides which block type to use to encode the following
 bits.  Once the first block is written, the algorithm moves on to inspecting
 the remaining population, and so on.
-This way, a large bitarray with densely and sparsely populated areas will
+This way, a large pauliebits with densely and sparsely populated areas will
 be compressed efficiently using different block types.
 
 The binary blob consists of a header which encodes the bit-endianness and the
-total length of the bitarray, i.e. the number of bits.  The header is followed
+total length of the pauliebits, i.e. the number of bits.  The header is followed
 by an arbitrary number of blocks.  There are 5 block types.  Each block starts
 with a block header encoding the block type and specifying the size of the
 block data that follows.
@@ -80,7 +80,7 @@ the head byte 0x00 (type 0 with no raw bytes) is considered the stop byte.
 Speed
 -----
 
-We create a 64 mbit (8mb) random bitarray with a probability of 1/1024
+We create a 64 mbit (8mb) random pauliebits with a probability of 1/1024
 for each bit being 1.  The table shows a comparison of different compression
 methods:
 
@@ -97,7 +97,7 @@ methods:
 Statistics
 ----------
 
-We create 256 mbit (32mb) random bitarrays with varying probability ``p``
+We create 256 mbit (32mb) random pauliebits with varying probability ``p``
 for elements being 1.  After compression, we look at the compression
 ratio, and the number of blocks of each type:
 

@@ -1,4 +1,4 @@
-from bitarray import bitarray
+from pauliebits import pauliebits
 from random import choice
 from time import perf_counter
 from itertools import combinations
@@ -31,19 +31,19 @@ def get_random_list(n_qubits:int, length: int) -> list[str]:
 
 
 CODEC = {
-    "I": bitarray([0, 0]),
-    "X": bitarray([1, 0]),
-    "Y": bitarray([1, 1]),
-    "Z": bitarray([0, 1]),
+    "I": pauliebits([0, 0]),
+    "X": pauliebits([1, 0]),
+    "Y": pauliebits([1, 1]),
+    "Z": pauliebits([0, 1]),
 }
 
 def create(paulistring):
-    ba = bitarray()
+    ba = pauliebits()
     ba.encode(CODEC, paulistring)
     return ba
 
 def create_ixyz(paulistring):
-    ba = bitarray()
+    ba = pauliebits()
     ba.encode_ixyz(paulistring)
     return ba
 

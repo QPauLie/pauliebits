@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bitarray"
+name = "pauliebits"
 version = "0.0.1"  
-description = "Fork of bitarray with custom C-implemented IXYZ codec and commutes_with"
+description = "Fork of pauliebits with custom C-implemented IXYZ codec and commutes_with"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "PSF" }
@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 [tool.setuptools]
-packages = ["bitarray"]
+packages = ["pauliebits"]
 
 # --- НАСТРОЙКИ CIBUILDWHEEL ДЛЯ СБОРКИ НА GITHUB ---
 [tool.cibuildwheel]

@@ -8,8 +8,8 @@ from itertools import islice
 from optparse import OptionParser
 from collections import Counter
 
-from bitarray import bitarray
-from bitarray.util import (serialize, deserialize,
+from pauliebits import pauliebits
+from pauliebits.util import (serialize, deserialize,
                            vl_encode, vl_decode, huffman_code)
 
 def encode_code(code):
@@ -31,7 +31,7 @@ def create_code(cnt):
     if len(cnt) > 0:
         return huffman_code(cnt)
     # special case for empty file
-    return {0: bitarray('0')}
+    return {0: pauliebits('0')}
 
 def encode(filename):
     with open(filename, 'rb') as fi:
@@ -40,7 +40,7 @@ def encode(filename):
     code = create_code(Counter(plain))
     with open(filename + '.huff', 'wb') as fo:
         fo.write(encode_code(code))
-        a = bitarray(endian='little')
+        a = pauliebits(endian='little')
         a.encode(code, plain)
         fo.write(serialize(a))
 
@@ -69,7 +69,7 @@ def main():
         help="encode (compress) FILE using the Huffman code calculated for "
              "the frequency of characters in FILE itself. "
              "The output is FILE.huff which contains both the Huffman "
-             "code and the bitarray resulting from the encoding.")
+             "code and the pauliebits resulting from the encoding.")
     p.add_option(
         '-d', '--decode',
         action="store_true",

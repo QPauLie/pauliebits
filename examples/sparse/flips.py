@@ -1,32 +1,32 @@
 """
-Implementation of a sparse bitarray
+Implementation of a sparse pauliebits
 
 Internally we store a list of positions at which a bit changes from
 1 to 0 or vice versa.  Moreover, we start with bit 0, meaning that if the
-first bit in the bitarray is 1 our list starts with posistion 0.
+first bit in the pauliebits is 1 our list starts with posistion 0.
 For example:
 
-   bitarray('110011111000')
+   pauliebits('110011111000')
 
 is represented as:
 
    flips:   [0, 2, 4, 9, 12]
 
-The last element in the list is always the length of the bitarray, such that
-an empty bitarray is represented as [0].
+The last element in the list is always the length of the pauliebits, such that
+an empty pauliebits is represented as [0].
 """
 from bisect import bisect, bisect_left
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 from common import Common
 
 
-class SparseBitarray(Common):
+class SparsePauliebits(Common):
 
     def __init__(self, x = 0):
         if isinstance(x, int):
-            self.flips = [x]  # bitarray with x zeros
+            self.flips = [x]  # pauliebits with x zeros
         else:
             self.flips = [0]
             for v in x:
@@ -39,12 +39,12 @@ class SparseBitarray(Common):
         if isinstance(key, slice):
             start, stop = self._get_start_stop(key)
             if stop <= start:
-                return SparseBitarray()
+                return SparsePauliebits()
 
             i = bisect(self.flips, start)
             j = bisect_left(self.flips, stop)
 
-            res = SparseBitarray()
+            res = SparsePauliebits()
             res.flips = [0] if i % 2 else []
             for k in range(i, j):
                 res.flips.append(self.flips[k] - start)
@@ -113,12 +113,12 @@ class SparseBitarray(Common):
         self._reduce()
 
     def _reduce(self):
-        n = self.flips[-1]      # length of bitarray
+        n = self.flips[-1]      # length of pauliebits
         lst = []                # new representation list
         i = 0
         while True:
             c = self.flips[i]   # current element (at index i)
-            if c == n:          # element with bitarray length reached
+            if c == n:          # element with pauliebits length reached
                 break
             j = i + 1           # find next value (at index j)
             while self.flips[j] == c:
@@ -163,8 +163,8 @@ class SparseBitarray(Common):
                 return 0
             return -1 if len(flips) == 2 else flips[1]
 
-    def to_bitarray(self):
-        a = bitarray(len(self))
+    def to_pauliebits(self):
+        a = pauliebits(len(self))
         for v, start, stop in self._intervals():
             a[start:stop] = v
         return a

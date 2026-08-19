@@ -2,7 +2,7 @@ from collections import Counter
 from statistics import fmean, pstdev
 
 from matplotlib import pyplot as plt
-from bitarray.util import random_k, sum_indices
+from pauliebits.util import random_k, sum_indices
 
 from sample import SampleMeanDist
 

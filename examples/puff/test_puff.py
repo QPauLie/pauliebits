@@ -3,7 +3,7 @@ import sys
 import zlib
 import unittest
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 from puff import State, Puff, FIXLCODES, MAXDCODES, MAXLCODES, FIXED_LENGTHS
 
@@ -11,7 +11,7 @@ from puff import State, Puff, FIXLCODES, MAXDCODES, MAXLCODES, FIXED_LENGTHS
 class TestState(unittest.TestCase):
 
     def test_simple(self):
-        a = bitarray(80)
+        a = pauliebits(80)
         b = bytearray()
         s = State(a, b)
         self.assertEqual(s.get_incnt(), 0)
@@ -19,13 +19,13 @@ class TestState(unittest.TestCase):
         s.extend_block(4)
         self.assertEqual(s.get_incnt(), 32)
         self.assertEqual(len(b), 4)
-        a[32:35] = bitarray('011')
+        a[32:35] = pauliebits('011')
         self.assertEqual(s.read_uint(3), 6)
         self.assertEqual(s.get_incnt(), 35)
 
     def test_read_uint(self):
         # works for either bit-endianness
-        inp = bitarray('11011100 1')
+        inp = pauliebits('11011100 1')
         out = bytearray()
         s = State(inp, out)
         self.assertRaises(ValueError, s.read_uint, -1)  # negative bits
@@ -41,18 +41,18 @@ class TestState(unittest.TestCase):
         self.assertEqual(len(out), 0)                  # nothing in output
 
     def test_read_uint32(self):
-        a = bitarray(b'\x7e\xae\xd4\xbb', endian='little')
+        a = pauliebits(b'\x7e\xae\xd4\xbb', endian='little')
         s = State(a, bytearray())
         self.assertEqual(s.read_uint(32), 0xbbd4ae7e)
         self.assertEqual(s.get_incnt(), 32)
 
-        a = bitarray(32 * '1', endian='little')
+        a = pauliebits(32 * '1', endian='little')
         s = State(a, bytearray())
         self.assertEqual(s.read_uint(32), (1 << 32) - 1)
         self.assertEqual(s.get_incnt(), 32)
 
     def test_copy(self):
-        a = bitarray()  # nothing is read from input in this test
+        a = pauliebits()  # nothing is read from input in this test
         out = bytearray(b'ABC')
         s = State(a, out)
         s.copy(3, 2)
@@ -68,7 +68,7 @@ class TestState(unittest.TestCase):
 
     def test_append_byte(self):
         out = bytearray()
-        s = State(bitarray(), out)
+        s = State(pauliebits(), out)
         s.append_byte(0)
         self.assertRaises(ValueError, s.append_byte, -1)
         self.assertRaises(ValueError, s.append_byte, 256)
@@ -76,7 +76,7 @@ class TestState(unittest.TestCase):
         self.assertEqual(bytes(out), b'\0\xff')
 
     def test_extend_block(self):
-        a = bitarray(b'ABCDEF')
+        a = pauliebits(b'ABCDEF')
         b = bytearray()
         s = State(a, b)
 
@@ -103,7 +103,7 @@ class TestState(unittest.TestCase):
     def test_decode_lengths(self):
         # this is taken from the stream of dynamic header bits - after nlen,
         # ndist, ncode and the (up to 19) code length code lengths are read
-        a = bitarray('''
+        a = pauliebits('''
     11001100 00001100 00011101 11011101 11000011 00000111 00001000 00101100
     00011100 10000011 01100000 11101110 11101011 00000111 01011000 00111011
     10111100 00000010 00011000 00111011 10111010 01000010 00001110 11100001
@@ -128,7 +128,7 @@ class TestState(unittest.TestCase):
         self.assertEqual(sum(length), 2183)
 
     def test_decode_lengths_error(self):
-        a = bitarray(1000)
+        a = pauliebits(1000)
         b = bytearray()
         s = State(a, b)
         lengths = 19 * [0]
@@ -141,7 +141,7 @@ class TestState(unittest.TestCase):
         self.assertRaises(ValueError, s.decode_lengths, lengths, 316)
 
     def test_decode_block_error(self):
-        a = bitarray(1000)
+        a = pauliebits(1000)
         b = bytearray()
         s = State(a, b)
         lengths = 302 * [0]
@@ -166,27 +166,27 @@ class TestFixedBlock(unittest.TestCase):
         return bytes(res)
 
     def test_literal(self):
-        a = bitarray('01111001 10011100 10010001 10011110 0000000')
+        a = pauliebits('01111001 10011100 10010001 10011110 0000000')
         #             I        l        a        n        end-of-block
         self.assertEqual(self.decode(a), b"Ilan")
 
     def test_rle(self):
-        a = bitarray('01110001 0000001  00000   0000000')
+        a = pauliebits('01110001 0000001  00000   0000000')
         #             A        len=3    dist=1  end-of-block
         self.assertEqual(self.decode(a), b"AAAA")
 
     def test_rle_258(self):
-        a = bitarray('01110001 11000101  00000   0000000')
+        a = pauliebits('01110001 11000101  00000   0000000')
         #             A        len=258   dist=1  end-of-block
         self.assertEqual(self.decode(a), 259 * b"A")
 
-        a = bitarray('01110010 11000100 11111  00000   0000000')
+        a = pauliebits('01110010 11000100 11111  00000   0000000')
         #             B        len=227  31     dist=1  end-of-block
         # here len = 227 + 31 = 258, same as before
         self.assertEqual(self.decode(a), 259 * b"B")
 
     def test_max_back(self):
-        a = bitarray('0000001  11101 1111111111111  0000000')
+        a = pauliebits('0000001  11101 1111111111111  0000000')
         #             len=3    dist=24577 + 8191
         buffer = b'ABCD' + 32764 * b'-'
         self.assertEqual(len(buffer), 1 << 15)
@@ -194,14 +194,14 @@ class TestFixedBlock(unittest.TestCase):
         self.assertEqual(out, buffer + b'ABC')
 
     def test_too_far_back(self):
-        a = bitarray('01110001 0000001  00001   0000000')
+        a = pauliebits('01110001 0000001  00001   0000000')
         #             A        len=3    dist=2  end-of-block
         self.assertRaises(ValueError, self.decode, a)
 
     def test_invalid_length_symbols(self):
-        a = bitarray('11000110')  # symbol 286
+        a = pauliebits('11000110')  # symbol 286
         self.assertRaises(ValueError, self.decode, a)
-        a = bitarray('11000111')  # symbol 287
+        a = pauliebits('11000111')  # symbol 287
         self.assertRaises(ValueError, self.decode, a)
 
 
@@ -213,7 +213,7 @@ class TestPuff(unittest.TestCase):
         self.assertEqual(len(FIXED_LENGTHS), FIXLCODES + MAXDCODES)
 
     def test_align_byte_boundary(self):
-        a = bitarray(15)
+        a = pauliebits(15)
         d = Puff(a, bytearray())
         d.read_uint(5)
         d.align_byte_boundary()
@@ -226,7 +226,7 @@ class TestPuff(unittest.TestCase):
     def round_trip(self, data, level=-1):
         compressed = zlib.compress(data, level=level)
 
-        a = bitarray(compressed, 'little')
+        a = pauliebits(compressed, 'little')
         out = bytearray()
         p = Puff(a, out)
         # check zlib header

@@ -1,7 +1,7 @@
 import hashlib
 from math import ceil, exp, log, log2
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 
 class BloomFilter(object):
@@ -18,12 +18,12 @@ class BloomFilter(object):
         self.k = ceil(-log2(p))
         # size of array
         self.m = ceil(-n * log2(p) / log(2))
-        self.array = bitarray(self.m)
+        self.array = pauliebits(self.m)
 
     def calculate_p(self):
         """
         Calculate the actual false positive error rate `p` from the number
-        of hashes `k` and the size if the bitarray `m`.  This is slightly
+        of hashes `k` and the size if the pauliebits `m`.  This is slightly
         different from the given `p`, because the integer value of `k`
         is being used.
         """

@@ -1,44 +1,44 @@
 Random Bitarrays
 ================
 
-Bitarray 3.5 introduced the utility function ``util.random_p(n, p=0.5)``.
-It returns a pseudo-random bitarray (of length ``n``) for which each bit has
+Pauliebits 3.5 introduced the utility function ``util.random_p(n, p=0.5)``.
+It returns a pseudo-random pauliebits (of length ``n``) for which each bit has
 probability ``p`` of being one.  This is mathematically equivalent to:
 
 .. code-block:: python
 
-    bitarray(random() < p for _ in range(n))
+    pauliebits(random() < p for _ in range(n))
 
 While this expression works well for small ``n``, it is quite slow when ``n``
 is large.  In the following we focus on the case of large ``n``.
 
 When ``p`` is small, a fast implementation of ``random_p()`` is to (a)
-calculate the population of the bitarray, and then (b) set the required
+calculate the population of the pauliebits, and then (b) set the required
 number of bits, using ``random.randrange()`` for each bit.
 Python 3.12 introduced ``random.binomialvariate()`` which is exactly what we
-need to determine the bitarray's population.
+need to determine the pauliebits's population.
 
-When ``p == 0.5``, we use ``random.getrandbits()`` to initialize our bitarray
-buffer.  It should be noted that ``bitarray.util.urandom()``
+When ``p == 0.5``, we use ``random.getrandbits()`` to initialize our pauliebits
+buffer.  It should be noted that ``pauliebits.util.urandom()``
 uses ``os.urandom()``,
 but since ``util.random_p()`` is designed to give reproducible pseudo-random
-bitarrays, it uses ``random.getrandbits()``.
+pauliebitss, it uses ``random.getrandbits()``.
 
-Taking two (independent) such bitarrays and combining them
-using the bitwise AND operation, gives us a random bitarray with
+Taking two (independent) such pauliebitss and combining them
+using the bitwise AND operation, gives us a random pauliebits with
 probability 1/4.
-Likewise, applying a bitwise OR operation to two such bitarrays gives us
+Likewise, applying a bitwise OR operation to two such pauliebitss gives us
 probability 3/4.
 Without going into too much further detail, it is possible to combine
-more than two "getrandbits" bitarrays to get probabilities ``i / 2**M``,
-where ``M`` is the maximal number of "getrandbits" bitarrays we combine,
+more than two "getrandbits" pauliebitss to get probabilities ``i / 2**M``,
+where ``M`` is the maximal number of "getrandbits" pauliebitss we combine,
 and ``i`` is an integer.
 The required sequence of AND and OR operations is calculated from
 the desired probability ``p`` and ``M``.
 
-Once we have calculated our sequence, and obtained a bitarray with
+Once we have calculated our sequence, and obtained a pauliebits with
 probability ``q = i / 2**M``, we perform a final OR or AND operation with
-a random bitarray of probability ``x``.
+a random pauliebits of probability ``x``.
 In order to arrive at exactly the requested probability ``p``, it can
 be verified that:
 
@@ -49,7 +49,7 @@ be verified that:
 
 It should be noted that ``x`` is always small (once symmetry is applied in
 case of AND) such that it always uses the "small p" case.
-Therefore, the bitarray has exactly probability ``x``, and hence
+Therefore, the pauliebits has exactly probability ``x``, and hence
 the requested probability ``p`` is exact.
 For more details, see ``VerificationTests`` in the
 additional `random tests <../devel/test_random.py>`__.
@@ -106,7 +106,7 @@ for different values of ``p`` for ``n=100_000_000``:
    0.499999999   22.4    1    0.999999998  AND  cheapest mixed case
 
    literal:
-   any         3740.2    -    bitarray(random() < p for _ in range(n))
+   any         3740.2    -    pauliebits(random() < p for _ in range(n))
 
 
 Using the literal definition one always uses ``n`` calls to ``random()``,

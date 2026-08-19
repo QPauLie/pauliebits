@@ -1,6 +1,6 @@
 """
 This file contains some little tricks and verifications for some code which
-is used in the C implementation of bitarray.
+is used in the C implementation of pauliebits.
 """
 from random import randint
 import unittest
@@ -44,7 +44,7 @@ class RangeTests(unittest.TestCase):
 
 def adjust_step_positive(slicelength, start, stop, step):
     """
-    This is the adjust_step_positive() implementation from bitarray.h.
+    This is the adjust_step_positive() implementation from pauliebits.h.
     """
     if step < 0:
         stop = start + 1

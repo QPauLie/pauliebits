@@ -10,11 +10,11 @@ https://github.com/nayuki/Simple-DEFLATE-decompressor/tree/master/python
 
 
 I wrote this to better understand the DEFLATE format, and also to give
-an example on how to write a Python C extension which makes use of bitarray
+an example on how to write a Python C extension which makes use of pauliebits
 on the C-level.
 
 
-To try it out (you need to have bitarray installed into your Python 3):
+To try it out (you need to have pauliebits installed into your Python 3):
 
     $ make test
     ...

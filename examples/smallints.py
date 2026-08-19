@@ -1,5 +1,5 @@
-from bitarray import bitarray
-from bitarray.util import int2ba, ba2int, pprint
+from pauliebits import pauliebits
+from pauliebits.util import int2ba, ba2int, pprint
 
 
 class SmallIntArray:
@@ -13,7 +13,7 @@ class SmallIntArray:
     def __init__(self, N, k):
         self.N = N  # number of integers
         self.k = k  # bits for each integer
-        self.array = bitarray(N * k)
+        self.array = pauliebits(N * k)
 
     def slice_i(self, i):
         assert 0 <= i < self.N

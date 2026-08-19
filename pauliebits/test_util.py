@@ -1,9 +1,9 @@
 # Copyright (c) 2019 - 2026, Ilan Schnell; All Rights Reserved
-# bitarray is published under the PSF license.
+# pauliebits is published under the PSF license.
 #
 # Author: Ilan Schnell
 """
-Tests for bitarray.util module
+Tests for pauliebits.util module
 """
 import os
 import sys
@@ -22,11 +22,11 @@ from random import (choice, choices, getrandbits, randrange, randint, random,
 from string import hexdigits, whitespace
 from collections import Counter
 
-from bitarray import (bitarray, frozenbitarray, decodetree, bits2bytes,
+from pauliebits import (pauliebits, frozenpauliebits, decodetree, bits2bytes,
                       get_default_endian)
-from bitarray.test_bitarray import Util, is_pypy, urandom_2, PTRSIZE
+from pauliebits.test_pauliebits import Util, is_pypy, urandom_2, PTRSIZE
 
-from bitarray.util import (
+from pauliebits.util import (
     zeros, ones, urandom, random_k, random_p, pprint, strip, count_n,
     parity, gen_primes, sum_indices, xor_indices,
     count_and, count_or, count_xor, any_and, subset,
@@ -37,7 +37,7 @@ from bitarray.util import (
     _huffman_tree, huffman_code, canonical_huffman, canonical_decode,
 )
 
-from bitarray.util import _Random  # type: ignore
+from pauliebits.util import _Random  # type: ignore
 
 
 ENDIANS = ('little', 'big')
@@ -51,9 +51,9 @@ class ZerosOnesTests(unittest.TestCase):
         for _ in range(50):
             a = choice([zeros(0), zeros(0, None), zeros(0, endian=None),
                         ones(0), ones(0, None), ones(0, endian=None)])
-            self.assertEqual(a, bitarray())
+            self.assertEqual(a, pauliebits())
             self.assertEqual(a.endian, get_default_endian())
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
 
             endian = choice(OPT_ENDIANS)
             n = randrange(100)
@@ -70,7 +70,7 @@ class ZerosOnesTests(unittest.TestCase):
         for f in zeros, ones:
             self.assertRaises(TypeError, f) # no argument
             self.assertRaises(TypeError, f, '')
-            self.assertRaises(TypeError, f, bitarray())
+            self.assertRaises(TypeError, f, pauliebits())
             self.assertRaises(TypeError, f, [])
             self.assertRaises(TypeError, f, 1.0)
             self.assertRaises(ValueError, f, -1)
@@ -88,7 +88,7 @@ class URandomTests(unittest.TestCase):
     def test_basic(self):
         for _ in range(20):
             a = choice([urandom(0), urandom(0, endian=None)])
-            self.assertEqual(a, bitarray())
+            self.assertEqual(a, pauliebits())
             self.assertEqual(a.endian, get_default_endian())
 
             endian = choice(OPT_ENDIANS)
@@ -97,13 +97,13 @@ class URandomTests(unittest.TestCase):
             a = choice([urandom(n, endian), urandom(n, endian=endian)])
             self.assertEqual(len(a), n)
             self.assertEqual(a.endian, endian or get_default_endian())
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
 
     def test_errors(self):
         U = urandom
         self.assertRaises(TypeError, U)
         self.assertRaises(TypeError, U, '')
-        self.assertRaises(TypeError, U, bitarray())
+        self.assertRaises(TypeError, U, pauliebits())
         self.assertRaises(TypeError, U, [])
         self.assertRaises(TypeError, U, 1.0)
         self.assertRaises(ValueError, U, -1)
@@ -125,7 +125,7 @@ class Random_K_Tests(unittest.TestCase):
             n = randrange(120)
             k = randint(0, n)
             a = random_k(n, k, endian)
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
             self.assertEqual(len(a), n)
             self.assertEqual(a.count(), k)
             self.assertEqual(a.endian, endian or get_default_endian())
@@ -186,7 +186,7 @@ class Random_K_Tests(unittest.TestCase):
             expected = math.comb(n, k)
             combs = set()
             for _ in range(10_000):
-                combs.add(frozenbitarray(random_k(n, k)))
+                combs.add(frozenpauliebits(random_k(n, k)))
                 if len(combs) == expected:
                     total += expected
                     break
@@ -195,7 +195,7 @@ class Random_K_Tests(unittest.TestCase):
         self.assertEqual(total, 2 ** n)
 
     def collect_code_branches(self):
-        # return list of bitarrays from all code branches of random_k()
+        # return list of pauliebitss from all code branches of random_k()
         res = []
         # test small k (no .combine_half())
         res.append(random_k(300, 10))
@@ -206,8 +206,8 @@ class Random_K_Tests(unittest.TestCase):
 
     def test_seed(self):
         # We ensure that after setting a seed value, random_k() will
-        # always return the same random bitarrays.  However, we do not ensure
-        # that these results will not change in future versions of bitarray.
+        # always return the same random pauliebitss.  However, we do not ensure
+        # that these results will not change in future versions of pauliebits.
         a = []
         for val in 654321, 654322, 654321, 654322:
             seed(val)
@@ -230,7 +230,7 @@ class Random_K_Tests(unittest.TestCase):
         # special cases
         self.assertRaises(ValueError, G, 0)
         self.assertEqual(G(1), zeros(M - 1))
-        self.assertEqual(G(K // 2), bitarray())
+        self.assertEqual(G(K // 2), pauliebits())
         self.assertEqual(G(K - 1), ones(M - 1))
         self.assertRaises(ValueError, G, K)
 
@@ -291,7 +291,7 @@ class Random_P_Tests(unittest.TestCase):
             n = randrange(120)
             p = choice([0.0, 0.0001, 0.2, 0.5, 0.9, 1.0])
             a = random_p(n, p, endian)
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
             self.assertEqual(len(a), n)
             self.assertEqual(a.endian, endian or get_default_endian())
 
@@ -305,7 +305,7 @@ class Random_P_Tests(unittest.TestCase):
         self.assertRaises(ValueError, R, 1, p=1.5)
         self.assertRaises(ValueError, R, 1, 0.15, 'foo')
         self.assertRaises(ValueError, R, 10, 0.5, endian='foo')
-        self.assertEqual(R(0), bitarray())
+        self.assertEqual(R(0), pauliebits())
         for n in range(30):
             self.assertEqual(R(n, 0), zeros(n))
             self.assertEqual(len(R(n, 0.5)), n)
@@ -327,7 +327,7 @@ class Random_P_Tests(unittest.TestCase):
             self.assertTrue(abs(a.count() - n * p) < max(4, 10 * sigma))
 
     def collect_code_branches(self):
-        # return list of bitarrays from all code branches of random_p()
+        # return list of pauliebitss from all code branches of random_p()
         res = []
         # for default p=0.5, random_p uses getrandbits
         res.append(random_p(32))
@@ -342,8 +342,8 @@ class Random_P_Tests(unittest.TestCase):
 
     def test_seed(self):
         # We ensure that after setting a seed value, random_p() will always
-        # return the same random bitarrays.  However, we do not ensure that
-        # these results will not change in future versions of bitarray.
+        # return the same random pauliebitss.  However, we do not ensure that
+        # these results will not change in future versions of pauliebits.
         a = []
         for val in 123456, 123457, 123456, 123457:
             seed(val)
@@ -456,7 +456,7 @@ class PPrintTests(unittest.TestCase):
         f = StringIO()
         pprint(a, f, indent=3, group=10, width=60)
         self.assertEqual(
-            f.getvalue(), "bitarray('''\n"
+            f.getvalue(), "pauliebits('''\n"
             "   0011010100 0101000101 0001000001 0100000100 0101000100\n"
             "   0001000001 0100000100 0101000001 0001000001 0000000100\n"
             "''')\n")
@@ -472,18 +472,18 @@ class PPrintTests(unittest.TestCase):
         self.assertEqual(b, a)
         self.assertIs(type(b), type(a))
 
-    def test_bitarray(self):
-        a = bitarray('110')
-        self.assertEqual(self.get_code_string(a), "bitarray('110')\n")
+    def test_pauliebits(self):
+        a = pauliebits('110')
+        self.assertEqual(self.get_code_string(a), "pauliebits('110')\n")
         self.round_trip(a)
 
-    def test_frozenbitarray(self):
-        a = frozenbitarray('01')
-        self.assertEqual(self.get_code_string(a), "frozenbitarray('01')\n")
+    def test_frozenpauliebits(self):
+        a = frozenpauliebits('01')
+        self.assertEqual(self.get_code_string(a), "frozenpauliebits('01')\n")
         self.round_trip(a)
 
     def test_formatting(self):
-        a = bitarray(200)
+        a = pauliebits(200)
         for width in range(40, 130, 10):
             for n in range(1, 10):
                 f = StringIO()
@@ -497,11 +497,11 @@ class PPrintTests(unittest.TestCase):
                     self.assertTrue(len(line) < width)
 
     def test_fallback(self):
-        for a in None, 'asd', [1, 2], bitarray(), frozenbitarray('1'):
+        for a in None, 'asd', [1, 2], pauliebits(), frozenpauliebits('1'):
             self.round_trip(a)
 
     def test_subclass(self):
-        class Foo(bitarray):
+        class Foo(pauliebits):
             pass
 
         a = Foo()
@@ -537,17 +537,17 @@ class StripTests(unittest.TestCase, Util):
 
     def test_simple(self):
         self.assertRaises(TypeError, strip, '0110')
-        self.assertRaises(TypeError, strip, bitarray(), 123)
-        self.assertRaises(ValueError, strip, bitarray(), 'up')
+        self.assertRaises(TypeError, strip, pauliebits(), 123)
+        self.assertRaises(ValueError, strip, pauliebits(), 'up')
 
-        a = bitarray('00010110000')
-        self.assertEQUAL(strip(a), bitarray('0001011'))
-        self.assertEQUAL(strip(a, 'left'), bitarray('10110000'))
-        self.assertEQUAL(strip(a, 'both'), bitarray('1011'))
-        b = frozenbitarray('00010110000')
+        a = pauliebits('00010110000')
+        self.assertEQUAL(strip(a), pauliebits('0001011'))
+        self.assertEQUAL(strip(a, 'left'), pauliebits('10110000'))
+        self.assertEQUAL(strip(a, 'both'), pauliebits('1011'))
+        b = frozenpauliebits('00010110000')
         c = strip(b, 'both')
-        self.assertEqual(c, bitarray('1011'))
-        self.assertIs(type(c), frozenbitarray)
+        self.assertEqual(c, pauliebits('1011'))
+        self.assertIs(type(c), frozenpauliebits)
 
     def test_zeros_ones(self):
         for _ in range(50):
@@ -555,13 +555,13 @@ class StripTests(unittest.TestCase, Util):
             mode = choice(['left', 'right', 'both'])
             a = zeros(n)
             c = strip(a, mode)
-            self.assertIs(type(c), bitarray)
+            self.assertIs(type(c), pauliebits)
             self.assertEqual(len(c), 0)
             self.assertEqual(a, zeros(n))
 
-            b = frozenbitarray(a)
+            b = frozenpauliebits(a)
             c = strip(b, mode)
-            self.assertIs(type(c), frozenbitarray)
+            self.assertIs(type(c), frozenpauliebits)
             self.assertEqual(len(c), 0)
 
             a.setall(1)
@@ -569,32 +569,32 @@ class StripTests(unittest.TestCase, Util):
             self.assertEqual(c, ones(n))
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             b = a.copy()
-            f = frozenbitarray(a)
+            f = frozenpauliebits(a)
             s = a.to01()
             for mode, res in [
-                    ('left',  bitarray(s.lstrip('0'), a.endian)),
-                    ('right', bitarray(s.rstrip('0'), a.endian)),
-                    ('both',  bitarray(s.strip('0'),  a.endian)),
+                    ('left',  pauliebits(s.lstrip('0'), a.endian)),
+                    ('right', pauliebits(s.rstrip('0'), a.endian)),
+                    ('both',  pauliebits(s.strip('0'),  a.endian)),
             ]:
                 c = strip(a, mode)
                 self.assertEQUAL(c, res)
-                self.assertIs(type(c), bitarray)
+                self.assertIs(type(c), pauliebits)
                 self.assertEQUAL(a, b)
 
                 c = strip(f, mode)
                 self.assertEQUAL(c, res)
-                self.assertIs(type(c), frozenbitarray)
+                self.assertIs(type(c), frozenpauliebits)
                 self.assertEQUAL(f, b)
 
     def test_one_set(self):
         for _ in range(10):
             n = randint(1, 10000)
-            a = bitarray(n)
+            a = pauliebits(n)
             a.setall(0)
             a[randrange(n)] = 1
-            self.assertEqual(strip(a, 'both'), bitarray('1'))
+            self.assertEqual(strip(a, 'both'), pauliebits('1'))
             self.assertEqual(len(a), n)
 
 # -----------------------------  count_n()  ---------------------------------
@@ -618,7 +618,7 @@ class CountN_Tests(unittest.TestCase, Util):
             self.assertEqual(a[i - 1], v)
 
     def test_empty(self):
-        a = bitarray()
+        a = pauliebits()
         self.assertEqual(count_n(a, 0), 0)
         self.assertEqual(count_n(a, 0, 0), 0)
         self.assertEqual(count_n(a, 0, 1), 0)
@@ -626,11 +626,11 @@ class CountN_Tests(unittest.TestCase, Util):
         self.assertRaises(TypeError, count_n, '', 0)
         self.assertRaises(TypeError, count_n, a, 7.0)
         self.assertRaises(ValueError, count_n, a, 0, 2)
-        self.assertRaisesMessage(ValueError, "n = 1 larger than bitarray "
+        self.assertRaisesMessage(ValueError, "n = 1 larger than pauliebits "
                                  "length 0", count_n, a, 1)
 
     def test_simple(self):
-        a = bitarray('111110111110111110111110011110111110111110111000')
+        a = pauliebits('111110111110111110111110011110111110111110111000')
         b = a.copy()
         self.assertEqual(len(a), 48)
         self.assertEqual(a.count(), 37)
@@ -647,7 +647,7 @@ class CountN_Tests(unittest.TestCase, Util):
         self.assertRaisesMessage(ValueError, "non-negative integer expected",
                                  count_n, a, -1)
         # n > len(a)
-        self.assertRaisesMessage(ValueError, "n = 49 larger than bitarray "
+        self.assertRaisesMessage(ValueError, "n = 49 larger than pauliebits "
                                  "length 48", count_n, a, 49)
         # n > a.count(0)
         self.assertRaisesMessage(ValueError, "n = 12 exceeds total count "
@@ -664,8 +664,8 @@ class CountN_Tests(unittest.TestCase, Util):
                 self.assertEqual(i, self.count_n(a if v else ~a, n))
         self.assertEQUAL(a, b)
 
-    def test_frozenbitarray(self):
-        a = frozenbitarray('001111101111101111101111100111100')
+    def test_frozenpauliebits(self):
+        a = frozenpauliebits('001111101111101111101111100111100')
         self.assertEqual(len(a), 33)
         self.assertEqual(a.count(), 24)
         self.assertEqual(count_n(a, 0), 0)
@@ -705,7 +705,7 @@ class CountN_Tests(unittest.TestCase, Util):
             a[-1] = 1
             self.assertEqual(count_n(a, 1), N)
             if N == 1:
-                msg = "n = 2 larger than bitarray length 1"
+                msg = "n = 2 larger than pauliebits length 1"
             else:
                 msg = "n = 2 exceeds total count (a.count(1) = 1)"
             self.assertRaisesMessage(ValueError, msg, count_n, a, 2)
@@ -722,7 +722,7 @@ class CountN_Tests(unittest.TestCase, Util):
     def test_large(self):
         for _ in range(100):
             N = randint(100_000, 250_000)
-            a = bitarray(N)
+            a = pauliebits(N)
             v = getrandbits(1)
             a.setall(not v)
             for _ in range(randrange(100)):
@@ -745,7 +745,7 @@ class BitwiseCountTests(unittest.TestCase, Util):
 
     def test_count_byte(self):
         for i in range(256):
-            a = bitarray(bytearray([i]))
+            a = pauliebits(bytearray([i]))
             cnt = a.count()
             self.assertEqual(count_and(a, zeros(8)), 0)
             self.assertEqual(count_and(a, ones(8)), cnt)
@@ -758,9 +758,9 @@ class BitwiseCountTests(unittest.TestCase, Util):
             self.assertEqual(count_xor(a, a), 0)
 
     def test_1(self):
-        a = bitarray('001111')
+        a = pauliebits('001111')
         aa = a.copy()
-        b = bitarray('010011')
+        b = pauliebits('010011')
         bb = b.copy()
         self.assertEqual(count_and(a, b), 2)
         self.assertEqual(count_or(a, b), 5)
@@ -781,12 +781,12 @@ class BitwiseCountTests(unittest.TestCase, Util):
         for f in count_and, count_or, count_xor:
             self.assertRaises(ValueError, f, a, b)
             self.assertRaises(ValueError, f,
-                              bitarray('110', 'big'),
-                              bitarray('101', 'little'))
+                              pauliebits('110', 'big'),
+                              pauliebits('101', 'little'))
 
     def test_frozen(self):
-        a = frozenbitarray('001111')
-        b = frozenbitarray('010011')
+        a = frozenpauliebits('001111')
+        b = frozenpauliebits('010011')
         self.assertEqual(count_and(a, b), 2)
         self.assertEqual(count_or(a, b), 5)
         self.assertEqual(count_xor(a, b), 3)
@@ -801,7 +801,7 @@ class BitwiseCountTests(unittest.TestCase, Util):
             self.assertEqual(count_xor(a, b), (a ^ b).count())
 
     def test_misc(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             n = len(a)
             b = urandom(n, a.endian)
             # any and
@@ -828,16 +828,16 @@ class BitwiseCountTests(unittest.TestCase, Util):
 class BitwiseAnyTests(unittest.TestCase, Util):
 
     def test_basic(self):
-        a = frozenbitarray('0101')
-        b = bitarray('0111')
+        a = frozenpauliebits('0101')
+        b = pauliebits('0111')
         self.assertTrue(any_and(a, b))
         self.assertRaises(TypeError, any_and)
         self.assertRaises(TypeError, any_and, a, 4)
         b.append(1)
         self.assertRaises(ValueError, any_and, a, b)
         self.assertRaises(ValueError, any_and,
-                          bitarray('01', 'little'),
-                          bitarray('11', 'big'))
+                          pauliebits('01', 'little'),
+                          pauliebits('11', 'big'))
 
     def test_overlap(self):
         n = 100
@@ -855,7 +855,7 @@ class BitwiseAnyTests(unittest.TestCase, Util):
             res2 = bool(set(r1) & set(r2))
             self.assertEqual(res1, res2)
 
-            a1, a2 = bitarray(n), bitarray(n)
+            a1, a2 = pauliebits(n), pauliebits(n)
             a1[i1:j1] = a2[i2:j2] = 1
             self.assertEqual(any_and(a1, a2), res1)
 
@@ -867,7 +867,7 @@ class BitwiseAnyTests(unittest.TestCase, Util):
             r1 = range(n)[s1]
             r2 = range(n)[s2]
             # test if ranges r1 and r2 have common items
-            a1, a2 = bitarray(n), bitarray(n)
+            a1, a2 = pauliebits(n), pauliebits(n)
             a1[s1] = a2[s2] = 1
             self.assertEqual(any_and(a1, a2), bool(set(r1) & set(r2)))
 
@@ -887,13 +887,13 @@ class BitwiseAnyTests(unittest.TestCase, Util):
                 ('1', '1', True),
                 ('00011', '11100', False),
                 ('00001011 1', '01000100 1', True)]:
-            a = bitarray(a)
-            b = bitarray(b)
+            a = pauliebits(a)
+            b = pauliebits(b)
             self.assertIs(any_and(a, b), res)
             self.check(a, b)
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             n = len(a)
             b = urandom(n, a.endian)
             self.check(a, b)
@@ -911,8 +911,8 @@ class BitwiseAnyTests(unittest.TestCase, Util):
 class SubsetTests(unittest.TestCase, Util):
 
     def test_basic(self):
-        a = frozenbitarray('0101')
-        b = bitarray('0111')
+        a = frozenpauliebits('0101')
+        b = pauliebits('0111')
         self.assertTrue(subset(a, b))
         self.assertFalse(subset(b, a))
         self.assertRaises(TypeError, subset)
@@ -922,8 +922,8 @@ class SubsetTests(unittest.TestCase, Util):
         b.append(1)
         self.assertRaises(ValueError, subset, a, b)
         self.assertRaises(ValueError, subset,
-                          bitarray('01', 'little'),
-                          bitarray('11', 'big'))
+                          pauliebits('01', 'little'),
+                          pauliebits('11', 'big'))
 
     def check(self, a, b, res):
         r = subset(a, b)
@@ -936,15 +936,15 @@ class SubsetTests(unittest.TestCase, Util):
         for a, b in [('', ''), ('0', '1'), ('0', '0'), ('1', '1'),
                      ('000', '111'), ('0101', '0111'),
                      ('000010111', '010011111')]:
-            self.check(bitarray(a), bitarray(b), True)
+            self.check(pauliebits(a), pauliebits(b), True)
 
     def test_False(self):
         for a, b in [('1', '0'), ('1101', '0111'),
                      ('0000101111', '0100111011')]:
-            self.check(bitarray(a), bitarray(b), False)
+            self.check(pauliebits(a), pauliebits(b), False)
 
     def test_random(self):
-        for a in self.randombitarrays(start=1):
+        for a in self.randompauliebitss(start=1):
             b = a.copy()
             # we set one random bit in b to 1, so a is always a subset of b
             b[randrange(len(a))] = 1
@@ -960,15 +960,15 @@ class SubsetTests(unittest.TestCase, Util):
 class CorrespondAllTests(unittest.TestCase):
 
     def test_basic(self):
-        a = frozenbitarray('0101')
-        b = bitarray('0110')
+        a = frozenpauliebits('0101')
+        b = pauliebits('0110')
         self.assertEqual(correspond_all(a, b), (1, 1, 1, 1))
         self.assertRaises(TypeError, correspond_all)
         b.append(1)
         self.assertRaises(ValueError, correspond_all, a, b)
         self.assertRaises(ValueError, correspond_all,
-                          bitarray('01', 'little'),
-                          bitarray('11', 'big'))
+                          pauliebits('01', 'little'),
+                          pauliebits('11', 'big'))
 
     def test_explitcit(self):
         for a, b, res in [
@@ -976,7 +976,7 @@ class CorrespondAllTests(unittest.TestCase):
                 ('0000011111',
                  '0000100111', (4, 1, 2, 3)),
             ]:
-            self.assertEqual(correspond_all(bitarray(a), bitarray(b)), res)
+            self.assertEqual(correspond_all(pauliebits(a), pauliebits(b)), res)
 
     def test_random(self):
         for _ in range(100):
@@ -1011,16 +1011,16 @@ class ByteSwapTests(unittest.TestCase):
         byteswap(a, 1)
         self.assertEqual(a, bytearray(b"CBAFED"))
 
-    def test_basic_bitarray(self):
-        a = bitarray("11110000 01010101")
+    def test_basic_pauliebits(self):
+        a = pauliebits("11110000 01010101")
         byteswap(a)
-        self.assertEqual(a, bitarray("01010101 11110000"))
+        self.assertEqual(a, pauliebits("01010101 11110000"))
 
-        a = bitarray("01111000 1001")
+        a = pauliebits("01111000 1001")
         b = a.copy()
         a.tobytes()  # clear padbits
         byteswap(a)
-        self.assertEqual(a, bitarray("10010000 0111"))
+        self.assertEqual(a, pauliebits("10010000 0111"))
         byteswap(a)
         self.assertEqual(a, b)
 
@@ -1054,11 +1054,11 @@ class ByteSwapTests(unittest.TestCase):
 
     def test_errors(self):
         # buffer not writable
-        for a in b"AB", frozenbitarray(16):
+        for a in b"AB", frozenpauliebits(16):
             self.assertRaises(BufferError, byteswap, a)
 
         a = bytearray(b"ABCD")
-        b = bitarray(32)
+        b = pauliebits(32)
         for n in -1, 3, 5, 6:
             # byte size not multiple of n
             self.assertRaises(ValueError, byteswap, a, n)
@@ -1083,7 +1083,7 @@ class ByteSwapTests(unittest.TestCase):
             byteswap(a)
             self.assertEqual(a, bytearray(r[::-1]))
 
-    def test_reverse_bitarray(self):
+    def test_reverse_pauliebits(self):
         for n in range(100):
             a = urandom(8 * n)
             b = a.copy()
@@ -1097,8 +1097,8 @@ class ParityTests(unittest.TestCase):
 
     def test_explitcit(self):
         for s, res in [('', 0), ('1', 1), ('0010011', 1), ('10100110', 0)]:
-            self.assertIs(parity(bitarray(s)), res)
-            self.assertIs(parity(frozenbitarray(s)), res)
+            self.assertIs(parity(pauliebits(s)), res)
+            self.assertIs(parity(frozenpauliebits(s)), res)
 
     def test_zeros_ones(self):
         for n in range(2000):
@@ -1107,7 +1107,7 @@ class ParityTests(unittest.TestCase):
 
     def test_random(self):
         endian = choice(ENDIANS)
-        a = bitarray(endian=endian)
+        a = pauliebits(endian=endian)
         par = 0
         for i in range(2000):
             self.assertEqual(parity(a), par)
@@ -1122,7 +1122,7 @@ class ParityTests(unittest.TestCase):
         self.assertRaises(TypeError, parity, '')
         self.assertRaises(TypeError, parity, 1)
         self.assertRaises(TypeError, parity)
-        self.assertRaises(TypeError, parity, bitarray("110"), 1)
+        self.assertRaises(TypeError, parity, pauliebits("110"), 1)
 
 # ----------------------------  sum_indices()  ------------------------------
 
@@ -1132,10 +1132,10 @@ class SumIndicesTests(unittest.TestCase):
 
     def test_explicit(self):
         endian = choice(ENDIANS)
-        a = bitarray("01100111 1101", endian)
+        a = pauliebits("01100111 1101", endian)
         self.assertEqual(sum_indices(a, mode=1),  49)
         self.assertEqual(sum_indices(a, mode=2), 381)
-        a = frozenbitarray("00001111", endian)
+        a = frozenpauliebits("00001111", endian)
         self.assertEqual(sum_indices(a, mode=1),  22)
         self.assertEqual(sum_indices(a, mode=2), 126)
 
@@ -1145,10 +1145,10 @@ class SumIndicesTests(unittest.TestCase):
         self.assertRaises(TypeError, S, 1.0)
         self.assertRaises(TypeError, S)
         for mode in -1, 0, 3, 4:
-            self.assertRaises(ValueError, S, bitarray("110"), mode)
+            self.assertRaises(ValueError, S, pauliebits("110"), mode)
 
     def test_ones(self):
-        a = bitarray(endian=choice(ENDIANS))
+        a = pauliebits(endian=choice(ENDIANS))
         sm1 = sm2 = 0
         for i in range(100):
             a.append(1)
@@ -1167,7 +1167,7 @@ class SumIndicesTests(unittest.TestCase):
 
     def test_small(self):
         for mode in 1, 2:
-            for a in bitarray(), bitarray("0"), bitarray("1"):
+            for a in pauliebits(), pauliebits("0"), pauliebits("1"):
                 self.assertEqual(sum_indices(a, mode), 0)
 
             for n in range(2, 50):
@@ -1189,8 +1189,8 @@ class XoredIndicesTests(unittest.TestCase, Util):
         for s, r in [("", 0), ("0", 0), ("1", 0), ("11", 1),
                      ("011", 3), ("001", 2), ("0001100", 7),
                      ("01100111 1101", 13)]:
-            for a in [bitarray(s, self.random_endian()),
-                      frozenbitarray(s, self.random_endian())]:
+            for a in [pauliebits(s, self.random_endian()),
+                      frozenpauliebits(s, self.random_endian())]:
                 self.assertEqual(xor_indices(a), r)
 
     def test_wrong_args(self):
@@ -1198,13 +1198,13 @@ class XoredIndicesTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, X, '')
         self.assertRaises(TypeError, X, 1)
         self.assertRaises(TypeError, X)
-        self.assertRaises(TypeError, X, bitarray("110"), 1)
+        self.assertRaises(TypeError, X, pauliebits("110"), 1)
 
     def test_ones(self):
         # OEIS A003815
         lst = [0, 1, 3, 0, 4, 1, 7, 0, 8, 1, 11, 0, 12, 1, 15, 0, 16, 1, 19]
         self.assertEqual([xor_indices(ones(i)) for i in range(1, 20)], lst)
-        a = bitarray()
+        a = pauliebits()
         x = 0
         for i in range(1000):
             a.append(1)
@@ -1226,21 +1226,21 @@ class XoredIndicesTests(unittest.TestCase, Util):
 
     def test_large_random(self):
         n = 10_037
-        for a in [urandom_2(n), frozenbitarray(urandom_2(n))]:
+        for a in [urandom_2(n), frozenpauliebits(urandom_2(n))]:
             res = reduce(operator.xor, (i for i, v in enumerate(a) if v))
             b = a.copy()
             self.assertEqual(xor_indices(a), res)
             self.assertEqual(a, b)
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             c = 0
             for i, v in enumerate(a):
                 c ^= i * v
             self.assertEqual(xor_indices(a), c)
 
     def test_flips(self):
-        a = bitarray(128)
+        a = pauliebits(128)
         c = 0
         for _ in range(1000):
             self.assertEqual(xor_indices(a), c)
@@ -1281,19 +1281,19 @@ class IntervalsTests(unittest.TestCase, Util):
                 ('00111100 0000011',
                  [(0, 0, 2), (1, 2, 6), (0, 6, 13), (1, 13, 15)]),
             ]:
-            a = bitarray(s)
+            a = pauliebits(s)
             self.assertEqual(list(intervals(a)), lst)
             self.assertEqual(runs(a), len(lst))
 
     def test_uniform(self):
         for n in range(1, 100):
             for v in 0, 1:
-                a = n * bitarray([v], self.random_endian())
+                a = n * pauliebits([v], self.random_endian())
                 self.assertEqual(list(intervals(a)), [(v, 0, n)])
                 self.assertEqual(runs(a), 1)
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             n = len(a)
             b = urandom(n)
             for value, start, stop in intervals(a):
@@ -1303,16 +1303,16 @@ class IntervalsTests(unittest.TestCase, Util):
             self.assertEqual(a, b)
 
     def test_list_runs(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             # list of length of runs of alternating bits
             alt_runs = [stop - start for _, start, stop in intervals(a)]
             self.assertEqual(len(alt_runs), runs(a))
 
-            b = bitarray()
+            b = pauliebits()
             v = a[0] if a else None  # value of first run
             for length in alt_runs:
                 self.assertTrue(length > 0)
-                b.extend(length * bitarray([v]))
+                b.extend(length * pauliebits([v]))
                 v = not v
             self.assertEqual(a, b)
 
@@ -1329,15 +1329,15 @@ class HexlifyTests(unittest.TestCase, Util):
             ('0000 1100 1110 1111', '037f',  '0cef'),
         ]
         for bs, hex_le, hex_be in data:
-            a_be = bitarray(bs, 'big')
-            a_le = bitarray(bs, 'little')
+            a_be = pauliebits(bs, 'big')
+            a_le = pauliebits(bs, 'little')
             self.assertEQUAL(hex2ba(hex_be, 'big'), a_be)
             self.assertEQUAL(hex2ba(hex_le, 'little'), a_le)
             self.assertEqual(ba2hex(a_be), hex_be)
             self.assertEqual(ba2hex(a_le), hex_le)
 
     def test_ba2hex_group(self):
-        a = bitarray('1000 0000 0101 1111', 'little')
+        a = pauliebits('1000 0000 0101 1111', 'little')
         self.assertEqual(ba2hex(a), "10af")
         self.assertEqual(ba2hex(a, 0), "10af")
         self.assertEqual(ba2hex(a, 1, ""), "10af")
@@ -1353,9 +1353,9 @@ class HexlifyTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, ba2hex, '101')
 
         # length not multiple of 4
-        self.assertRaises(ValueError, ba2hex, bitarray('10'))
+        self.assertRaises(ValueError, ba2hex, pauliebits('10'))
 
-        a = bitarray('1000 0000 0101 1111', 'little')
+        a = pauliebits('1000 0000 0101 1111', 'little')
         self.assertRaises(ValueError, ba2hex, a, -1)
         self.assertRaises(ValueError, ba2hex, a, group=-1)
         # sep not str
@@ -1365,13 +1365,13 @@ class HexlifyTests(unittest.TestCase, Util):
 
     def test_hex2ba_whitespace(self):
         self.assertEqual(hex2ba("F1 FA %s f3 c0" % whitespace),
-                         bitarray("11110001 11111010 11110011 11000000"
+                         pauliebits("11110001 11111010 11110011 11000000"
                                   if get_default_endian() == "big" else
                                   "11111000 11110101 11111100 00110000"))
         self.assertEQUAL(hex2ba(b' a F ', 'big'),
-                         bitarray('1010 1111', 'big'))
+                         pauliebits('1010 1111', 'big'))
         self.assertEQUAL(hex2ba(860 * " " + '0  1D' + 590 * " ", 'little'),
-                         bitarray('0000 1000 1011', 'little'))
+                         pauliebits('0000 1000 1011', 'little'))
 
     def test_hex2ba_errors(self):
         self.assertRaises(TypeError, hex2ba, 0)
@@ -1390,7 +1390,7 @@ class HexlifyTests(unittest.TestCase, Util):
             a = hex2ba(c, "big")
             self.assertEqual(a.to01(), '1110')
             self.assertEqual(a.endian, 'big')
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
 
     def test_random(self):
         for _ in range(100):
@@ -1405,7 +1405,7 @@ class HexlifyTests(unittest.TestCase, Util):
     def test_hexdigits(self):
         a = hex2ba(hexdigits)
         self.assertEqual(len(a), 4 * len(hexdigits))
-        self.assertIs(type(a), bitarray)
+        self.assertIs(type(a), pauliebits)
         self.check_obj(a)
 
         t = ba2hex(a)
@@ -1417,7 +1417,7 @@ class HexlifyTests(unittest.TestCase, Util):
         a = urandom(80, 'big')
         s = binascii.hexlify(a.tobytes()).decode()
         self.assertEqual(ba2hex(a), s)
-        b = bitarray(binascii.unhexlify(s), endian='big')
+        b = pauliebits(binascii.unhexlify(s), endian='big')
         self.assertEQUAL(hex2ba(s, 'big'), b)
 
 # --------------------------  ba2base()  base2ba()  -------------------------
@@ -1435,8 +1435,8 @@ class BaseTests(unittest.TestCase, Util):
             ('111111 000001',  64, '/g',    '/B'),
         ]
         for bs, n, s_le, s_be in data:
-            a_le = bitarray(bs, 'little')
-            a_be = bitarray(bs, 'big')
+            a_le = pauliebits(bs, 'little')
+            a_be = pauliebits(bs, 'big')
             self.assertEQUAL(base2ba(n, s_le, 'little'), a_le)
             self.assertEQUAL(base2ba(n, s_be, 'big'),    a_be)
             self.assertEqual(ba2base(n, a_le), s_le)
@@ -1446,16 +1446,16 @@ class BaseTests(unittest.TestCase, Util):
         for c in '7', b'7', bytearray(b'7'):
             a = base2ba(32, c)
             self.assertEqual(a.to01(), '11111')
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
 
     def test_base2ba_whitespace(self):
         self.assertEqual(base2ba(8, bytearray(b"17 0"), "little"),
-                         bitarray("100 111 000"))
-        self.assertEqual(base2ba(32, "7 A"), bitarray("11111 00000"))
-        self.assertEqual(base2ba(64, b"A /"), bitarray("000000 111111"))
+                         pauliebits("100 111 000"))
+        self.assertEqual(base2ba(32, "7 A"), pauliebits("11111 00000"))
+        self.assertEqual(base2ba(64, b"A /"), pauliebits("000000 111111"))
         for n in 2, 4, 8, 16, 32, 64:
             a = base2ba(n, whitespace)
-            self.assertEqual(a, bitarray())
+            self.assertEqual(a, pauliebits())
             a = urandom(60)
             c = list(ba2base(n, a))
             for _ in range(randrange(80)):
@@ -1464,7 +1464,7 @@ class BaseTests(unittest.TestCase, Util):
             self.assertEqual(base2ba(n, s), a)
 
     def test_ba2base_group(self):
-        a = bitarray("001 011 100 111", "little")
+        a = pauliebits("001 011 100 111", "little")
         self.assertEqual(ba2base(8, a, 3), "461 7")
         self.assertEqual(ba2base(8, a, group=2), "46 17")
         self.assertEqual(ba2base(8, a, sep="_", group=2), "46_17")
@@ -1478,7 +1478,7 @@ class BaseTests(unittest.TestCase, Util):
                 (32, "10110 00111 01101 01111", 2, ", ", "WH, NP"),
                 (64, "101100 011101 101011 111110 101110", 2, ".", "sd.r+.u"),
                 ]:
-            a = bitarray(s, "big")
+            a = pauliebits(s, "big")
             s = ba2base(n, a, group, sep)
             self.assertIs(type(s), str)
             self.assertEqual(s, res)
@@ -1486,7 +1486,7 @@ class BaseTests(unittest.TestCase, Util):
     def test_empty(self):
         for n in 2, 4, 8, 16, 32, 64:
             a = base2ba(n, '')
-            self.assertEqual(a, bitarray())
+            self.assertEqual(a, pauliebits())
             self.assertEqual(ba2base(n, a), '')
 
     def test_invalid_characters(self):
@@ -1503,7 +1503,7 @@ class BaseTests(unittest.TestCase, Util):
             self.assertRaisesMessage(ValueError, msg, base2ba, n, '{')
 
     def test_invalid_args(self):
-        a = bitarray()
+        a = pauliebits()
         self.assertRaises(TypeError, ba2base, None, a)
         self.assertRaises(TypeError, base2ba, None, '')
         self.assertRaises(TypeError, ba2base, 16.0, a)
@@ -1520,14 +1520,14 @@ class BaseTests(unittest.TestCase, Util):
                 self.assertRaisesMessage(ValueError, msg, ba2base, i, a)
                 self.assertRaisesMessage(ValueError, msg, base2ba, i, '')
 
-        a = bitarray(29)
+        a = pauliebits(29)
         for m in range(2, 7):
-            msg = "bitarray length 29 not multiple of %d" % m
+            msg = "pauliebits length 29 not multiple of %d" % m
             self.assertRaisesMessage(ValueError, msg, ba2base, 1 << m, a)
 
     def test_hexadecimal(self):
         a = base2ba(16, 'F61', 'big')
-        self.assertEqual(a, bitarray('1111 0110 0001'))
+        self.assertEqual(a, pauliebits('1111 0110 0001'))
         self.assertEqual(ba2base(16, a), 'f61')
 
         for n in range(50):
@@ -1570,13 +1570,13 @@ class BaseTests(unittest.TestCase, Util):
                 (64, "little", "utMtkppEtF"),
                 (64, "big",    "dtMtJllIto"),
         ]:
-            a = bitarray(primes, endian)
+            a = pauliebits(primes, endian)
             s = ba2base(n, a)
             self.assertIs(type(s), str)
             self.assertEqual(s, rep)
             b = base2ba(n, rep, endian)
             self.assertEqual(b, a)
-            self.assertIs(type(b), bitarray)
+            self.assertIs(type(b), pauliebits)
             self.assertEqual(b.endian, endian)
 
     alphabets = [
@@ -1641,12 +1641,12 @@ class SC_Tests(unittest.TestCase, Util):
                 (b'\x11\x09\xa1\x08\0',     '00000000 1',        'big'),
                 (b'\x01g\xa4abde\0',        97 * '0' + '110110', 'little'),
         ]:
-            a = bitarray(bits, endian)
+            a = pauliebits(bits, endian)
             self.assertEqual(sc_encode(a), b)
             self.assertEQUAL(sc_decode(b), a)
 
     def test_encode_types(self):
-        for a in bitarray('1', 'big'), frozenbitarray('1', 'big'):
+        for a in pauliebits('1', 'big'), frozenpauliebits('1', 'big'):
             b = sc_encode(a)
             self.assertIs(type(b), bytes)
             self.assertEqual(b, b'\x11\x01\x01\x80\0')
@@ -1658,12 +1658,12 @@ class SC_Tests(unittest.TestCase, Util):
         blob = b'\x11\x03\x01\x20\0'
         for b in blob, bytearray(blob), list(blob), array.array('B', blob):
             a = sc_decode(b)
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
             self.assertEqual(a.endian, 'big')
             self.assertEqual(a.to01(), '001')
 
         a = [17, 3, 1, 32, 0]
-        self.assertEqual(sc_decode(a), bitarray("001"))
+        self.assertEqual(sc_decode(a), pauliebits("001"))
         for x in 256, -1:
             a[-1] = x
             self.assertRaises(ValueError, sc_decode, a)
@@ -1688,11 +1688,11 @@ class SC_Tests(unittest.TestCase, Util):
 
     def test_decode_untouch(self):
         stream = iter(b'\x01\x03\x01\x03\0XYZ')
-        self.assertEqual(sc_decode(stream), bitarray('110'))
+        self.assertEqual(sc_decode(stream), pauliebits('110'))
         self.assertEqual(next(stream), ord('X'))
 
         stream = iter([0x11, 0x05, 0x01, 0xff, 0, None, 'foo'])
-        self.assertEqual(sc_decode(stream), bitarray('11111'))
+        self.assertEqual(sc_decode(stream), pauliebits('11111'))
         self.assertIsNone(next(stream))
         self.assertEqual(next(stream), 'foo')
 
@@ -1796,7 +1796,7 @@ class SC_Tests(unittest.TestCase, Util):
             self.assertEqual(sc_encode(a), b)
 
     def test_block_type1(self):
-        a = bitarray(256, 'little')
+        a = pauliebits(256, 'little')
         for n in range(1, 32):
             a[getrandbits(8)] = 1
 
@@ -1808,7 +1808,7 @@ class SC_Tests(unittest.TestCase, Util):
             self.assertEqual(sc_encode(a), b)
 
     def test_block_type2(self):
-        a = bitarray(65536, 'little')
+        a = pauliebits(65536, 'little')
         for n in range(1, 256):
             a[getrandbits(16)] = 1
 
@@ -1826,7 +1826,7 @@ class SC_Tests(unittest.TestCase, Util):
                 self.assertTrue(len(sc_encode(a)) <= len(b))
 
     def test_block_type3(self):
-        a = bitarray(16_777_216, 'little')
+        a = pauliebits(16_777_216, 'little')
         a[choices(range(1 << 24), k=255)] = 1
         b = bytearray([0x04, 0x00, 0x00, 0x00, 0x01, 0xc3, a.count()])
         for i in a.search(1):
@@ -1836,7 +1836,7 @@ class SC_Tests(unittest.TestCase, Util):
         self.assertEqual(sc_encode(a), b)
 
     def test_block_type4(self):
-        a = bitarray(1 << 26, 'little')
+        a = pauliebits(1 << 26, 'little')
         # To understand why we cannot have a population larger than 5 for
         # an array size 4 times the size of a type 3 block, take a look
         # at the cost comparison in sc_encode_block().  (2 + 6 >= 2 * 4)
@@ -1929,14 +1929,14 @@ class VLFTests(unittest.TestCase, Util):
                 (b'\xb5\xa7\x18', '0101 0100111 0011'),
                 (b'\x95\xb7\x1c', '0101 0110111 001110'),
         ]:
-            a = bitarray(s)
+            a = pauliebits(s)
             self.assertEqual(vl_encode(a), blob)
             c = vl_decode(blob)
             self.assertEqual(c, a)
             self.assertEqual(c.endian, get_default_endian())
 
             for endian in 'big', 'little', None:
-                a = bitarray(s, endian)
+                a = pauliebits(s, endian)
                 c = vl_encode(a)
                 self.assertIs(type(c), bytes)
                 self.assertEqual(c, blob)
@@ -1947,7 +1947,7 @@ class VLFTests(unittest.TestCase, Util):
 
     def test_encode_types(self):
         s = "0011 01"
-        for a in bitarray(s), frozenbitarray(s):
+        for a in pauliebits(s), frozenpauliebits(s):
             b = vl_encode(a)
             self.assertIs(type(b), bytes)
             self.assertEqual(b, b'\xd3\x20')
@@ -1960,8 +1960,8 @@ class VLFTests(unittest.TestCase, Util):
         for s in (blob, iter(blob), memoryview(blob), iter([0xd3, 0x20]),
                   bytearray(blob)):
             a = vl_decode(s, endian=self.random_endian())
-            self.assertIs(type(a), bitarray)
-            self.assertEqual(a, bitarray('0011 01'))
+            self.assertIs(type(a), pauliebits)
+            self.assertEqual(a, pauliebits('0011 01'))
 
         # these objects are not iterable
         for arg in None, 0, 1, 0.0:
@@ -1981,19 +1981,19 @@ class VLFTests(unittest.TestCase, Util):
         for s, bits in [(b'\x40ABC', ''),
                         (b'\xe0\x40A', '00001')]:
             stream = iter(s)
-            self.assertEqual(vl_decode(stream), bitarray(bits))
+            self.assertEqual(vl_decode(stream), pauliebits(bits))
             self.assertEqual(next(stream), 65)
 
     def test_decode_ambiguity(self):
         for s in b'\x40', b'\x4f', b'\x45':
-            self.assertEqual(vl_decode(s), bitarray())
+            self.assertEqual(vl_decode(s), pauliebits())
         for s in b'\x1e', b'\x1f':
-            self.assertEqual(vl_decode(s), bitarray('111'))
+            self.assertEqual(vl_decode(s), pauliebits('111'))
 
     def test_decode_stream(self):
         stream = iter(b'\x40\x30\x38\x40\x2c\xe0\x40\xd3\x20')
         for bits in '', '0', '1', '', '11', '0000 1', '0011 01':
-            self.assertEqual(vl_decode(stream), bitarray(bits))
+            self.assertEqual(vl_decode(stream), pauliebits(bits))
 
         arrays = [urandom(randrange(30)) for _ in range(1000)]
         stream = iter(b''.join(vl_encode(a) for a in arrays))
@@ -2058,7 +2058,7 @@ class VLFTests(unittest.TestCase, Util):
             self.round_trip(a)
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             self.round_trip(a)
 
 # ---------------------------------------------------------------------------
@@ -2066,29 +2066,29 @@ class VLFTests(unittest.TestCase, Util):
 class IntegerizationTests(unittest.TestCase, Util):
 
     def test_ba2int(self):
-        self.assertEqual(ba2int(bitarray('0')), 0)
-        self.assertEqual(ba2int(bitarray('1')), 1)
-        self.assertEqual(ba2int(bitarray('00101', 'big')), 5)
-        self.assertEqual(ba2int(bitarray('00101', 'little')), 20)
-        self.assertEqual(ba2int(frozenbitarray('11')), 3)
-        self.assertRaises(ValueError, ba2int, bitarray())
-        self.assertRaises(ValueError, ba2int, frozenbitarray())
+        self.assertEqual(ba2int(pauliebits('0')), 0)
+        self.assertEqual(ba2int(pauliebits('1')), 1)
+        self.assertEqual(ba2int(pauliebits('00101', 'big')), 5)
+        self.assertEqual(ba2int(pauliebits('00101', 'little')), 20)
+        self.assertEqual(ba2int(frozenpauliebits('11')), 3)
+        self.assertRaises(ValueError, ba2int, pauliebits())
+        self.assertRaises(ValueError, ba2int, frozenpauliebits())
         self.assertRaises(TypeError, ba2int, '101')
-        a = bitarray('111')
+        a = pauliebits('111')
         b = a.copy()
         self.assertEqual(ba2int(a), 7)
         # ensure original object wasn't altered
         self.assertEQUAL(a, b)
 
     def test_ba2int_frozen(self):
-        for a in self.randombitarrays(start=1):
-            b = frozenbitarray(a)
+        for a in self.randompauliebitss(start=1):
+            b = frozenpauliebits(a)
             self.assertEqual(ba2int(b), ba2int(a))
             self.assertEQUAL(a, b)
 
     def test_ba2int_random(self):
-        for a in self.randombitarrays(start=1):
-            b = bitarray(a, 'big')
+        for a in self.randompauliebitss(start=1):
+            b = pauliebits(a, 'big')
             self.assertEqual(a, b)
             self.assertEqual(ba2int(b), int(b.to01(), 2))
 
@@ -2103,12 +2103,12 @@ class IntegerizationTests(unittest.TestCase, Util):
             self.assertEqual(ba2int(a), i)
 
     def test_int2ba(self):
-        self.assertEqual(int2ba(0), bitarray('0'))
-        self.assertEqual(int2ba(1), bitarray('1'))
-        self.assertEqual(int2ba(5), bitarray('101'))
-        self.assertEQUAL(int2ba(6, endian='big'), bitarray('110', 'big'))
+        self.assertEqual(int2ba(0), pauliebits('0'))
+        self.assertEqual(int2ba(1), pauliebits('1'))
+        self.assertEqual(int2ba(5), pauliebits('101'))
+        self.assertEQUAL(int2ba(6, endian='big'), pauliebits('110', 'big'))
         self.assertEQUAL(int2ba(6, endian='little'),
-                         bitarray('011', 'little'))
+                         pauliebits('011', 'little'))
 
     def test_errors(self):
         self.assertRaises(TypeError, int2ba, 1.0)
@@ -2146,22 +2146,22 @@ class IntegerizationTests(unittest.TestCase, Util):
                 ('00000000 1', -256),
                 ('11111111 1',   -1),
         ]:
-            self.assertEqual(ba2int(bitarray(s, 'little'), signed=1), i)
-            self.assertEqual(ba2int(bitarray(s[::-1], 'big'), signed=1), i)
+            self.assertEqual(ba2int(pauliebits(s, 'little'), signed=1), i)
+            self.assertEqual(ba2int(pauliebits(s[::-1], 'big'), signed=1), i)
 
-            len_s = len(bitarray(s))
+            len_s = len(pauliebits(s))
             self.assertEQUAL(int2ba(i, len_s, 'little', signed=1),
-                             bitarray(s, 'little'))
+                             pauliebits(s, 'little'))
             self.assertEQUAL(int2ba(i, len_s, 'big', signed=1),
-                             bitarray(s[::-1], 'big'))
+                             pauliebits(s[::-1], 'big'))
 
     def test_zero(self):
         for endian in "little", "big":
             a = int2ba(0, endian=endian)
-            self.assertEQUAL(a, bitarray('0', endian=endian))
+            self.assertEQUAL(a, pauliebits('0', endian=endian))
             for n in range(1, 100):
                 a = int2ba(0, length=n, endian=endian, signed=True)
-                b = bitarray(n * '0', endian)
+                b = pauliebits(n * '0', endian)
                 self.assertEQUAL(a, b)
                 for signed in 0, 1:
                     self.assertEqual(ba2int(b, signed=signed), 0)
@@ -2170,7 +2170,7 @@ class IntegerizationTests(unittest.TestCase, Util):
         for endian in "little", "big":
             for n in range(1, 100):
                 a = int2ba(-1, length=n, endian=endian, signed=True)
-                b = bitarray(n * '1', endian)
+                b = pauliebits(n * '1', endian)
                 self.assertEQUAL(a, b)
                 self.assertEqual(ba2int(b, signed=True), -1)
 
@@ -2193,7 +2193,7 @@ class IntegerizationTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, int2ba, 0, 1.0)
         self.assertRaises(ValueError, int2ba, 0, 0)
         self.assertEqual(int2ba(5, length=6, endian='big'),
-                         bitarray('000101'))
+                         pauliebits('000101'))
         for n in range(1, 100):
             ab = int2ba(1, n, 'big')
             al = int2ba(1, n, 'little')
@@ -2201,27 +2201,27 @@ class IntegerizationTests(unittest.TestCase, Util):
             self.assertEqual(al.endian, 'little')
             self.assertEqual(len(ab), n),
             self.assertEqual(len(al), n)
-            self.assertEqual(ab, bitarray((n - 1) * '0') + bitarray('1'))
-            self.assertEqual(al, bitarray('1') + bitarray((n - 1) * '0'))
+            self.assertEqual(ab, pauliebits((n - 1) * '0') + pauliebits('1'))
+            self.assertEqual(al, pauliebits('1') + pauliebits((n - 1) * '0'))
 
             ab = int2ba(0, n, 'big')
             al = int2ba(0, n, 'little')
             self.assertEqual(len(ab), n)
             self.assertEqual(len(al), n)
-            self.assertEqual(ab, bitarray(n * '0', 'big'))
-            self.assertEqual(al, bitarray(n * '0', 'little'))
+            self.assertEqual(ab, pauliebits(n * '0', 'big'))
+            self.assertEqual(al, pauliebits(n * '0', 'little'))
 
-            self.assertEqual(int2ba(2 ** n - 1), bitarray(n * '1'))
+            self.assertEqual(int2ba(2 ** n - 1), pauliebits(n * '1'))
             self.assertEqual(int2ba(2 ** n - 1, endian='little'),
-                             bitarray(n * '1'))
+                             pauliebits(n * '1'))
 
     def test_explicit(self):
         for i, sa in [( 0,     '0'),    (1,         '1'),
                       ( 2,    '10'),    (3,        '11'),
                       (25, '11001'),  (265, '100001001'),
                       (3691038, '1110000101001000011110')]:
-            ab = bitarray(sa, 'big')
-            al = bitarray(sa[::-1], 'little')
+            ab = pauliebits(sa, 'big')
+            al = pauliebits(sa[::-1], 'little')
             self.assertEQUAL(int2ba(i),
                              ab if get_default_endian() == 'big' else al)
             self.assertEQUAL(int2ba(i, endian='big'), ab)
@@ -2240,7 +2240,7 @@ class IntegerizationTests(unittest.TestCase, Util):
             self.assertEqual(ba2int(a), i)
             if i > 0:
                 self.assertEqual(i.bit_length(), len(a))
-            # add a few trailing / leading zeros to bitarray
+            # add a few trailing / leading zeros to pauliebits
             if endian == 'big':
                 a = zeros(randrange(4), endian) + a
             else:
@@ -2259,7 +2259,7 @@ class IntegerizationTests(unittest.TestCase, Util):
         return -(i & mask) + (i & ~mask)
 
     def test_random_signed(self):
-        for a in self.randombitarrays(start=1):
+        for a in self.randompauliebitss(start=1):
             i = ba2int(a, signed=True)
             b = int2ba(i, len(a), a.endian, signed=True)
             self.assertEQUAL(a, b)
@@ -2279,7 +2279,7 @@ class MixedTests(unittest.TestCase, Util):
             i = randrange(1000)
             s = bin(i)
             self.assertEqual(s[:2], '0b')
-            a = bitarray(s[2:], 'big')
+            a = pauliebits(s[2:], 'big')
             self.assertEqual(ba2int(a), i)
             t = a.to01()
             self.assertEqual(t, s[2:])
@@ -2308,7 +2308,7 @@ class MixedTests(unittest.TestCase, Util):
             self.assertEqual(int(t, 16), i)
 
     def test_bitwise(self):
-        for a in self.randombitarrays(start=1):
+        for a in self.randompauliebitss(start=1):
             b = urandom(len(a), a.endian)
             aa = a.copy()
             bb = b.copy()
@@ -2328,7 +2328,7 @@ class MixedTests(unittest.TestCase, Util):
             self.assertEQUAL(b, bb)
 
     def test_bitwise_inplace(self):
-        for a in self.randombitarrays(start=1):
+        for a in self.randompauliebitss(start=1):
             b = urandom(len(a), a.endian)
             bb = b.copy()
             i = ba2int(a)
@@ -2367,7 +2367,7 @@ class SerializationTests(unittest.TestCase, Util):
                 (b'\x10\xf0',     'big',    '11110000'),
                 (b'\x12\x87\xd8', 'big',    '10000111 110110')
         ]:
-            a = bitarray(bits, endian)
+            a = pauliebits(bits, endian)
             s = serialize(a)
             self.assertEqual(blob, s)
             self.assertIs(type(s), bytes)
@@ -2375,7 +2375,7 @@ class SerializationTests(unittest.TestCase, Util):
             b = deserialize(blob)
             self.assertEqual(b, a)
             self.assertEqual(b.endian, endian)
-            self.assertIs(type(b), bitarray)
+            self.assertIs(type(b), pauliebits)
 
     def test_serialize_args(self):
         for x in '0', 0, 1, b'\x00', 0.0, [0, 1], bytearray([0]):
@@ -2383,9 +2383,9 @@ class SerializationTests(unittest.TestCase, Util):
         # no arguments
         self.assertRaises(TypeError, serialize)
         # too many arguments
-        self.assertRaises(TypeError, serialize, bitarray(), 1)
+        self.assertRaises(TypeError, serialize, pauliebits(), 1)
 
-        for a in bitarray('0111', 'big'), frozenbitarray('0111', 'big'):
+        for a in pauliebits('0111', 'big'), frozenpauliebits('0111', 'big'):
             self.assertEqual(serialize(a), b'\x14\x70')
 
     def test_deserialize_args(self):
@@ -2397,7 +2397,7 @@ class SerializationTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, deserialize, b'\x00', 1)
 
         blob = b'\x03\x06'
-        x = bitarray(blob)
+        x = pauliebits(blob)
         for s in blob, bytearray(blob), memoryview(blob), x:
             a = deserialize(s)
             self.assertEqual(a.to01(), '01100')
@@ -2413,7 +2413,7 @@ class SerializationTests(unittest.TestCase, Util):
         for i in range(256):
             b = bytearray([i])
             if i == 0 or i == 16:
-                self.assertEqual(deserialize(b), bitarray())
+                self.assertEqual(deserialize(b), pauliebits())
             else:
                 self.assertRaises(ValueError, deserialize, b)
                 check_msg(b)
@@ -2439,7 +2439,7 @@ class SerializationTests(unittest.TestCase, Util):
             self.assertEqual(a.endian, endian)
 
     def test_random(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             b = serialize(a)
             c = deserialize(b)
             self.assertEqual(a, c)
@@ -2502,10 +2502,10 @@ class HuffmanTests(unittest.TestCase):
     def test_one_symbol(self):
         cnt = {'a': 1}
         code = huffman_code(cnt)
-        self.assertEqual(code, {'a': bitarray('0')})
+        self.assertEqual(code, {'a': pauliebits('0')})
         for n in range(4):
             msg = n * ['a']
-            a = bitarray()
+            a = pauliebits()
             a.encode(code, msg)
             self.assertEqual(a.to01(), n * '0')
             self.assertEqual(list(a.decode(code)), msg)
@@ -2545,7 +2545,7 @@ class HuffmanTests(unittest.TestCase):
     def test_counter(self):
         message = 'the quick brown fox jumps over the lazy dog.'
         code = huffman_code(Counter(message))
-        a = bitarray()
+        a = pauliebits()
         a.encode(code, message)
         self.assertEqual(''.join(a.decode(code)), message)
         self.check_tree(code)
@@ -2553,7 +2553,7 @@ class HuffmanTests(unittest.TestCase):
     def test_random_list(self):
         plain = choices(range(100), k=500)
         code = huffman_code(Counter(plain))
-        a = bitarray()
+        a = pauliebits()
         a.encode(code, plain)
         self.assertEqual(list(a.decode(code)), plain)
         self.check_tree(code)
@@ -2574,7 +2574,7 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
         self.assertIs(type(chc), dict)
         self.assertIs(type(count), list)
         self.assertIs(type(symbol), list)
-        a = bitarray()
+        a = pauliebits()
         a.encode(chc, plain)
         self.assertEqual(bytearray(a.decode(chc)), plain)
         self.assertEqual(bytearray(canonical_decode(a, count, symbol)), plain)
@@ -2582,14 +2582,14 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
     def test_example(self):
         cnt = {'a': 5, 'b': 3, 'c': 1, 'd': 1, 'r': 2}
         codedict, count, symbol = canonical_huffman(cnt)
-        self.assertEqual(codedict, {'a': bitarray('0'),
-                                    'b': bitarray('10'),
-                                    'c': bitarray('1110'),
-                                    'd': bitarray('1111'),
-                                    'r': bitarray('110')})
+        self.assertEqual(codedict, {'a': pauliebits('0'),
+                                    'b': pauliebits('10'),
+                                    'c': pauliebits('1110'),
+                                    'd': pauliebits('1111'),
+                                    'r': pauliebits('110')})
         self.assertEqual(count, [0, 1, 1, 1, 2])
         self.assertEqual(symbol, ['a', 'b', 'r', 'c', 'd'])
-        a = bitarray('01011001110011110101100')
+        a = pauliebits('01011001110011110101100')
         msg = "abracadabra"
         self.assertEqual(''.join(a.decode(codedict)), msg)
         self.assertEqual(''.join(canonical_decode(a, count, symbol)), msg)
@@ -2605,12 +2605,12 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
     def test_one_symbol(self):
         cnt = {'a': 1}
         chc, count, symbol = canonical_huffman(cnt)
-        self.assertEqual(chc, {'a': bitarray('0')})
+        self.assertEqual(chc, {'a': pauliebits('0')})
         self.assertEqual(count, [0, 1])
         self.assertEqual(symbol, ['a'])
         for n in range(4):
             msg = n * ['a']
-            a = bitarray()
+            a = pauliebits()
             a.encode(chc, msg)
             self.assertEqual(a.to01(), n * '0')
             self.assertEqual(list(canonical_decode(a, count, symbol)), msg)
@@ -2619,9 +2619,9 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
                               canonical_decode(a, count, symbol))
 
     def test_canonical_decode_errors(self):
-        a = bitarray('1101')
+        a = pauliebits('1101')
         s = ['a']
-        # bitarray not of bitarray type
+        # pauliebits not of pauliebits type
         self.assertRaises(TypeError, canonical_decode, '11', [0, 1], s)
         # count not sequence
         self.assertRaises(TypeError, canonical_decode, a, {0, 1}, s)
@@ -2643,7 +2643,7 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
                                  canonical_decode, a, 33 * [0], symbol)
 
     def test_canonical_decode_count_range(self):
-        a = bitarray()
+        a = pauliebits()
         for i in range(1, 32):
             count = 32 * [0]
             # negative count
@@ -2674,7 +2674,7 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
         # symbols can be anything, they do not even have to be hashable here
         cnt = [0, 0, 4]
         s = ['A', 42, [1.2-3.7j, 4j], {'B': 6}]
-        a = bitarray('00 01 10 11')
+        a = pauliebits('00 01 10 11')
         # count can be a list
         self.assertEqual(list(canonical_decode(a, cnt, s)), s)
         # count can also be a tuple (any sequence object in fact)
@@ -2704,29 +2704,29 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
         self.assertEqual(list(canonical_decode(a, cnt, iter(s))), s)
 
     def test_canonical_decode_empty(self):
-        a = bitarray()
+        a = pauliebits()
         # count and symbol are empty, ok because sum([]) == len([])
         self.assertEqual(list(canonical_decode(a, [], [])), [])
         a.append(0)
-        self.assertRaisesMessage(ValueError, "reached end of bitarray",
+        self.assertRaisesMessage(ValueError, "reached end of pauliebits",
                                  list, canonical_decode(a, [], []))
-        a = bitarray(31 * '0')
+        a = pauliebits(31 * '0')
         self.assertRaisesMessage(ValueError, "ran out of codes",
                                  list, canonical_decode(a, [], []))
 
     def test_canonical_decode_one_symbol(self):
         symbols = ['A']
         count = [0, 1]
-        a = bitarray('000')
+        a = pauliebits('000')
         self.assertEqual(list(canonical_decode(a, count, symbols)),
                          3 * symbols)
         a.append(1)
-        a.extend(bitarray(10 * '0'))
+        a.extend(pauliebits(10 * '0'))
         iterator = canonical_decode(a, count, symbols)
-        self.assertRaisesMessage(ValueError, "reached end of bitarray",
+        self.assertRaisesMessage(ValueError, "reached end of pauliebits",
                                  list, iterator)
 
-        a.extend(bitarray(20 * '0'))
+        a.extend(pauliebits(20 * '0'))
         iterator = canonical_decode(a, count, symbols)
         self.assertRaisesMessage(ValueError, "ran out of codes",
                                  list, iterator)
@@ -2736,7 +2736,7 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
             msg = bytearray(f.read())
         self.assertTrue(len(msg) > 50000)
         codedict, count, symbol = canonical_huffman(Counter(msg))
-        a = bitarray()
+        a = pauliebits()
         a.encode(codedict, msg)
         self.assertEqual(bytearray(canonical_decode(a, count, symbol)), msg)
         self.check_code(codedict, count, symbol)
@@ -2745,7 +2745,7 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
         msg = bytearray(b"Hello World!")
         codedict, count, symbol = canonical_huffman(Counter(msg))
         self.check_code(codedict, count, symbol)
-        a = bitarray()
+        a = pauliebits()
         a.encode(codedict, 10 * msg)
 
         it = canonical_decode(a, count, symbol)
@@ -2801,10 +2801,10 @@ class CanonicalHuffmanTests(unittest.TestCase, Util):
     def ensure_round_trip(self, chc, count, symbol):
         # create a short test message, encode and decode
         msg = choices(symbol, k=10)
-        a = bitarray()
+        a = pauliebits()
         a.encode(chc, msg)
         it = canonical_decode(a, count, symbol)
-        # the iterator holds a reference to the bitarray and symbol list
+        # the iterator holds a reference to the pauliebits and symbol list
         del a, count, symbol
         self.assertEqual(type(it).__name__, 'canonical_decodeiter')
         self.assertEqual(list(it), msg)

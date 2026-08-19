@@ -2,8 +2,8 @@ from optparse import OptionParser
 from time import perf_counter
 from collections import Counter
 
-from bitarray import bitarray
-from bitarray.util import _huffman_tree
+from pauliebits import pauliebits
+from pauliebits.util import _huffman_tree
 
 from huffman import (huff_code, write_dot, print_code,
                      make_tree, iterdecode)
@@ -48,7 +48,7 @@ def main():
         # create tree from code (no frequencies)
         write_dot(make_tree(code), 'tree_raw.dot', 0 in plain)
 
-    a = bitarray()
+    a = pauliebits()
 
     t0 = perf_counter()
     a.encode(code, plain)

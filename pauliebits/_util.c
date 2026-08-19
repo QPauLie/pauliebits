@@ -1,6 +1,6 @@
 /*
    Copyright (c) 2019 - 2026, Ilan Schnell; All Rights Reserved
-   bitarray is published under the PSF license.
+   pauliebits is published under the PSF license.
 
    This file contains the C implementation of some useful utility functions.
 
@@ -10,40 +10,40 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "pythoncapi_compat.h"
-#include "bitarray.h"
+#include "pauliebits.h"
 
 /* set during module initialization */
-static PyTypeObject *bitarray_type;
+static PyTypeObject *pauliebits_type;
 
-#define bitarray_Check(obj)  PyObject_TypeCheck((obj), bitarray_type)
+#define pauliebits_Check(obj)  PyObject_TypeCheck((obj), pauliebits_type)
 
-/* Return 0 if obj is bitarray.  If not, set exception and return -1. */
+/* Return 0 if obj is pauliebits.  If not, set exception and return -1. */
 static int
-ensure_bitarray(PyObject *obj)
+ensure_pauliebits(PyObject *obj)
 {
-    if (bitarray_Check(obj))
+    if (pauliebits_Check(obj))
         return 0;
 
-    PyErr_Format(PyExc_TypeError, "bitarray expected, not '%s'",
+    PyErr_Format(PyExc_TypeError, "pauliebits expected, not '%s'",
                  Py_TYPE(obj)->tp_name);
     return -1;
 }
 
-/* Return new bitarray of length 'nbits', endianness given by the PyObject
+/* Return new pauliebits of length 'nbits', endianness given by the PyObject
    'endian' (which may be Py_None).
    Unless -1, 'c' is written to all bytes of the buffer. */
-static bitarrayobject *
-new_bitarray(Py_ssize_t nbits, PyObject *endian, int c)
+static pauliebitsobject *
+new_pauliebits(Py_ssize_t nbits, PyObject *endian, int c)
 {
-    PyObject *args;             /* args for bitarray() */
-    bitarrayobject *res;
+    PyObject *args;             /* args for pauliebits() */
+    pauliebitsobject *res;
 
     args = Py_BuildValue("nOO", nbits, endian, Py_Ellipsis);
     if (args == NULL)
         return NULL;
 
-    /* equivalent to: res = bitarray(nbits, endian, Ellipsis) */
-    res = (bitarrayobject *) PyObject_CallObject((PyObject *) bitarray_type,
+    /* equivalent to: res = pauliebits(nbits, endian, Ellipsis) */
+    res = (pauliebitsobject *) PyObject_CallObject((PyObject *) pauliebits_type,
                                                  args);
     Py_DECREF(args);
     if (res == NULL)
@@ -58,9 +58,9 @@ new_bitarray(Py_ssize_t nbits, PyObject *endian, int c)
 }
 
 /* Starting from 64-bit word index i, count remaining population
-   in bitarray a.  Basically equivalent to: a[64 * i:].count() */
+   in pauliebits a.  Basically equivalent to: a[64 * i:].count() */
 static Py_ssize_t
-count_from_word(bitarrayobject *a, Py_ssize_t i)
+count_from_word(pauliebitsobject *a, Py_ssize_t i)
 {
     const Py_ssize_t nbits = a->nbits;
     Py_ssize_t cnt;
@@ -76,7 +76,7 @@ count_from_word(bitarrayobject *a, Py_ssize_t i)
 
 /* like resize() but without over-allocation or buffer import/export checks */
 static int
-resize_lite(bitarrayobject *self, Py_ssize_t nbits)
+resize_lite(pauliebitsobject *self, Py_ssize_t nbits)
 {
     const Py_ssize_t newsize = BYTES(nbits);
 
@@ -127,13 +127,13 @@ zeros(PyObject *module, PyObject *args, PyObject *kwds)
                                      &n, &endian))
         return NULL;
 
-    return (PyObject *) new_bitarray(n, endian, 0);
+    return (PyObject *) new_pauliebits(n, endian, 0);
 }
 
 PyDoc_STRVAR(zeros_doc,
-"zeros(n, /, endian=None) -> bitarray\n\
+"zeros(n, /, endian=None) -> pauliebits\n\
 \n\
-Create a bitarray of length `n`, with all values `0`, and optional\n\
+Create a pauliebits of length `n`, with all values `0`, and optional\n\
 bit-endianness (`little` or `big`).");
 
 
@@ -148,13 +148,13 @@ ones(PyObject *module, PyObject *args, PyObject *kwds)
                                      &n, &endian))
         return NULL;
 
-    return (PyObject *) new_bitarray(n, endian, 0xff);
+    return (PyObject *) new_pauliebits(n, endian, 0xff);
 }
 
 PyDoc_STRVAR(ones_doc,
-"ones(n, /, endian=None) -> bitarray\n\
+"ones(n, /, endian=None) -> pauliebits\n\
 \n\
-Create a bitarray of length `n`, with all values `1`, and optional\n\
+Create a pauliebits of length `n`, with all values `1`, and optional\n\
 bit-endianness (`little` or `big`).");
 
 /* ------------------------------- count_n ----------------------------- */
@@ -163,7 +163,7 @@ bit-endianness (`little` or `big`).");
    the total count, the result is a negative number; the negative of the
    total count + 1, which is useful for displaying error messages. */
 static Py_ssize_t
-count_n_lock_held(bitarrayobject *a, Py_ssize_t n, int vi)
+count_n_lock_held(pauliebitsobject *a, Py_ssize_t n, int vi)
 {
     const Py_ssize_t nbits = a->nbits;
     uint64_t *wbuff = WBUFF(a);
@@ -211,11 +211,11 @@ count_n_lock_held(bitarrayobject *a, Py_ssize_t n, int vi)
 static PyObject *
 count_n(PyObject *module, PyObject *args)
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t nbits, n, i;
     int vi = 1;
 
-    if (!PyArg_ParseTuple(args, "O!n|O&:count_n", bitarray_type,
+    if (!PyArg_ParseTuple(args, "O!n|O&:count_n", pauliebits_type,
                           (PyObject *) &a, &n, conv_pybit, &vi))
         return NULL;
     if (n < 0) {
@@ -230,7 +230,7 @@ count_n(PyObject *module, PyObject *args)
     Py_END_CRITICAL_SECTION();
 
     if (n > nbits)
-        return PyErr_Format(PyExc_ValueError, "n = %zd larger than bitarray "
+        return PyErr_Format(PyExc_ValueError, "n = %zd larger than pauliebits "
                             "length %zd", n, nbits);
 
     if (i < 0)
@@ -251,14 +251,14 @@ Raises `ValueError` when `n` exceeds total count (`a.count(value)`).");
 static PyObject *
 parity(PyObject *module, PyObject *obj)
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     uint64_t x, *wbuff;
     Py_ssize_t i;
 
-    if (ensure_bitarray(obj) < 0)
+    if (ensure_pauliebits(obj) < 0)
         return NULL;
 
-    a = (bitarrayobject *) obj;
+    a = (pauliebitsobject *) obj;
     Py_BEGIN_CRITICAL_SECTION(a);
     wbuff = WBUFF(a);
     x = zlw(a);
@@ -272,7 +272,7 @@ parity(PyObject *module, PyObject *obj)
 PyDoc_STRVAR(parity_doc,
 "parity(a, /) -> int\n\
 \n\
-Return parity of bitarray `a`.\n\
+Return parity of pauliebits `a`.\n\
 `parity(a)` is equivalent to `a.count() % 2` but more efficient.");
 
 
@@ -294,11 +294,11 @@ setup_misc_tables(void) {
     setup_table(xor_table[1], 'X');
 }
 
-/* Internal function, similar to sum_indices(), but bitarrays are limited
+/* Internal function, similar to sum_indices(), but pauliebitss are limited
    in size.  For details see: devel/test_sum_indices.py
 */
 static uint64_t
-ssqi_lock_held(bitarrayobject *a, int mode)
+ssqi_lock_held(pauliebitsobject *a, int mode)
 {
     uint64_t nbytes = Py_SIZE(a), i;
     uint64_t sm = 0;            /* accumulated sum */
@@ -326,12 +326,12 @@ ssqi_lock_held(bitarrayobject *a, int mode)
 static PyObject *
 ssqi(PyObject *module, PyObject *args)
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t nbits;
     uint64_t limit, res;
     int mode = 1;
 
-    if (!PyArg_ParseTuple(args, "O!|i", bitarray_type,
+    if (!PyArg_ParseTuple(args, "O!|i", pauliebits_type,
                           (PyObject *) &a, &mode))
         return NULL;
 
@@ -356,13 +356,13 @@ ssqi(PyObject *module, PyObject *args)
 static PyObject *
 xor_indices(PyObject *module, PyObject *obj)
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t res = 0, nbytes, i;
 
-    if (ensure_bitarray(obj) < 0)
+    if (ensure_pauliebits(obj) < 0)
         return NULL;
 
-    a = (bitarrayobject *) obj;
+    a = (pauliebitsobject *) obj;
     Py_BEGIN_CRITICAL_SECTION(a);
     nbytes = Py_SIZE(a);
     set_padbits(a);
@@ -380,14 +380,14 @@ xor_indices(PyObject *module, PyObject *obj)
 PyDoc_STRVAR(xor_indices_doc,
 "xor_indices(a, /) -> int\n\
 \n\
-Return xor reduced indices of all active bits in bitarray `a`.\n\
+Return xor reduced indices of all active bits in pauliebits `a`.\n\
 This is essentially equivalent to\n\
 `reduce(operator.xor, (i for i, v in enumerate(a) if v))`.");
 
 /* --------------------------- binary functions ------------------------ */
 
 static PyObject *
-binary_func_lock_held(bitarrayobject *a, bitarrayobject *b, const char oper)
+binary_func_lock_held(pauliebitsobject *a, pauliebitsobject *b, const char oper)
 {
     Py_ssize_t cnt = 0, cwords, i;
     uint64_t *wbuff_a, *wbuff_b;
@@ -447,11 +447,11 @@ static PyObject *
 binary_function(PyObject *args, const char *format, const char oper)
 {
     PyObject *res = NULL;
-    bitarrayobject *a, *b;
+    pauliebitsobject *a, *b;
 
     if (!PyArg_ParseTuple(args, format,
-                          bitarray_type, (PyObject *) &a,
-                          bitarray_type, (PyObject *) &b))
+                          pauliebits_type, (PyObject *) &a,
+                          pauliebits_type, (PyObject *) &b))
         return NULL;
 
     Py_BEGIN_CRITICAL_SECTION2(a, b);
@@ -472,7 +472,7 @@ PyDoc_STRVAR(count_ ## oper ## _doc,                                    \
 "count_" #oper "(a, b, /) -> int\n\
 \n\
 Return `(a " ostr " b).count()` in a memory efficient manner,\n\
-as no intermediate bitarray object gets created.")
+as no intermediate pauliebits object gets created.")
 
 COUNT_FUNC(and, "&");           /* count_and */
 COUNT_FUNC(or,  "|");           /* count_or  */
@@ -500,14 +500,14 @@ subset(PyObject *module, PyObject *args)
 PyDoc_STRVAR(subset_doc,
 "subset(a, b, /) -> bool\n\
 \n\
-Return `True` if bitarray `a` is a subset of bitarray `b`.\n\
+Return `True` if pauliebits `a` is a subset of pauliebits `b`.\n\
 `subset(a, b)` is equivalent to `a | b == b` (and equally `a & b == a`) but\n\
-more efficient as no intermediate bitarray object is created and the buffer\n\
+more efficient as no intermediate pauliebits object is created and the buffer\n\
 iteration is stopped as soon as one mismatch is found.");
 
 
 static PyObject *
-correspond_all_lock_held(bitarrayobject *a, bitarrayobject *b)
+correspond_all_lock_held(pauliebitsobject *a, pauliebitsobject *b)
 {
     Py_ssize_t nff = 0, nft = 0, ntf = 0, ntt = 0, cwords, i;
     uint64_t u, v, not_u, not_v;
@@ -549,11 +549,11 @@ static PyObject *
 correspond_all(PyObject *module, PyObject *args)
 {
     PyObject *res = NULL;
-    bitarrayobject *a, *b;
+    pauliebitsobject *a, *b;
 
     if (!PyArg_ParseTuple(args, "O!O!:correspond_all",
-                          bitarray_type, (PyObject *) &a,
-                          bitarray_type, (PyObject *) &b))
+                          pauliebits_type, (PyObject *) &a,
+                          pauliebits_type, (PyObject *) &b))
         return NULL;
 
     Py_BEGIN_CRITICAL_SECTION2(a, b);
@@ -644,25 +644,25 @@ Reverse every `n` consecutive bytes of `a` in-place.\n\
 By default, all bytes are reversed.  Note that `n` is not limited to 2, 4\n\
 or 8, but can be any positive integer.\n\
 Also, `a` may be any object that exposes a writable buffer.\n\
-Nothing about this function is specific to bitarray objects.");
+Nothing about this function is specific to pauliebits objects.");
 
 /* ---------------------------- serialization -------------------------- */
 
 /*
   The binary format used here is similar to the one used for pickling
-  bitarray objects.  However, this format has a head byte which encodes both
+  pauliebits objects.  However, this format has a head byte which encodes both
   the bit-endianness and the number of pad bits, whereas the binary pickle
   blob does not.
 */
 
 static int
-serialize_lock_held(bitarrayobject *a, Py_ssize_t nbits, PyObject *bytes)
+serialize_lock_held(pauliebitsobject *a, Py_ssize_t nbits, PyObject *bytes)
 {
     char *str;
 
     if (a->nbits != nbits) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during serialize()");
+                        "pauliebits changed size during serialize()");
         return -1;
     }
 
@@ -678,15 +678,15 @@ serialize_lock_held(bitarrayobject *a, Py_ssize_t nbits, PyObject *bytes)
 static PyObject *
 serialize(PyObject *module, PyObject *obj)
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     PyObject *result;
     Py_ssize_t nbits;
     int ret;
 
-    if (ensure_bitarray(obj) < 0)
+    if (ensure_pauliebits(obj) < 0)
         return NULL;
 
-    a = (bitarrayobject *) obj;
+    a = (pauliebitsobject *) obj;
 
     Py_BEGIN_CRITICAL_SECTION(a);
     nbits = a->nbits;
@@ -708,10 +708,10 @@ serialize(PyObject *module, PyObject *obj)
 }
 
 PyDoc_STRVAR(serialize_doc,
-"serialize(bitarray, /) -> bytes\n\
+"serialize(pauliebits, /) -> bytes\n\
 \n\
-Return a serialized representation of the bitarray, which may be passed to\n\
-`deserialize()`.  It efficiently represents the bitarray object (including\n\
+Return a serialized representation of the pauliebits, which may be passed to\n\
+`deserialize()`.  It efficiently represents the pauliebits object (including\n\
 its bit-endianness) and is guaranteed not to change in future releases.");
 
 
@@ -719,7 +719,7 @@ static PyObject *
 deserialize(PyObject *module, PyObject *buffer)
 {
     Py_buffer view;
-    bitarrayobject *a;
+    pauliebitsobject *a;
     unsigned char head;
     Py_ssize_t nbits;
 
@@ -740,9 +740,9 @@ deserialize(PyObject *module, PyObject *buffer)
         PyErr_Format(PyExc_ValueError, "invalid header byte: 0x%02x", head);
         goto error;
     }
-    /* create bitarray of desired length */
+    /* create pauliebits of desired length */
     nbits = 8 * (view.len - 1) - ((Py_ssize_t) (head & 0x07));
-    a = new_bitarray(nbits, Py_None, -1);
+    a = new_pauliebits(nbits, Py_None, -1);
     if (a == NULL)
         goto error;
 
@@ -763,9 +763,9 @@ deserialize(PyObject *module, PyObject *buffer)
 }
 
 PyDoc_STRVAR(deserialize_doc,
-"deserialize(bytes, /) -> bitarray\n\
+"deserialize(bytes, /) -> pauliebits\n\
 \n\
-Return a bitarray given a bytes-like representation such as returned\n\
+Return a pauliebits given a bytes-like representation such as returned\n\
 by `serialize()`.");
 
 /* ----------------------------- hexadecimal --------------------------- */
@@ -784,10 +784,10 @@ hex_to_int(char c)
     return -1;
 }
 
-/* return hexadecimal string from bitarray,
+/* return hexadecimal string from pauliebits,
    on failure set exception and return NULL */
 static char *
-ba2hex_lock_held(bitarrayobject *a, Py_ssize_t group, char *sep)
+ba2hex_lock_held(pauliebitsobject *a, Py_ssize_t group, char *sep)
 {
     const int be = IS_BE(a);
     size_t strsize = a->nbits / 4, j, nsep;
@@ -822,12 +822,12 @@ ba2hex(PyObject *module, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "group", "sep", NULL};
     PyObject *result;
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t nbits, group = 0;
     char *sep = " ", *str;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|ns:ba2hex", kwlist,
-                                     bitarray_type, (PyObject *) &a,
+                                     pauliebits_type, (PyObject *) &a,
                                      &group, &sep))
         return NULL;
 
@@ -844,7 +844,7 @@ ba2hex(PyObject *module, PyObject *args, PyObject *kwds)
     Py_END_CRITICAL_SECTION();
 
     if (nbits % 4) {
-        PyErr_Format(PyExc_ValueError, "bitarray length %zd not "
+        PyErr_Format(PyExc_ValueError, "pauliebits length %zd not "
                      "multiple of 4", nbits);
         return NULL;
     }
@@ -857,20 +857,20 @@ ba2hex(PyObject *module, PyObject *args, PyObject *kwds)
 }
 
 PyDoc_STRVAR(ba2hex_doc,
-"ba2hex(bitarray, /, group=0, sep=' ') -> hexstr\n\
+"ba2hex(pauliebits, /, group=0, sep=' ') -> hexstr\n\
 \n\
 Return a string containing the hexadecimal representation of\n\
-the bitarray (which has to be multiple of 4 in length).\n\
+the pauliebits (which has to be multiple of 4 in length).\n\
 When grouped, the string `sep` is inserted between groups\n\
 of `group` characters, default is a space.");
 
 
-/* Translate hexadecimal digits from 'hexstr' into the bitarray 'a' buffer,
+/* Translate hexadecimal digits from 'hexstr' into the pauliebits 'a' buffer,
    which must be initialized to zeros.
-   Each digit corresponds to 4 bits in the bitarray.
+   Each digit corresponds to 4 bits in the pauliebits.
    Note that the number of hexadecimal digits may be odd. */
 static int
-hex2ba_lock_held(bitarrayobject *a, Py_buffer hexstr)
+hex2ba_lock_held(pauliebitsobject *a, Py_buffer hexstr)
 {
     const int be = IS_BE(a);
     const char *str = hexstr.buf;
@@ -903,14 +903,14 @@ hex2ba(PyObject *module, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"", "endian", NULL};
     PyObject *endian = Py_None;
     Py_buffer hexstr;
-    bitarrayobject *a;
+    pauliebitsobject *a;
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s*|O:hex2ba", kwlist,
                                      &hexstr, &endian))
         return NULL;
 
-    a = new_bitarray(4 * hexstr.len, endian, 0);
+    a = new_pauliebits(4 * hexstr.len, endian, 0);
     if (a == NULL)
         goto error;
 
@@ -931,9 +931,9 @@ hex2ba(PyObject *module, PyObject *args, PyObject *kwds)
 }
 
 PyDoc_STRVAR(hex2ba_doc,
-"hex2ba(hexstr, /, endian=None) -> bitarray\n\
+"hex2ba(hexstr, /, endian=None) -> pauliebits\n\
 \n\
-Bitarray of hexadecimal representation.  hexstr may contain any number\n\
+Pauliebits of hexadecimal representation.  hexstr may contain any number\n\
 (including odd numbers) of hex digits (upper or lower case).\n\
 Whitespace is ignored.");
 
@@ -999,10 +999,10 @@ base_to_length(int n)
     return -1;
 }
 
-/* return ASCII string from bitarray and base length m,
+/* return ASCII string from pauliebits and base length m,
    on failure set exception and return NULL */
 static char *
-ba2base_lock_held(bitarrayobject *a, int m, Py_ssize_t group, char *sep)
+ba2base_lock_held(pauliebitsobject *a, int m, Py_ssize_t group, char *sep)
 {
     const int le = IS_LE(a);
     const char *alphabet;
@@ -1050,14 +1050,14 @@ static PyObject *
 ba2base(PyObject *module, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "", "group", "sep", NULL};
-    bitarrayobject *a;
+    pauliebitsobject *a;
     PyObject *result;
     Py_ssize_t nbits, group = 0;
     char *sep = " ", *str;
     int n, m;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO!|ns:ba2base", kwlist,
-                                     &n, bitarray_type, (PyObject *) &a,
+                                     &n, pauliebits_type, (PyObject *) &a,
                                      &group, &sep))
         return NULL;
 
@@ -1081,7 +1081,7 @@ ba2base(PyObject *module, PyObject *args, PyObject *kwds)
     Py_END_CRITICAL_SECTION();
 
     if (nbits % m) {
-        PyErr_Format(PyExc_ValueError, "bitarray length %zd not "
+        PyErr_Format(PyExc_ValueError, "pauliebits length %zd not "
                      "multiple of %d", nbits, m);
         return NULL;
     }
@@ -1094,11 +1094,11 @@ ba2base(PyObject *module, PyObject *args, PyObject *kwds)
 }
 
 PyDoc_STRVAR(ba2base_doc,
-"ba2base(n, bitarray, /, group=0, sep=' ') -> str\n\
+"ba2base(n, pauliebits, /, group=0, sep=' ') -> str\n\
 \n\
 Return a string containing the base `n` ASCII representation of\n\
-the bitarray.  Allowed values for `n` are 2, 4, 8, 16, 32 and 64.\n\
-The bitarray has to have a length divisible by 1, 2, 3, 4, 5 or 6\n\
+the pauliebits.  Allowed values for `n` are 2, 4, 8, 16, 32 and 64.\n\
+The pauliebits has to have a length divisible by 1, 2, 3, 4, 5 or 6\n\
 respectively.\n\
 For `n=32` the RFC 4648 Base32 alphabet is used, and for `n=64` the\n\
 standard base 64 alphabet is used.\n\
@@ -1106,9 +1106,9 @@ When grouped, the string `sep` is inserted between groups\n\
 of `group` characters, default is a space.");
 
 
-/* translate ASCII digits (with base length m) into bitarray buffer */
+/* translate ASCII digits (with base length m) into pauliebits buffer */
 static int
-base2ba_lock_held(bitarrayobject *a, Py_buffer asciistr, int m)
+base2ba_lock_held(pauliebitsobject *a, Py_buffer asciistr, int m)
 {
     const char *str = asciistr.buf;
     const int le = IS_LE(a);
@@ -1143,7 +1143,7 @@ base2ba(PyObject *module, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"", "", "endian", NULL};
     PyObject *endian = Py_None;
     Py_buffer asciistr;
-    bitarrayobject *a = NULL;
+    pauliebitsobject *a = NULL;
     int m, n, ret;                   /* n = 2**m */
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "is*|O:base2ba", kwlist,
@@ -1154,7 +1154,7 @@ base2ba(PyObject *module, PyObject *args, PyObject *kwds)
     if (m < 0)
         goto error;
 
-    a = new_bitarray(m * asciistr.len, endian, (m == 4) ? 0 : -1);
+    a = new_pauliebits(m * asciistr.len, endian, (m == 4) ? 0 : -1);
     if (a == NULL)
         goto error;
 
@@ -1177,9 +1177,9 @@ base2ba(PyObject *module, PyObject *args, PyObject *kwds)
 }
 
 PyDoc_STRVAR(base2ba_doc,
-"base2ba(n, asciistr, /, endian=None) -> bitarray\n\
+"base2ba(n, asciistr, /, endian=None) -> pauliebits\n\
 \n\
-Bitarray of base `n` ASCII representation.\n\
+Pauliebits of base `n` ASCII representation.\n\
 Allowed values for `n` are 2, 4, 8, 16, 32 and 64.\n\
 For `n=32` the RFC 4648 Base32 alphabet is used, and for `n=64` the\n\
 standard base 64 alphabet is used.  Whitespace is ignored.");
@@ -1268,15 +1268,15 @@ byte_length(Py_ssize_t i)
     return n;
 }
 
-/***********************  sparse bitarray compression  *****************
+/***********************  sparse pauliebits compression  *****************
  *
  * see also: doc/sparse_compression.rst
  */
 
-/* Bitarray buffer size (in bytes) that can be indexed by n bytes.
+/* Pauliebits buffer size (in bytes) that can be indexed by n bytes.
 
    A sparse block of type n uses n bytes to index each bit.
-   The decoded block size, that is the bitarray buffer size corresponding
+   The decoded block size, that is the pauliebits buffer size corresponding
    to a sparse block of type n, is given by BSI(n).  Using 1 byte we can
    index 256 bits which have a decoded block size of 32 bytes:
 
@@ -1298,7 +1298,7 @@ byte_length(Py_ssize_t i)
    SEGSIZE must also be divisible by the word size sizeof(uint64_t) = 8. */
 #define SEGSIZE  32
 
-/* number of segments for given bitarray */
+/* number of segments for given pauliebits */
 #define NSEG(self)  ((Py_SIZE(self) + SEGSIZE - 1) / SEGSIZE)
 
 /* Calculate an array with the running totals (rts) for 256 bit segments.
@@ -1309,11 +1309,11 @@ byte_length(Py_ssize_t i)
    +-----------+-----------+-----------+-----------+
    |      5    |      0    |      3    |      4    |   segment population
    |           |           |           |           |
-   |  [0:256]  | [256:512] | [512:768] | [768:987] |   bitarray slice
+   |  [0:256]  | [256:512] | [512:768] | [768:987] |   pauliebits slice
    +-----------+-----------+-----------+-----------+
    0           5           5           8          12   running totals, rts[i]
 
-   In this example we have a bitarray of length nbits = 987.  Note that:
+   In this example we have a pauliebits of length nbits = 987.  Note that:
 
      * The number of segments is given by NSEG(self).
        Here we have 4 segments: NSEG(self) = 4
@@ -1332,7 +1332,7 @@ byte_length(Py_ssize_t i)
    As each segment (at large) covers 256 bits (32 bytes), and each element
    in the running totals array takes up 8 bytes (on a 64-bit machine) the
    additional memory to accommodate the rts array is therefore 1/4 of the
-   bitarray's memory.
+   pauliebits's memory.
    However, calculating this array upfront allows sc_count() to
    simply look up two entries from the array and take their difference.
    Thus, the speedup is significant.
@@ -1342,7 +1342,7 @@ byte_length(Py_ssize_t i)
    soon as the index count (population) of the current segment is reached.
 */
 static Py_ssize_t *
-sc_rts(bitarrayobject *a)
+sc_rts(pauliebitsobject *a)
 {
     const Py_ssize_t n_seg = NSEG(a);         /* total number of segments */
     const Py_ssize_t c_seg = a->nbits / (8 * SEGSIZE); /* complete segments */
@@ -1378,11 +1378,11 @@ static PyObject *
 module_sc_rts(PyObject *module, PyObject *obj)
 {
     PyObject *list;
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t *rts, nseg, i;
 
-    assert(bitarray_Check(obj));
-    a = (bitarrayobject *) obj;
+    assert(pauliebits_Check(obj));
+    a = (pauliebitsobject *) obj;
 
     Py_BEGIN_CRITICAL_SECTION(a);
     nseg = NSEG(a);
@@ -1421,7 +1421,7 @@ module_sc_rts(PyObject *module, PyObject *obj)
    running totals, stored in rts[].
    Here, and in the following, 'offset' is in units of bytes. */
 static Py_ssize_t
-sc_count(bitarrayobject *a, Py_ssize_t *rts, Py_ssize_t offset, int n)
+sc_count(pauliebitsobject *a, Py_ssize_t *rts, Py_ssize_t offset, int n)
 {
     const Py_ssize_t i = offset / SEGSIZE;     /* indices into rts[] */
     const Py_ssize_t j = Py_MIN(i + BSI(n) / SEGSIZE, NSEG(a));
@@ -1438,7 +1438,7 @@ sc_count(bitarrayobject *a, Py_ssize_t *rts, Py_ssize_t offset, int n)
      * range(0x01, 0x20) number of raw bytes
      * range(0x20, 0xa0) number of 32-byte segments */
 static int
-sc_write_raw(char *str, bitarrayobject *a, Py_ssize_t *rts, Py_ssize_t offset)
+sc_write_raw(char *str, pauliebitsobject *a, Py_ssize_t *rts, Py_ssize_t offset)
 {
     const Py_ssize_t nbytes = Py_SIZE(a) - offset;  /* remaining bytes */
     Py_ssize_t k = Py_MIN(32, nbytes);
@@ -1471,7 +1471,7 @@ sc_write_raw(char *str, bitarrayobject *a, Py_ssize_t *rts, Py_ssize_t offset)
        k = sc_count(a, rts, offset, n) < 256
 */
 static void
-sc_write_indices(char *str, bitarrayobject *a, Py_ssize_t *rts,
+sc_write_indices(char *str, pauliebitsobject *a, Py_ssize_t *rts,
                  Py_ssize_t offset, int n, int k)
 {
     const char *buff = a->ob_item + offset;
@@ -1524,7 +1524,7 @@ sc_write_indices(char *str, bitarrayobject *a, Py_ssize_t *rts,
    Return number of bytes written to buffer 'str' (encoded block size).
    Note that the decoded block size is always BSI(n). */
 static Py_ssize_t
-sc_write_sparse(char *str, bitarrayobject *a, Py_ssize_t *rts,
+sc_write_sparse(char *str, pauliebitsobject *a, Py_ssize_t *rts,
                 Py_ssize_t offset, int n, int k)
 {
     int len = 0;
@@ -1556,11 +1556,11 @@ sc_write_sparse(char *str, bitarrayobject *a, Py_ssize_t *rts,
    Notes:
 
    - 32 index bytes take up as much space as a raw buffer of 32 bytes.
-     Hence, if the bit count of the first 32 bytes of the bitarray buffer
+     Hence, if the bit count of the first 32 bytes of the pauliebits buffer
      is greater than or equal to 32, we choose a raw block (type 0).
 
    - Arguably, n index bytes always take up as much space as n raw bytes.
-     So what makes 32 special here?  A bitarray with a 32 byte buffer has
+     So what makes 32 special here?  A pauliebits with a 32 byte buffer has
      256 items (bits), and these 256 bits can be addressed using one
      index byte.  That is, BSI(1) = 32, see above.
      This is also the reason, why the index count of type 1 blocks is limited
@@ -1586,7 +1586,7 @@ sc_write_sparse(char *str, bitarrayobject *a, Py_ssize_t *rts,
 
          Regardless of the exact index count for each block, the total size
          of the index bytes is (n * population), as all blocks are of type n.
-         The number_of_blocks is 256 (unless limited by the bitarray size).
+         The number_of_blocks is 256 (unless limited by the pauliebits size).
          The header_size is only 1 byte for type 1 and 2 bytes otherwise.
 
      (b) The encoded size of a single block of type n+1 is:
@@ -1606,7 +1606,7 @@ sc_write_sparse(char *str, bitarrayobject *a, Py_ssize_t *rts,
  */
 static Py_ssize_t
 sc_encode_block(char *str, Py_ssize_t *len,
-                bitarrayobject *a, Py_ssize_t *rts, Py_ssize_t offset)
+                pauliebitsobject *a, Py_ssize_t *rts, Py_ssize_t offset)
 {
     const Py_ssize_t nbytes = Py_SIZE(a) - offset;  /* remaining bytes */
     int count, n;
@@ -1651,7 +1651,7 @@ sc_encode_block(char *str, Py_ssize_t *len,
 
 /* write header and return number of bytes written to buffer 'str' */
 static int
-sc_encode_header(char *str, bitarrayobject *a)
+sc_encode_header(char *str, pauliebitsobject *a)
 {
     int len;
 
@@ -1666,19 +1666,19 @@ sc_encode_header(char *str, bitarrayobject *a)
    allocation if we run out */
 #define ALLOC_SIZE  32768
 
-/* Encode bitarray `a` into the private bytes object referenced by `*out`.
+/* Encode pauliebits `a` into the private bytes object referenced by `*out`.
    The lock for `a` must be held by the caller.  The output may be resized,
    so `out` is passed as `PyObject **` to propagate a possibly changed
    pointer back to the caller.
    Return encoded length (bytes written into `out`), or -1 on error. */
 static Py_ssize_t
-sc_encode_lock_held(bitarrayobject *a, PyObject **out)
+sc_encode_lock_held(pauliebitsobject *a, PyObject **out)
 {
     char *str;                  /* output buffer */
     Py_ssize_t len = 0;         /* bytes written into output buffer */
-    Py_ssize_t offset = 0;      /* block offset into bitarray a in bytes */
+    Py_ssize_t offset = 0;      /* block offset into pauliebits a in bytes */
     Py_ssize_t *rts;            /* running totals of segments */
-    Py_ssize_t total;           /* total population count of bitarray */
+    Py_ssize_t total;           /* total population count of pauliebits */
 
     set_padbits(a);
     if ((rts = sc_rts(a)) == NULL)
@@ -1688,7 +1688,7 @@ sc_encode_lock_held(bitarrayobject *a, PyObject **out)
     len += sc_encode_header(str, a);
 
     total = rts[NSEG(a)];
-    /* encode blocks as long as we haven't reached the end of the bitarray
+    /* encode blocks as long as we haven't reached the end of the pauliebits
        and haven't reached the total population count yet */
     while (offset < Py_SIZE(a) && rts[offset / SEGSIZE] != total) {
         Py_ssize_t allocated = PyBytes_GET_SIZE(*out);
@@ -1718,7 +1718,7 @@ sc_encode(PyObject *module, PyObject *obj)
     PyObject *out;   /* bytes object to be returned */
     Py_ssize_t len;  /* bytes written into output bytes buffer */
 
-    if (ensure_bitarray(obj) < 0)
+    if (ensure_pauliebits(obj) < 0)
         return NULL;
 
     out = PyBytes_FromStringAndSize(NULL, ALLOC_SIZE);
@@ -1726,7 +1726,7 @@ sc_encode(PyObject *module, PyObject *obj)
         return NULL;
 
     Py_BEGIN_CRITICAL_SECTION(obj);
-    len = sc_encode_lock_held((bitarrayobject *) obj, &out);
+    len = sc_encode_lock_held((pauliebitsobject *) obj, &out);
     Py_END_CRITICAL_SECTION();
 
     if (len < 0 || _PyBytes_Resize(&out, len) < 0) {
@@ -1739,11 +1739,11 @@ sc_encode(PyObject *module, PyObject *obj)
 #undef ALLOC_SIZE
 
 PyDoc_STRVAR(sc_encode_doc,
-"sc_encode(bitarray, /) -> bytes\n\
+"sc_encode(pauliebits, /) -> bytes\n\
 \n\
-Compress a bitarray using sparse encoding and return its binary\n\
+Compress a pauliebits using sparse encoding and return its binary\n\
 representation.  This representation is useful for efficiently storing\n\
-sparse bitarrays.  Use `sc_decode()` for decompressing (decoding).");
+sparse pauliebitss.  Use `sc_decode()` for decompressing (decoding).");
 
 
 /* read header from 'iter' and set 'endian' and 'nbits', return 0 on success
@@ -1775,10 +1775,10 @@ sc_decode_header(PyObject *iter, int *endian, Py_ssize_t *nbits)
     return 0;
 }
 
-/* Read k bytes from iter and set elements in bitarray.
+/* Read k bytes from iter and set elements in pauliebits.
    Return the size of offset increment in bytes, or -1 on failure. */
 static Py_ssize_t
-sc_read_raw(bitarrayobject *a, Py_ssize_t offset, PyObject *iter, int k)
+sc_read_raw(pauliebitsobject *a, Py_ssize_t offset, PyObject *iter, int k)
 {
     char *buff = a->ob_item + offset;
     int i;
@@ -1798,10 +1798,10 @@ sc_read_raw(bitarrayobject *a, Py_ssize_t offset, PyObject *iter, int k)
     return k;
 }
 
-/* Read n * k bytes from iter and set elements in bitarray.
+/* Read n * k bytes from iter and set elements in pauliebits.
    Return size of offset increment in bytes, or -1 on failure. */
 static Py_ssize_t
-sc_read_sparse(bitarrayobject *a, Py_ssize_t offset, PyObject *iter,
+sc_read_sparse(pauliebitsobject *a, Py_ssize_t offset, PyObject *iter,
                int n, int k)
 {
     assert(1 <= n && n <= 4 && k >= 0);
@@ -1824,10 +1824,10 @@ sc_read_sparse(bitarrayobject *a, Py_ssize_t offset, PyObject *iter,
     return BSI(n);
 }
 
-/* Decode one block: consume iter and set bitarray buffer starting at
+/* Decode one block: consume iter and set pauliebits buffer starting at
    offset.  Return decoded block size, or -1 on failure. */
 static Py_ssize_t
-sc_decode_block(bitarrayobject *a, Py_ssize_t offset, PyObject *iter)
+sc_decode_block(pauliebitsobject *a, Py_ssize_t offset, PyObject *iter)
 {
     int head, k;
 
@@ -1860,7 +1860,7 @@ static PyObject *
 sc_decode(PyObject *module, PyObject *obj)
 {
     PyObject *iter;
-    bitarrayobject *a = NULL;
+    pauliebitsobject *a = NULL;
     Py_ssize_t offset = 0, increase, nbits;
     int endian;
 
@@ -1872,8 +1872,8 @@ sc_decode(PyObject *module, PyObject *obj)
     if (sc_decode_header(iter, &endian, &nbits) < 0)
         goto error;
 
-    /* create bitarray of length nbits */
-    a = new_bitarray(nbits, Py_None, 0);
+    /* create pauliebits of length nbits */
+    a = new_pauliebits(nbits, Py_None, 0);
     if (a == NULL)
         goto error;
     a->endian = endian;
@@ -1894,25 +1894,25 @@ sc_decode(PyObject *module, PyObject *obj)
 }
 
 PyDoc_STRVAR(sc_decode_doc,
-"sc_decode(stream, /) -> bitarray\n\
+"sc_decode(stream, /) -> pauliebits\n\
 \n\
 Decompress binary stream (an integer iterator, or bytes-like object) of a\n\
-sparse compressed (`sc`) bitarray, and return the decoded  bitarray.\n\
-This function consumes only one bitarray and leaves the remaining stream\n\
+sparse compressed (`sc`) pauliebits, and return the decoded  pauliebits.\n\
+This function consumes only one pauliebits and leaves the remaining stream\n\
 untouched.  Use `sc_encode()` for compressing (encoding).");
 
 #undef BSI
 #undef NSEG
 
-/* ------------------- variable length bitarray format ----------------- */
+/* ------------------- variable length pauliebits format ----------------- */
 
 /* LEN_PAD_BITS is always 3 - the number of bits (length) that is necessary
    to represent the number of pad bits.  The number of padding bits itself is
    called 'padding' below.
 
    'padding' refers to the pad bits within the variable length format.
-   This is not the same as the pad bits of the actual bitarray.
-   For example, b'\x10' has padding = 1, and decodes to bitarray('000'),
+   This is not the same as the pad bits of the actual pauliebits.
+   For example, b'\x10' has padding = 1, and decodes to pauliebits('000'),
    which has 5 pad bits.  'padding' can take values up to 6.
  */
 #define LEN_PAD_BITS  3
@@ -1921,10 +1921,10 @@ untouched.  Use `sc_encode()` for compressing (encoding).");
    we increase the allocation in vl_decode_core() */
 #define ALLOC_BITS  1024
 
-/* Consume 'iter' while extending bitarray 'a'.
+/* Consume 'iter' while extending pauliebits 'a'.
    Return 0 on success.  On failure, set exception and return -1. */
 static int
-vl_decode_core(bitarrayobject *a, PyObject *iter)
+vl_decode_core(pauliebitsobject *a, PyObject *iter)
 {
     Py_ssize_t i = 0;        /* bit counter */
     int padding, k, c;
@@ -1944,7 +1944,7 @@ vl_decode_core(bitarrayobject *a, PyObject *iter)
         if ((c = next_char(iter)) < 0)
             return -1;
 
-        /* ensure bitarray is large enough to accommodate seven more bits */
+        /* ensure pauliebits is large enough to accommodate seven more bits */
         if (a->nbits < i + 7 && resize_lite(a, a->nbits + ALLOC_BITS) < 0)
             return -1;
         assert(i + 6 < a->nbits);
@@ -1952,7 +1952,7 @@ vl_decode_core(bitarrayobject *a, PyObject *iter)
         for (k = 0; k < 7; k++)
             setbit(a, i++, (0x40 >> k) & c);
     }
-    /* set final length of bitarray */
+    /* set final length of pauliebits */
     return resize_lite(a, i - padding);
 }
 
@@ -1961,7 +1961,7 @@ vl_decode(PyObject *module, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "endian", NULL};
     PyObject *obj, *iter, *endian = Py_None;
-    bitarrayobject *a;
+    pauliebitsobject *a;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:vl_decode", kwlist,
                                      &obj, &endian))
@@ -1972,7 +1972,7 @@ vl_decode(PyObject *module, PyObject *args, PyObject *kwds)
         return PyErr_Format(PyExc_TypeError, "'%s' object is not iterable",
                             Py_TYPE(obj)->tp_name);
 
-    a = new_bitarray(ALLOC_BITS, endian, -1);
+    a = new_pauliebits(ALLOC_BITS, endian, -1);
     if (a == NULL)
         goto error;
 
@@ -1990,15 +1990,15 @@ vl_decode(PyObject *module, PyObject *args, PyObject *kwds)
 #undef ALLOC_BITS
 
 PyDoc_STRVAR(vl_decode_doc,
-"vl_decode(stream, /, endian=None) -> bitarray\n\
+"vl_decode(stream, /, endian=None) -> pauliebits\n\
 \n\
 Decode binary stream (an integer iterator, or bytes-like object), and\n\
-return the decoded bitarray.  This function consumes only one bitarray and\n\
+return the decoded pauliebits.  This function consumes only one pauliebits and\n\
 leaves the remaining stream untouched.  Use `vl_encode()` for encoding.");
 
 
 static PyObject *
-vl_encode_lock_held(bitarrayobject *a)
+vl_encode_lock_held(pauliebitsobject *a)
 {
     PyObject *bytes;
     Py_ssize_t nbits, n, i, j = 0;  /* j: byte counter */
@@ -2037,12 +2037,12 @@ static PyObject *
 vl_encode(PyObject *module, PyObject *obj)
 {
     PyObject *res;
-    bitarrayobject *a;
+    pauliebitsobject *a;
 
-    if (ensure_bitarray(obj) < 0)
+    if (ensure_pauliebits(obj) < 0)
         return NULL;
 
-    a = (bitarrayobject *) obj;
+    a = (pauliebitsobject *) obj;
 
     Py_BEGIN_CRITICAL_SECTION(a);
     res = vl_encode_lock_held(a);
@@ -2052,10 +2052,10 @@ vl_encode(PyObject *module, PyObject *obj)
 }
 
 PyDoc_STRVAR(vl_encode_doc,
-"vl_encode(bitarray, /) -> bytes\n\
+"vl_encode(pauliebits, /) -> bytes\n\
 \n\
-Return variable length binary representation of bitarray.\n\
-This representation is useful for efficiently storing small bitarray\n\
+Return variable length binary representation of pauliebits.\n\
+This representation is useful for efficiently storing small pauliebits\n\
 in a binary stream.  Use `vl_decode()` for decoding.");
 
 #undef LEN_PAD_BITS
@@ -2073,8 +2073,8 @@ in a binary stream.  Use `vl_decode()` for decoding.");
 
 typedef struct {
     PyObject_HEAD
-    bitarrayobject *array;           /* bitarray we're decoding */
-    Py_ssize_t index;                /* current index in bitarray */
+    pauliebitsobject *array;           /* pauliebits we're decoding */
+    Py_ssize_t index;                /* current index in pauliebits */
     int count[MAXBITS + 1];          /* number of symbols of each length */
     PyObject *symbol;                /* canonical ordered symbols */
 } chdi_obj;                          /* canonical Huffman decode iterator */
@@ -2133,7 +2133,7 @@ chdi_new(PyObject *module, PyObject *args)
     chdi_obj *it;       /* iterator object to be returned */
 
     if (!PyArg_ParseTuple(args, "O!OO:canonical_decode",
-                          bitarray_type, &a, &count, &symbol))
+                          pauliebits_type, &a, &count, &symbol))
         return NULL;
     if (!PySequence_Check(count))
         return PyErr_Format(PyExc_TypeError, "count expected to be sequence, "
@@ -2159,7 +2159,7 @@ chdi_new(PyObject *module, PyObject *args)
         goto error;
     }
     Py_INCREF(a);
-    it->array = (bitarrayobject *) a;
+    it->array = (pauliebitsobject *) a;
     it->index = 0;
     /* PySequence_Fast() returns a new reference, so no Py_INCREF here */
     it->symbol = symbol;
@@ -2176,9 +2176,9 @@ chdi_new(PyObject *module, PyObject *args)
 }
 
 PyDoc_STRVAR(chdi_doc,
-"canonical_decode(bitarray, count, symbol, /) -> iterator\n\
+"canonical_decode(pauliebits, count, symbol, /) -> iterator\n\
 \n\
-Decode bitarray using canonical Huffman decoding tables\n\
+Decode pauliebits using canonical Huffman decoding tables\n\
 where `count` is a sequence containing the number of symbols of each length\n\
 and `symbol` is a sequence of symbols in canonical order.");
 
@@ -2211,7 +2211,7 @@ chdi_next_lock_held(chdi_obj *it)
         code <<= 1;
 
         if (it->index >= nbits && len != MAXBITS) {
-            PyErr_SetString(PyExc_ValueError, "reached end of bitarray");
+            PyErr_SetString(PyExc_ValueError, "reached end of pauliebits");
             return -1;
         }
     }
@@ -2255,7 +2255,7 @@ chdi_traverse(chdi_obj *it, visitproc visit, void *arg)
 
 static PyTypeObject CHDI_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.util.canonical_decodeiter",     /* tp_name */
+    "pauliebits.util.canonical_decodeiter",     /* tp_name */
     sizeof(chdi_obj),                         /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
@@ -2300,25 +2300,25 @@ module_setup_table(PyObject *module, PyObject *obj)
     return PyBytes_FromStringAndSize(table, 256);
 }
 
-/* Return zlw(a) as a new bitarray, rather than an int object.
+/* Return zlw(a) as a new pauliebits, rather than an int object.
    This makes testing easier, because the int result would depend
    on the machine byteorder. */
 static PyObject *
 module_zlw(PyObject *module, PyObject *obj)
 {
-    bitarrayobject *a, *res;
+    pauliebitsobject *a, *res;
     uint64_t w;
     int endian;
 
-    assert(bitarray_Check(obj));
-    a = (bitarrayobject *) obj;
+    assert(pauliebits_Check(obj));
+    a = (pauliebitsobject *) obj;
 
     Py_BEGIN_CRITICAL_SECTION(a);
     w = zlw(a);
     endian = a->endian;
     Py_END_CRITICAL_SECTION();
 
-    if ((res = new_bitarray(64, Py_None, -1)) == NULL)
+    if ((res = new_pauliebits(64, Py_None, -1)) == NULL)
         return NULL;
     res->endian = endian;
     memcpy(res->ob_item, &w, 8);
@@ -2328,10 +2328,10 @@ module_zlw(PyObject *module, PyObject *obj)
 static PyObject *
 module_cfw(PyObject *module, PyObject *args)  /* count_from_word() */
 {
-    bitarrayobject *a;
+    pauliebitsobject *a;
     Py_ssize_t res, i;
 
-    if (!PyArg_ParseTuple(args, "O!n", bitarray_type, (PyObject *) &a, &i))
+    if (!PyArg_ParseTuple(args, "O!n", pauliebits_type, (PyObject *) &a, &i))
         return NULL;
 
     Py_BEGIN_CRITICAL_SECTION(a);
@@ -2451,8 +2451,8 @@ PyInit__util(void)
     setup_misc_tables();
     setup_digit_table();
 
-    bitarray_type = (PyTypeObject *) bitarray_module_attr("bitarray");
-    if (bitarray_type == NULL)
+    pauliebits_type = (PyTypeObject *) pauliebits_module_attr("pauliebits");
+    if (pauliebits_type == NULL)
         return NULL;
 
     if ((m = PyModule_Create(&moduledef)) == NULL)

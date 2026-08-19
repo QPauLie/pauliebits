@@ -1,5 +1,5 @@
 """
-Statistical Tests for Random Functions in bitarray.util
+Statistical Tests for Random Functions in pauliebits.util
 -------------------------------------------------------
 
 These are statistical tests.  They do not test any basic functionality of
@@ -20,12 +20,12 @@ from math import comb, fmod, sqrt
 from statistics import fmean, stdev, pstdev
 from random import choices, randint, randrange, random, binomialvariate
 
-from bitarray import bitarray, frozenbitarray
-from bitarray.util import (
+from pauliebits import pauliebits, frozenpauliebits
+from pauliebits.util import (
     zeros, ones, urandom, random_k, random_p, sum_indices,
     int2ba, count_and, count_or, count_xor, parity,
 )
-from bitarray.util import _Random  # type: ignore
+from pauliebits.util import _Random  # type: ignore
 
 
 HEAVY = False   # set True for heavy testing
@@ -40,18 +40,18 @@ SMALL_P = _r.SMALL_P
 
 def count_each_index(arrays):
     """
-    Given an iterable of bitarrays, count the sums of all bits at each
+    Given an iterable of pauliebitss, count the sums of all bits at each
     index and return those counts in a Counter object.
     For example, for a returned Counter c, c[2] = 4 means that a sum of 2
-    across all bitarrays occurs at 4 indices.
+    across all pauliebitss occurs at 4 indices.
     """
-    b = bitarray()
-    n = None         # length of each bitarray
+    b = pauliebits()
+    n = None         # length of each pauliebits
     for a in arrays:
         if n is None:
             n = len(a)
         elif len(a) != n:
-            raise ValueError("bitarrays of same length expected")
+            raise ValueError("pauliebitss of same length expected")
         b.extend(a)
     if n is None:
         return Counter()
@@ -61,12 +61,12 @@ def count_each_index(arrays):
 class CountEachIndexTests(unittest.TestCase):
 
     def test_example(self):
-        arrays = [bitarray("0011101"),
-                  bitarray("1010100"),
-                  bitarray("1011001")]
+        arrays = [pauliebits("0011101"),
+                  pauliebits("1010100"),
+                  pauliebits("1011001")]
         #             sums: 2032202
         c = count_each_index(arrays)
-        self.assertEqual(c.total(), 7)  # length of each bitarray
+        self.assertEqual(c.total(), 7)  # length of each pauliebits
         self.assertEqual(c[0], 2)
         self.assertEqual(c[1], 0)
         self.assertEqual(c[2], 4)
@@ -95,7 +95,7 @@ class CountEachIndexTests(unittest.TestCase):
         arrays = []
         for m in range(10):
             self.assertEqual(count_each_index(arrays), Counter())
-            arrays.append(bitarray())
+            arrays.append(pauliebits())
 
     def test_zeros_ones(self):
         for _ in range(1_000):
@@ -111,7 +111,7 @@ class CountEachIndexTests(unittest.TestCase):
         C = count_each_index
         self.assertRaises(ValueError, C, "ABC")
         self.assertRaises(TypeError, C, [0, 1])
-        self.assertRaises(ValueError, C, [bitarray("01"), bitarray("1")])
+        self.assertRaises(ValueError, C, [pauliebits("01"), pauliebits("1")])
 
 
 def create_masks(m):
@@ -133,14 +133,14 @@ class CreateMasksTests(unittest.TestCase):
         C = create_masks
         self.assertEqual(C(0), [])
 
-        self.assertEqual(C(1), [bitarray("01")])
+        self.assertEqual(C(1), [pauliebits("01")])
 
-        self.assertEqual(C(2), [bitarray("0101"),
-                                bitarray("0011")])
+        self.assertEqual(C(2), [pauliebits("0101"),
+                                pauliebits("0011")])
 
-        self.assertEqual(C(3), [bitarray("01010101"),
-                                bitarray("00110011"),
-                                bitarray("00001111")])
+        self.assertEqual(C(3), [pauliebits("01010101"),
+                                pauliebits("00110011"),
+                                pauliebits("00001111")])
 
     def test_11(self):
         m = 11
@@ -221,7 +221,7 @@ class Random_K_Tests(Util):
 
     def test_mean(self):
         M = 100_000  # number of trails
-        N = 1_000    # bitarray length
+        N = 1_000    # pauliebits length
         K = 500      # sample size
         C = Counter()
         ranges = [0.0, 500.0, 510.0, 520.0, 1000.0]
@@ -240,7 +240,7 @@ class Random_K_Tests(Util):
 
     def test_mean_2(self):
         M = 100_000  # number of trails
-        N = 500      # bitarray length
+        N = 500      # pauliebits length
         K = 400      # sample size
         C = Counter()
         ranges = [200.0, 249.5, 251.0, 255.0, 260.0, 300.0]
@@ -258,10 +258,10 @@ class Random_K_Tests(Util):
         self.assertTrue(abs(C[3] -  4_376) <=   647)  # p = 0.043762
 
     def test_apply_masks(self):
-        Na = 25_000  # number of bitarrays to test against masks
+        Na = 25_000  # number of pauliebitss to test against masks
         Nm = 12      # number of masks
         n = 1 << Nm  # length of each mask
-        # Create masks for selecting half elements in random bitarray a.
+        # Create masks for selecting half elements in random pauliebits a.
         # For example, masks[0] selects all odd elements, and masks[-1]
         # selects the upper half of a.
         masks = create_masks(Nm)
@@ -288,7 +288,7 @@ class Random_K_Tests(Util):
     def test_random_masks(self):
         Na = 10  # number of arrays to test
         Nm = 500_000 if HEAVY else 25_000  # number of masks
-        n = 7000  # bitarray length
+        n = 7000  # pauliebits length
         # count for each array
         ka = choices(range(1, n, 2), k=Na)
         arrays = [random_k(n, k) for k in ka]
@@ -319,7 +319,7 @@ class Random_K_Tests(Util):
     def test_elements_uniform(self):
         arrays = [random_k(100_000, 30_000) for _ in range(100)]
         for a in arrays:
-            # for each bitarray check sample size k
+            # for each pauliebits check sample size k
             self.assertEqual(a.count(), 30_000)
 
         c = count_each_index(arrays)
@@ -355,7 +355,7 @@ class Random_K_Tests(Util):
             for _ in range(100_000):
                 a = random_k(n, k)
                 self.assertEqual(a.count(), k)
-                combs.add(frozenbitarray(a))
+                combs.add(frozenpauliebits(a))
                 if len(combs) == expected:
                     total += expected
                     break
@@ -373,7 +373,7 @@ class Random_K_Tests(Util):
         m = comb(n, k)
         c = Counter()
         for _ in range(N):
-            a = frozenbitarray(random_k(n, k))
+            a = frozenpauliebits(random_k(n, k))
             c[a] += 1
         self.assertEqual(c.total(), N)
         self.assertEqual(len(c), m)
@@ -413,7 +413,7 @@ class Random_P_Tests(Util):
 
     def test_apply_masks(self):
         M = 12  # number of masks
-        # Create masks for selecting half elements in the random bitarray a.
+        # Create masks for selecting half elements in the random pauliebits a.
         # For example, masks[0] selects all odd elements, and masks[-1]
         # selects the upper half of a.
         masks = create_masks(M)
@@ -427,7 +427,7 @@ class Random_P_Tests(Util):
                 c1 = count_and(a, masks[i])
                 c0 = tot - c1
                 if c0 == c1:  # counts are equal ->
-                    continue  # ignore this mask for this bitarray a
+                    continue  # ignore this mask for this pauliebits a
                 n[i] += 1
                 # counts are not equal, the probability for having more,
                 # e.g. even than odd (masks[0]) elements should be 1/2,
@@ -442,7 +442,7 @@ class Random_P_Tests(Util):
     def test_elements_uniform(self):
         arrays = [random_p(100_000, 0.3) for _ in range(100)]
         for a in arrays:
-            # for each bitarray see if population is within expectation
+            # for each pauliebits see if population is within expectation
             self.check_probability(a, 0.3)
 
         c = count_each_index(arrays)
@@ -597,7 +597,7 @@ class VerificationTests(Util):
             self.assertTrue(0 <= k <= n // 2)
 
             if k < 16 or k * K < 3 * n:
-                # for small k, we increase the count of a zeros(n) bitarray
+                # for small k, we increase the count of a zeros(n) pauliebits
                 i = 0
             else:
                 # We could simply have `i = int(k / n * K)`.  However,
@@ -606,7 +606,7 @@ class VerificationTests(Util):
                 # increasing and decreasing the count is equally expensive.
                 p = k / n  # p <= 0.5
                 # Numerator: f(p)=(1-2*p)*c  ->  f(0)=c, f(1/2)=0
-                # As the standard deviation of the .combine_half() bitarrays
+                # As the standard deviation of the .combine_half() pauliebitss
                 # gets smaller with larger n, we divide by sqrt(n).
                 p -= (0.2 - 0.4 * p) / sqrt(n)
                 # Note that we divide by K+1.  This will round towards the
@@ -779,10 +779,10 @@ class VerificationTests(Util):
     def dummy_random_p(self, p=0.5, verbose=False):
         """
         Unlike random_p(), this function returns the desired probability q
-        itself, and not a random bitarray.  The point of this function is to
+        itself, and not a random pauliebits.  The point of this function is to
         illustrate how random_p() essentially works.
-        Instead of actual bitarray operations, we change q accordingly.
-        This method is neither concerned with the bitarray length n nor
+        Instead of actual pauliebits operations, we change q accordingly.
+        This method is neither concerned with the pauliebits length n nor
         endianness.
         """
         # error check inputs and handle edge cases
@@ -804,10 +804,10 @@ class VerificationTests(Util):
         if p * (K + 1) > i + 1:
             i += 1
         self.assertTrue(0 < i <= K // 2)
-        a = bitarray(i.to_bytes(2, byteorder="little"), "little")
+        a = pauliebits(i.to_bytes(2, byteorder="little"), "little")
         seq = a[a.index(1) + 1 : M]
 
-        # combine random bitarrays using bitwise AND and OR operations
+        # combine random pauliebits using bitwise AND and OR operations
         q = 0.5
         for k in seq:
             if k:

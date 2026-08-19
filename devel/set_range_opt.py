@@ -2,8 +2,8 @@ import unittest
 from random import getrandbits, randint, randrange
 from time import perf_counter
 
-from bitarray import bitarray
-from bitarray.util import urandom
+from pauliebits import pauliebits
+from pauliebits.util import urandom
 
 
 def nxir(x, start, step):
@@ -21,7 +21,7 @@ def set_range_opt(self, start, stop, step, value):
     assert 0 <= 8 * ca - start < 8
     assert 0 <= stop - 8 * cb < 8
 
-    mask = bitarray(step, self.endian)
+    mask = pauliebits(step, self.endian)
     mask.setall(not value)
     mask[nxir(8 * ca, start, step)] = value
     mask *= (m - 1) // step + 1
@@ -68,8 +68,8 @@ def speed_cmp():
     print("n=%d\ntimes in micro seconds\n" % n)
     print('%8s %12s %12s' % ("step", "this-code", "native"))
     for step in range(1, 20):
-        a = bitarray(n)
-        b = bitarray(n)
+        a = pauliebits(n)
+        b = pauliebits(n)
         t0 = perf_counter()
         set_range_opt(a, 0, n, step, 1)
         t1 = perf_counter()

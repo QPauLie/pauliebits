@@ -1,14 +1,14 @@
 # issue 6
 # http://www-graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
 
-from bitarray import bitarray
-from bitarray.util import zeros, ba2int, int2ba
+from pauliebits import pauliebits
+from pauliebits.util import zeros, ba2int, int2ba
 
 
 def lexico_all(n, k, endian=None):
     """lexico_all(n, k, endian=None) -> iterator
 
-Return an iterator over all bitarrays of length `n` and
+Return an iterator over all pauliebitss of length `n` and
 population count `k` in lexicographical order.
 """
     if n < 0:
@@ -32,9 +32,9 @@ population count `k` in lexicographical order.
 
 
 def lexico_next(__a):
-    """lexico_next(a, /) -> bitarray
+    """lexico_next(a, /) -> pauliebits
 
-Return the next lexicographical permutation of bitarray `a`.
+Return the next lexicographical permutation of pauliebits `a`.
 The length and population count of the result remains unchanged.
 The integer value (`ba2int()`) of the next permutation will always increase,
 except when the cycle is completed.  In that case, the lowest lexicographical
@@ -61,8 +61,8 @@ import unittest
 from random import choice, getrandbits, randrange
 from itertools import pairwise
 
-from bitarray import frozenbitarray
-from bitarray.util import random_k
+from pauliebits import frozenpauliebits
+from pauliebits.util import random_k
 
 
 class LexicoTests(unittest.TestCase):
@@ -70,7 +70,7 @@ class LexicoTests(unittest.TestCase):
     def test_errors(self):
         N = lexico_next
         self.assertRaises(TypeError, N)
-        self.assertRaises(TypeError, N, bitarray('1'), 1)
+        self.assertRaises(TypeError, N, pauliebits('1'), 1)
         self.assertRaises(TypeError, N, '1')
 
         A = lexico_all
@@ -89,7 +89,7 @@ class LexicoTests(unittest.TestCase):
     def test_zeros_ones(self):
         for n in range(30):
             endian = choice(["little", "big"])
-            a = bitarray(n, endian)
+            a = pauliebits(n, endian)
             a.setall(getrandbits(1))
             b = lexico_next(a)
             self.assertEqual(b.endian, endian)
@@ -104,14 +104,14 @@ class LexicoTests(unittest.TestCase):
                   '1100', '0011'], 'big'),
                 (['0000111', '1110000'], 'little'),
         ]:
-            a = bitarray(perm[0], endian)
+            a = pauliebits(perm[0], endian)
             for s in perm[1:]:
                 a = lexico_next(a)
-                self.assertEqual(a, bitarray(s))
+                self.assertEqual(a, pauliebits(s))
 
     def check_cycle(self, n, k):
         endian = choice(["little", "big"])
-        a0 = bitarray(n, endian)
+        a0 = pauliebits(n, endian)
         a0[:k] = 1
         if endian == "big":
             a0.reverse()
@@ -121,7 +121,7 @@ class LexicoTests(unittest.TestCase):
         coll = set()
         a = a0.copy()
         for i in range(ncycle):
-            coll.add(frozenbitarray(a))
+            coll.add(frozenpauliebits(a))
             b = lexico_next(a)
             self.assertEqual(len(b), n)
             self.assertEqual(b.count(), k)
@@ -179,12 +179,12 @@ class LexicoTests(unittest.TestCase):
         ]:
             lst = list(lexico_all(n, k, 'big'))
             self.assertEqual(len(lst), math.comb(n, k))
-            self.assertEqual(lst, [bitarray(s) for s in res])
+            self.assertEqual(lst, [pauliebits(s) for s in res])
             if n == 0:
                 continue
             a = lst[0]
             for i in range(20):
-                self.assertEqual(a, bitarray(res[i % len(lst)]))
+                self.assertEqual(a, pauliebits(res[i % len(lst)]))
                 a = lexico_next(a)
 
     def test_all_perm(self):
@@ -195,11 +195,11 @@ class LexicoTests(unittest.TestCase):
         cnt = 0
         coll = set()
         for a in lexico_all(n, k, endian):
-            self.assertIs(type(a), bitarray)
+            self.assertIs(type(a), pauliebits)
             self.assertEqual(len(a), n)
             self.assertEqual(a.count(), k)
             self.assertEqual(a.endian, endian)
-            coll.add(frozenbitarray(a))
+            coll.add(frozenpauliebits(a))
             if prev is None:
                 first = a.copy()
                 c = a.copy()

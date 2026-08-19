@@ -5,7 +5,7 @@ import sys
 from math import log2
 from collections import Counter
 
-from bitarray.util import huffman_code
+from pauliebits.util import huffman_code
 
 
 def efficiency(freq, code):

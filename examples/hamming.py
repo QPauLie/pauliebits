@@ -1,6 +1,6 @@
 # https://www.youtube.com/watch?v=b3NxrZOu_CE
 # https://en.wikipedia.org/wiki/Hamming_code
-from bitarray.util import xor_indices, int2ba, parity
+from pauliebits.util import xor_indices, int2ba, parity
 
 
 class Hamming:
@@ -19,7 +19,7 @@ class Hamming:
     def send(self, a):
         "encode message inplace"
         if len(a) != self.k:
-            raise ValueError("expected bitarray of message length %d" % self.k)
+            raise ValueError("expected pauliebits of message length %d" % self.k)
         for i in self.parity_bits:
             a.insert(i, 0)
 
@@ -31,7 +31,7 @@ class Hamming:
     def receive(self, a):
         "decode inplace and return number of bit errors"
         if len(a) != self.n:
-            raise ValueError("expected bitarray of block length %d" % self.n)
+            raise ValueError("expected pauliebits of block length %d" % self.n)
         p = parity(a)
         c = xor_indices(a)
         a.invert(c)  # fix bit error
@@ -50,8 +50,8 @@ class Hamming:
 from random import getrandbits, randint
 import unittest
 
-from bitarray import bitarray
-from bitarray.util import urandom, count_xor
+from pauliebits import pauliebits
+from pauliebits.util import urandom, count_xor
 
 
 class HammingTests(unittest.TestCase):
@@ -78,10 +78,10 @@ class HammingTests(unittest.TestCase):
         self.assertEqual(parity(a), 0)       # overall parity is 0
 
     def test_example(self):
-        a = bitarray("   0  010  111 0110")
+        a = pauliebits("   0  010  111 0110")
         #             012  4    8
         c = a.copy()
-        b = bitarray("1100 1010 1111 0110")
+        b = pauliebits("1100 1010 1111 0110")
         #             012  4    8
         h = Hamming(4)
         self.check_well_prepared(b)

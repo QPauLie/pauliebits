@@ -1,10 +1,10 @@
 """
-Demonstrates how to memory map a file into a bitarray.
+Demonstrates how to memory map a file into a pauliebits.
 """
 import os
 import mmap
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 
 filename = 'big.data'
@@ -14,10 +14,10 @@ filesize = 10_000_000
 with open(filename, 'wb') as fo:
     fo.write(filesize * b'\0')
 
-# open file in binary read-write mode for mapping into bitarray
+# open file in binary read-write mode for mapping into pauliebits
 with open(filename, 'r+b') as f:
     mapping = mmap.mmap(f.fileno(), 0)
-    a = bitarray(buffer=mapping, endian='little')
+    a = pauliebits(buffer=mapping, endian='little')
 
     assert len(a) == 8 * filesize
     assert not a.any()  # no bits 1
@@ -27,7 +27,7 @@ with open(filename, 'r+b') as f:
 # open in binary read-only mode
 with open(filename, 'rb') as fi:
     m = mmap.mmap(fi.fileno(), 0, access=mmap.ACCESS_READ)
-    b = bitarray(buffer=m, endian='little')
+    b = pauliebits(buffer=m, endian='little')
 
     assert len(b) == 8 * filesize
     assert b.count() == 1  # only one bit is set

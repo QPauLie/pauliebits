@@ -26,7 +26,7 @@
 */
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
-#include "bitarray.h"
+#include "pauliebits.h"
 
 
 #define MAXBITS    15           /* maximum bits in a code */
@@ -40,8 +40,8 @@
 typedef struct {
     PyObject_HEAD
     /* input */
-    bitarrayobject *in;         /* bitarray we're decoding */
-    Py_ssize_t incnt;           /* current index in bitarray */
+    pauliebitsobject *in;         /* pauliebits we're decoding */
+    Py_ssize_t incnt;           /* current index in pauliebits */
     /* output */
     PyObject *out;              /* bytearray output buffer */
     Py_ssize_t outcnt;          /* bytes written to out so far */
@@ -97,7 +97,7 @@ decode(state_obj *s, const struct huffman *h)
         code <<= 1;
 
         if (s->incnt >= nbits && len != MAXBITS) {
-            PyErr_SetString(PyExc_ValueError, "reached end of bitarray");
+            PyErr_SetString(PyExc_ValueError, "reached end of pauliebits");
             return -1;
         }
     }
@@ -263,7 +263,7 @@ codes(state_obj *s, const struct huffman *lencode,
 /* ------------------------ State Python interface ------------------ */
 
 /* set during module init */
-static PyTypeObject *bitarray_type;
+static PyTypeObject *pauliebits_type;
 
 /* create a new initialized State object */
 static PyObject *
@@ -275,8 +275,8 @@ state_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTuple(args, "OO:State", &in, &out))
         return NULL;
 
-    if (!PyObject_TypeCheck(in, bitarray_type)) {
-        PyErr_SetString(PyExc_TypeError, "bitarray expected");
+    if (!PyObject_TypeCheck(in, pauliebits_type)) {
+        PyErr_SetString(PyExc_TypeError, "pauliebits expected");
         return NULL;
     }
     if (!PyByteArray_Check(out)) {
@@ -289,7 +289,7 @@ state_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
 
     Py_INCREF(in);
-    self->in = (bitarrayobject *) in;
+    self->in = (pauliebitsobject *) in;
     self->incnt = 0;
 
     Py_INCREF(out);
@@ -635,8 +635,8 @@ PyMODINIT_FUNC PyInit__puff(void)
 {
     PyObject *m;
 
-    bitarray_type = (PyTypeObject *) bitarray_module_attr("bitarray");
-    if (bitarray_type == NULL)
+    pauliebits_type = (PyTypeObject *) pauliebits_module_attr("pauliebits");
+    if (pauliebits_type == NULL)
         return NULL;
 
     if ((m = PyModule_Create(&moduledef)) == NULL)

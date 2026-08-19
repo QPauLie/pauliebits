@@ -1,9 +1,9 @@
 """
-Implementation of a sparse bitarray
+Implementation of a sparse pauliebits
 
 For example:
 
-   bitarray('110011111000')
+   pauliebits('110011111000')
 
 is represented as:
 
@@ -12,12 +12,12 @@ is represented as:
 """
 from bisect import bisect_left
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 from common import Common
 
 
-class SparseBitarray(Common):
+class SparsePauliebits(Common):
 
     def __init__(self, x = 0):
         if isinstance(x, int):
@@ -36,11 +36,11 @@ class SparseBitarray(Common):
         if isinstance(key, slice):
             start, stop = self._get_start_stop(key)
             if stop <= start:
-                return SparseBitarray()
+                return SparsePauliebits()
 
             i = bisect_left(self.ones, start)
             j = bisect_left(self.ones, stop)
-            res = SparseBitarray(stop - start)
+            res = SparsePauliebits(stop - start)
             for k in range(i, j):
                 res.ones.append(self.ones[k] - start)
             return res
@@ -132,8 +132,8 @@ class SparseBitarray(Common):
                          range(len(other.ones)))
         self.n += other.n
 
-    def to_bitarray(self):
-        a = bitarray(self.n)
+    def to_pauliebits(self):
+        a = pauliebits(self.n)
         a.setall(0)
         a[self.ones] = 1
         return a

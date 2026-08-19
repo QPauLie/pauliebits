@@ -1,7 +1,7 @@
 """
-The purpose of this script is to illustrate how copy_n() in _bitarray.c works.
+The purpose of this script is to illustrate how copy_n() in _pauliebits.c works.
 This is a Python implementation of copy_n() with output of the different
-stages of the bitarray we copy into.
+stages of the pauliebits we copy into.
 
 Sample output:
 a = 21
@@ -15,37 +15,37 @@ sb = -6
  -> p3 = 1
  -> sb = 2
 other
-bitarray('00101110 11111001 01011101 11001011 10110000 01011110 011')
+pauliebits('00101110 11111001 01011101 11001011 10110000 01011110 011')
 b..b+n          ^^ ^^^^^^^^ ^^^^^^^^ ^^^^^^^^ ^^^^^
                    ======== ======== ======== ========
                 33
 self
-bitarray('01011101 11100101 01110101 01011001 01110100 10001010 01111011')
+pauliebits('01011101 11100101 01110101 01011001 01110100 10001010 01111011')
 a..a+n                           ^^^ ^^^^^^^^ ^^^^^^^^ ^^^^^^^^ ^^^^
                             11111
                                                                     2222
 memmove 4
                             ======== ======== ======== ========
-bitarray('01011101 11100101 11111001 01011101 11001011 10110000 01111011')
+pauliebits('01011101 11100101 11111001 01011101 11001011 10110000 01111011')
 rshift 7
                             >>>>>>>> >>>>>>>> >>>>>>>> >>>>>>>> >>>>>>>>
-bitarray('01011101 11100101 00000001 11110010 10111011 10010111 01100000')
+pauliebits('01011101 11100101 00000001 11110010 10111011 10010111 01100000')
                                    = ======== ======== ======== ========
                             11111
                                                                     2222
                                  33
-bitarray('01011101 11100101 01110101 11110010 10111011 10010111 01101011')
+pauliebits('01011101 11100101 01110101 11110010 10111011 10010111 01101011')
 """
 from io import StringIO
 
-from bitarray import bitarray, bits2bytes
-from bitarray.util import pprint
+from pauliebits import pauliebits, bits2bytes
+from pauliebits.util import pprint
 
 
 verbose = False
 
 def mark_range_n(i, n, c, text=''):
-    a = bitarray(i * '0' + n * '1')
+    a = pauliebits(i * '0' + n * '1')
     f = StringIO()
     pprint(a, stream=f)
     s = f.getvalue()
@@ -189,7 +189,7 @@ def copy_n(self, a, other, b, n):
 
 def test_copy_n():
     from random import choice, randrange, randint
-    from bitarray.util import urandom
+    from pauliebits.util import urandom
 
     def random_endian():
         return choice(['little', 'big'])
@@ -224,12 +224,12 @@ def test_copy_n():
 if __name__ == '__main__':
     test_copy_n()
     verbose = True
-    other = bitarray(
+    other = pauliebits(
         '00101110 11111001 01011101 11001011 10110000 01011110 011')
-    self =  bitarray(
+    self =  pauliebits(
         '01011101 11100101 01110101 01011001 01110100 10001010 01111011')
     copy_n(self, 21, other, 6, 31)
-    assert self == bitarray(
+    assert self == pauliebits(
         '01011101 11100101 01110101 11110010 10111011 10010111 01101011')
     #copy_n(self, 2, other, 12, 1)
     #copy_n(self, 9, other, 17, 23)

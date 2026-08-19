@@ -4,9 +4,9 @@ import platform
 
 
 if "test" in sys.argv:
-    import bitarray
+    import pauliebits
     # when test was successful, return 0 (hence not)
-    sys.exit(not bitarray.test().wasSuccessful())
+    sys.exit(not pauliebits.test().wasSuccessful())
 
 try:
     from setuptools import setup, Extension
@@ -17,9 +17,9 @@ except ImportError:
 kwds = {}
 kwds['long_description'] = open('README.rst').read()
 
-# Read version from bitarray/bitarray.h
-pat = re.compile(r'#define\s+BITARRAY_VERSION\s+"(\S+)"', re.M)
-data = open('bitarray/bitarray.h').read()
+# Read version from pauliebits/pauliebits.h
+pat = re.compile(r'#define\s+PAULIEBITS_VERSION\s+"(\S+)"', re.M)
+data = open('pauliebits/pauliebits.h').read()
 kwds['version'] = pat.search(data).group(1)
 
 macros = []
@@ -28,10 +28,10 @@ if platform.python_implementation() == 'PyPy':
     macros.append(("PY_BIG_ENDIAN", str(int(sys.byteorder == 'big'))))
 
 setup(
-    name = "bitarray",
+    name = "pauliebits",
     author = "Ilan Schnell",
     author_email = "ilanschnell@gmail.com",
-    url = "https://github.com/ilanschnell/bitarray",
+    url = "https://github.com/ilanschnell/pauliebits",
     license = "PSF-2.0",
     python_requires = ">=3.7",
     classifiers = [
@@ -52,15 +52,15 @@ setup(
         "Topic :: Utilities",
     ],
     description = "efficient arrays of booleans -- C extension",
-    packages = ["bitarray"],
-    package_data = {"bitarray": ["*.h", "*.pickle",
+    packages = ["pauliebits"],
+    package_data = {"pauliebits": ["*.h", "*.pickle",
                                  "py.typed",  # see PEP 561
                                  "*.pyi"]},
-    ext_modules = [Extension(name = "bitarray._bitarray",
+    ext_modules = [Extension(name = "pauliebits._pauliebits",
                              define_macros = macros,
-                             sources = ["bitarray/_bitarray.c"]),
-                   Extension(name = "bitarray._util",
-                             sources = ["bitarray/_util.c"])],
+                             sources = ["pauliebits/_pauliebits.c"]),
+                   Extension(name = "pauliebits._util",
+                             sources = ["pauliebits/_util.c"])],
     zip_safe = False,
     **kwds
 )

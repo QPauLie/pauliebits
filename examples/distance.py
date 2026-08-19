@@ -1,11 +1,11 @@
 """
 In this module, we implement distance functions and compare them to the
 corresponding functions in the scipy.spatial.distance module.
-The functions using bitarray are typically around 50 to 200 times faster.
+The functions using pauliebits are typically around 50 to 200 times faster.
 """
 from time import perf_counter
 
-from bitarray.util import correspond_all, count_and, count_xor, urandom
+from pauliebits.util import correspond_all, count_and, count_xor, urandom
 
 import numpy
 import scipy.spatial.distance as distance  # type: ignore

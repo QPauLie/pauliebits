@@ -1,6 +1,6 @@
 All files under this 'examples/' directory are unsupported.
 
-While bitarray itself supports Python 3.7+, some examples may require
+While pauliebits itself supports Python 3.7+, some examples may require
 higher Python versions.
 
 
@@ -20,25 +20,25 @@ double.py
 
 
 dubner.rst
-    We show how bitarrays can be used to calculate twin primes
+    We show how pauliebitss can be used to calculate twin primes
     and "middle numbers" very efficiently, and verify the some
     conjectures in: https://oeis.org/A007534/a007534.pdf
 
 
 dyn_sieve.py
     Prime numbers, implemented as a dynamically growing sieve of Eratosthenes.
-    Similar to prime number sieve in SymPy, but implemented using a bitarray.
+    Similar to prime number sieve in SymPy, but implemented using a pauliebits.
 
 
 extend_json.py
     Demonstrates how to construct a json encoder and decoder (using the
     'json' standard library) which can handle extended Python data structures
-    containing bitarrays.
+    containing pauliebitss.
 
 
 gene.py
     Shows how gene sequences (ATGC) can be very easily and efficiently
-    represented by bitarrays.
+    represented by pauliebitss.
 
 
 hamming.py
@@ -53,7 +53,7 @@ huffman/
 
 lexico.py
     Contains two functions, all_perm and next_perm, which are handle
-    lexicographical permutations of bitarrays.
+    lexicographical permutations of pauliebitss.
 
 
 lfsr.py
@@ -69,15 +69,15 @@ mandel.py
 
 
 masked.py
-    Illustrate masked indexing, i.e. using bitarrays to select indices
+    Illustrate masked indexing, i.e. using pauliebitss to select indices
 
 
 mmapped-file.py
-    Demonstrates how to memory map a file into a bitarray.
+    Demonstrates how to memory map a file into a pauliebits.
 
 
 ndarray.py
-    Demonstrates how to efficiently convert boolean data from a bitarray
+    Demonstrates how to efficiently convert boolean data from a pauliebits
     to a numpy.ndarray of dtype bool.
     Requires: numpy
 

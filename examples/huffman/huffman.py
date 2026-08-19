@@ -4,9 +4,9 @@ and codes.
 
 Note:
 There is a function for directly creating a Huffman code from a frequency
-map in the bitarray library itself: bitarray.util.huffman_code()
+map in the pauliebits library itself: pauliebits.util.huffman_code()
 """
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 
 class Node:
@@ -22,16 +22,16 @@ class Node:
 def huff_code(tree):
     """
     Given a Huffman tree, traverse the tree and return the Huffman code, i.e.
-    a dictionary mapping symbols to bitarrays.
+    a dictionary mapping symbols to pauliebitss.
     """
     result = {}
 
-    def traverse(nd, prefix=bitarray()):
+    def traverse(nd, prefix=pauliebits()):
         try:  # leaf
             result[nd.symbol] = prefix
         except AttributeError:
-            traverse(nd.child[0], prefix + bitarray([0]))
-            traverse(nd.child[1], prefix + bitarray([1]))
+            traverse(nd.child[0], prefix + pauliebits([0]))
+            traverse(nd.child[1], prefix + pauliebits([1]))
 
     traverse(tree)
     return result
@@ -39,7 +39,7 @@ def huff_code(tree):
 
 def insert_symbol(tree, ba, sym):
     """
-    Insert symbol into a tree at the position described by the bitarray,
+    Insert symbol into a tree at the position described by the pauliebits,
     creating nodes as necessary.
     """
     nd = tree
@@ -81,7 +81,7 @@ def traverse(tree, it):
     while 1:
         nd = nd.child[next(it)]
         if nd is None:
-            raise ValueError("prefix code does not match data in bitarray")
+            raise ValueError("prefix code does not match data in pauliebits")
 
         try:
             return nd.symbol
@@ -172,7 +172,7 @@ def print_code(freq, codedict):
 
 
 def test():
-    from bitarray.util import _huffman_tree
+    from pauliebits.util import _huffman_tree
 
     freq = {'a': 10, 'b': 2, 'c': 1}
     tree = _huffman_tree(freq)
@@ -180,14 +180,14 @@ def test():
     assert len(code['a']) == 1
     assert len(code['b']) == len(code['c']) == 2
 
-    code = {'a': bitarray('0'),
-            'b': bitarray('10'),
-            'c': bitarray('11')}
+    code = {'a': pauliebits('0'),
+            'b': pauliebits('10'),
+            'c': pauliebits('11')}
     tree = make_tree(code)
     txt = 'abca'
-    a = bitarray()
+    a = pauliebits()
     a.encode(code, txt)
-    assert a == bitarray('010110')
+    assert a == pauliebits('010110')
     assert ''.join(iterdecode(tree, a)) == txt
 
 

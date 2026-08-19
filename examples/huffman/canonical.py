@@ -1,7 +1,7 @@
 from collections import Counter
 
-from bitarray import bitarray
-from bitarray.util import canonical_huffman, canonical_decode
+from pauliebits import pauliebits
+from pauliebits.util import canonical_huffman, canonical_decode
 
 from huffman import write_dot, print_code, make_tree
 
@@ -38,7 +38,7 @@ def main():
         # create tree from code (no frequencies)
         write_dot(make_tree(code), 'tree_raw.dot', 0 in plain)
 
-    a = bitarray()
+    a = pauliebits()
     a.encode(code, plain)
     assert bytearray(a.decode(code)) == plain
     assert bytearray(canonical_decode(a, count, symbol)) == plain

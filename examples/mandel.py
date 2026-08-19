@@ -1,5 +1,5 @@
 import sys
-from bitarray import bitarray
+from pauliebits import pauliebits
 from numba import jit  # type: ignore
 
 width, height = 4000, 3000
@@ -17,7 +17,7 @@ def mandel(c):
 
 
 def main():
-    data = bitarray(endian='big')
+    data = pauliebits(endian='big')
 
     for j in range(height):
         sys.stdout.write('.')

@@ -78,8 +78,8 @@ each block type.
 
 import unittest
 
-from bitarray import bitarray
-from bitarray.util import sc_encode, sc_decode
+from pauliebits import pauliebits
+from pauliebits.util import sc_encode, sc_decode
 
 
 class Tests(unittest.TestCase):
@@ -90,7 +90,7 @@ class Tests(unittest.TestCase):
                          {'endian': 'little',
                           'nbits': 0,
                           'blocks': [0, 0, 0, 0, 0]})
-        self.assertEqual(sc_decode(blob), bitarray())
+        self.assertEqual(sc_decode(blob), pauliebits())
 
     def test_zeros_explitcit(self):
         for blob, blocks in [
@@ -104,7 +104,7 @@ class Tests(unittest.TestCase):
             stat = sc_stat(blob, count=True)
             self.assertEqual(stat['blocks'], blocks)
             self.assertEqual(stat['count'], 5 * [0])
-            self.assertEqual(sc_decode(blob), bitarray(8))
+            self.assertEqual(sc_decode(blob), pauliebits(8))
 
     def test_untouch(self):
         blob = b"\x01\x07\x01\x73\0XYZ"
@@ -117,12 +117,12 @@ class Tests(unittest.TestCase):
                           'count': [5, 0, 0, 0, 0]})
         self.assertEqual(next(stream), ord('X'))
         stream = iter(blob)
-        self.assertEqual(sc_decode(stream), bitarray("1100111"))
+        self.assertEqual(sc_decode(stream), pauliebits("1100111"))
         self.assertEqual(next(stream), ord('X'))
 
     def test_random(self):
         n = 20_000_000
-        a = bitarray(n)
+        a = pauliebits(n)
         for c in range(0, 21, 2):
             lst = [randrange(n) for _ in range(1 << c)]
             a[lst] = 1
@@ -138,7 +138,7 @@ class Tests(unittest.TestCase):
 
     def test_values(self):
         b = [0x11, 3, 1, 32, 0]
-        self.assertEqual(sc_decode(b), bitarray("001"))
+        self.assertEqual(sc_decode(b), pauliebits("001"))
         self.assertEqual(sc_stat(b), {'endian': 'big',
                                       'nbits': 3,
                                       'blocks': [1, 0, 0, 0, 0]})
@@ -151,7 +151,7 @@ class Tests(unittest.TestCase):
 
     def test_example(self):
         n = 1 << 26
-        a = bitarray(n, 'little')
+        a = pauliebits(n, 'little')
         a[:1 << 16] = 1
         for i in range(2, 1 << 16):
             a[n // i] = 1

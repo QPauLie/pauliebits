@@ -6,7 +6,7 @@ typedef struct {
     size_t size;
     size_t nbits;
     size_t allocated;
-} bitarrayobject;
+} pauliebitsobject;
 
 
 /* number of bytes necessary to store given bits */
@@ -36,7 +36,7 @@ size_t new_allocation(size_t size, size_t allocated, size_t newsize)
           /* overallocate when previous size isn't zero and when growth
              is moderate */
           if (size != 0 && newsize / 2 <= allocated) {
-              /* overallocate proportional to the bitarray size and
+              /* overallocate proportional to the pauliebits size and
                  add padding to make the allocated size multiple of 4 */
               new_alloc += (newsize >> 4) + (newsize < 8 ? 3 : 7);
               new_alloc &= ~(size_t) 3;
@@ -45,7 +45,7 @@ size_t new_allocation(size_t size, size_t allocated, size_t newsize)
     }
 }
 
-void resize(bitarrayobject *self, size_t nbits)
+void resize(pauliebitsobject *self, size_t nbits)
 {
     size_t size = self->size, allocated = self->allocated;
     size_t newsize = BYTES(nbits), new_allocated;
@@ -82,7 +82,7 @@ void resize(bitarrayobject *self, size_t nbits)
 int main()
 {
     int i, nbits, prev_alloc = -1;
-    bitarrayobject x;
+    pauliebitsobject x;
 
 #define SHOW  printf("%lu  %lu\n", x.size, x.allocated)
 

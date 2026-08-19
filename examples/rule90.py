@@ -1,5 +1,5 @@
 import time
-from bitarray.util import zeros
+from pauliebits.util import zeros
 
 
 # https://en.wikipedia.org/wiki/Rule_90

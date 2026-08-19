@@ -1,4 +1,4 @@
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 from test_resize import get_alloc, resize, show
 
@@ -9,7 +9,7 @@ def bbs():
     s = pow(s, 2, 50515093)
     return s % 8000
 
-a = bitarray()
+a = pauliebits()
 prev = -1
 while len(a) < 1_000:
     alloc = get_alloc(a)
@@ -33,8 +33,8 @@ while len(a):
 show(a)
 
 for nbits in range(0, 100, 8):
-    a = bitarray()
-    a.extend(bitarray(nbits))
+    a = pauliebits()
+    a.extend(pauliebits(nbits))
     show(a)
 
 for _ in range(100_000):

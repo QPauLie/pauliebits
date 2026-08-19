@@ -1,9 +1,9 @@
 # Copyright (c) 2019 - 2026, Ilan Schnell; All Rights Reserved
-# bitarray is published under the PSF license.
+# pauliebits is published under the PSF license.
 #
 # Author: Ilan Schnell
 """
-Useful utilities for working with bitarrays.
+Useful utilities for working with pauliebitss.
 """
 import os
 import sys
@@ -11,9 +11,9 @@ import math
 import random
 import operator
 
-from bitarray import bitarray, bits2bytes
+from pauliebits import pauliebits, bits2bytes
 
-from bitarray._util import (
+from pauliebits._util import (
     zeros, ones, count_n, parity, _ssqi, xor_indices,
     count_and, count_or, count_xor, any_and, subset,
     correspond_all, byteswap,
@@ -42,22 +42,22 @@ __all__ = [
 
 
 def urandom(__n, endian=None):
-    """urandom(n, /, endian=None) -> bitarray
+    """urandom(n, /, endian=None) -> pauliebits
 
-Return random bitarray of length `n` (uses `os.urandom()`).
+Return random pauliebits of length `n` (uses `os.urandom()`).
 """
-    a = bitarray(os.urandom(bits2bytes(__n)), endian)
+    a = pauliebits(os.urandom(bits2bytes(__n)), endian)
     del a[__n:]
     return a
 
 
 def random_k(__n, k, endian=None):
-    """random_k(n, /, k, endian=None) -> bitarray
+    """random_k(n, /, k, endian=None) -> pauliebits
 
-Return (pseudo-) random bitarray of length `n` with `k` elements
-set to one.  Mathematically equivalent to setting (in a bitarray of
+Return (pseudo-) random pauliebits of length `n` with `k` elements
+set to one.  Mathematically equivalent to setting (in a pauliebits of
 length `n`) all bits at indices `random.sample(range(n), k)` to one.
-The random bitarrays are reproducible when giving Python's `random.seed()`
+The random pauliebitss are reproducible when giving Python's `random.seed()`
 a specific seed value.
 """
     r = _Random(__n, endian)
@@ -66,12 +66,12 @@ a specific seed value.
 
 
 def random_p(__n, p=0.5, endian=None):
-    """random_p(n, /, p=0.5, endian=None) -> bitarray
+    """random_p(n, /, p=0.5, endian=None) -> pauliebits
 
-Return (pseudo-) random bitarray of length `n`, where each bit has
+Return (pseudo-) random pauliebits of length `n`, where each bit has
 probability `p` of being one (independent of any other bits).  Mathematically
-equivalent to `bitarray((random() < p for _ in range(n)), endian)`, but much
-faster for large `n`.  The random bitarrays are reproducible when giving
+equivalent to `pauliebits((random() < p for _ in range(n)), endian)`, but much
+faster for large `n`.  The random pauliebitss are reproducible when giving
 Python's `random.seed()` with a specific seed value.
 
 This function requires Python 3.12 or higher, as it depends on the standard
@@ -79,7 +79,7 @@ library function `random.binomialvariate()`.  Raises `NotImplementedError`
 when Python version is too low.
 """
     if sys.version_info[:2] < (3, 12):
-        raise NotImplementedError("bitarray.util.random_p() requires "
+        raise NotImplementedError("pauliebits.util.random_p() requires "
                                   "Python 3.12 or higher")
     r = _Random(__n, endian)
     return r.random_p(p)
@@ -109,32 +109,32 @@ class _Random:
 
     def random_half(self):
         """
-        Return bitarray with each bit having probability p = 1/2 of being 1.
+        Return pauliebits with each bit having probability p = 1/2 of being 1.
         """
         nbytes = self.nbytes
         # use random module function for reproducibility (not urandom())
         b = random.getrandbits(8 * nbytes).to_bytes(nbytes, 'little')
-        a = bitarray(b, self.endian)
+        a = pauliebits(b, self.endian)
         del a[self.n:]
         return a
 
     def op_seq(self, i):
         """
-        Return bitarray containing operator sequence.
+        Return pauliebits containing operator sequence.
         Each item represents a bitwise operation:   0: AND   1: OR
         After applying the sequence (see .combine_half()), we
-        obtain a bitarray with probability  q = i / K
+        obtain a pauliebits with probability  q = i / K
         """
         if not 0 < i < self.K:
             raise ValueError("0 < i < %d, got i = %d" % (self.K, i))
 
         # sequence of &, | operations - least significant operations first
-        a = bitarray(i.to_bytes(2, byteorder="little"), "little")
+        a = pauliebits(i.to_bytes(2, byteorder="little"), "little")
         return a[a.index(1) + 1 : self.M]
 
     def combine_half(self, seq):
         """
-        Combine random bitarrays with probability 1/2
+        Combine random pauliebitss with probability 1/2
         according to given operator sequence.
         """
         a = self.random_half()
@@ -169,7 +169,7 @@ class _Random:
             p -= (0.2 - 0.4 * p) / math.sqrt(n)
             i = int(p * (self.K + 1))
 
-        # combine random bitarrays using bitwise AND and OR operations
+        # combine random pauliebitss using bitwise AND and OR operations
         if i < 3:
             a = zeros(n, self.endian)
             diff = -k
@@ -206,7 +206,7 @@ class _Random:
 
         # for small n, use literal definition
         if self.n < 16:
-            return bitarray((random.random() < p for _ in range(self.n)),
+            return pauliebits((random.random() < p for _ in range(self.n)),
                             self.endian)
 
         # exploit symmetry to establish: p < 0.5
@@ -228,10 +228,10 @@ class _Random:
 
         # when n is small compared to number of operations, also use literal
         if self.n < 100 and self.nbytes <= len(seq) + 3 * bool(q != p):
-            return bitarray((random.random() < p for _ in range(self.n)),
+            return pauliebits((random.random() < p for _ in range(self.n)),
                             self.endian)
 
-        # combine random bitarrays using bitwise AND and OR operations
+        # combine random pauliebitss using bitwise AND and OR operations
         a = self.combine_half(seq)
         if q < p:
             x = (p - q) / (1.0 - q)
@@ -244,16 +244,16 @@ class _Random:
 
 
 def gen_primes(__n, endian=None, odd=False):
-    """gen_primes(n, /, endian=None, odd=False) -> bitarray
+    """gen_primes(n, /, endian=None, odd=False) -> pauliebits
 
-Generate a bitarray of length `n` in which active indices are prime numbers.
+Generate a pauliebits of length `n` in which active indices are prime numbers.
 By default (`odd=False`), active indices correspond to prime numbers directly.
 When `odd=True`, only odd prime numbers are represented in the resulting
-bitarray `a`, and `a[i]` corresponds to `2*i+1` being prime or not.
+pauliebits `a`, and `a[i]` corresponds to `2*i+1` being prime or not.
 """
     n = operator.index(__n)
     if n < 0:
-        raise ValueError("bitarray length must be >= 0")
+        raise ValueError("pauliebits length must be >= 0")
 
     if odd:
         a = ones(105, endian)  # 105 = 3 * 5 * 7
@@ -270,7 +270,7 @@ bitarray `a`, and `a[i]` corresponds to `2*i+1` being prime or not.
     # repeating the array many times is faster than setting the multiples
     # of the low primes to 0
     a *= (n + len(a) - 1) // len(a)
-    a[:8] = bitarray(f, endian)
+    a[:8] = pauliebits(f, endian)
     del a[n:]
     # perform sieve starting at 11
     if odd:
@@ -287,7 +287,7 @@ bitarray `a`, and `a[i]` corresponds to `2*i+1` being prime or not.
 def sum_indices(__a, mode=1):
     """sum_indices(a, /, mode=1) -> int
 
-Return sum of indices of all active bits in bitarray `a`.
+Return sum of indices of all active bits in pauliebits `a`.
 Equivalent to `sum(i for i, v in enumerate(a) if v)`.
 `mode=2` sums square of indices.
 """
@@ -310,10 +310,10 @@ Equivalent to `sum(i for i, v in enumerate(a) if v)`.
     for i in range(nblocks):
         # use memoryview to avoid copying memory
         v = memoryview(__a)[i * m : (i + 1) * m]
-        block = bitarray(None, __a.endian, buffer=v)
+        block = pauliebits(None, __a.endian, buffer=v)
         if padbits and i == nblocks - 1:
             if block.readonly:
-                block = bitarray(block)
+                block = pauliebits(block)
             block[-padbits:] = 0
 
         k = block.count()
@@ -330,16 +330,16 @@ Equivalent to `sum(i for i, v in enumerate(a) if v)`.
 
 
 def pprint(__a, stream=None, group=8, indent=4, width=80):
-    """pprint(bitarray, /, stream=None, group=8, indent=4, width=80)
+    """pprint(pauliebits, /, stream=None, group=8, indent=4, width=80)
 
-Pretty-print bitarray object to `stream`, defaults is `sys.stdout`.
+Pretty-print pauliebits object to `stream`, defaults is `sys.stdout`.
 By default, bits are grouped in bytes (8 bits), and 64 bits per line.
-Non-bitarray objects are printed using `pprint.pprint()`.
+Non-pauliebits objects are printed using `pprint.pprint()`.
 """
     if stream is None:
         stream = sys.stdout
 
-    if not isinstance(__a, bitarray):
+    if not isinstance(__a, pauliebits):
         import pprint as _pprint
         _pprint.pprint(__a, stream=stream, indent=indent, width=width)
         return
@@ -384,9 +384,9 @@ Non-bitarray objects are printed using `pprint.pprint()`.
 
 
 def strip(__a, mode='right'):
-    """strip(bitarray, /, mode='right') -> bitarray
+    """strip(pauliebits, /, mode='right') -> pauliebits
 
-Return a new bitarray with zeros stripped from left, right or both ends.
+Return a new pauliebits with zeros stripped from left, right or both ends.
 Allowed values for mode are the strings: `left`, `right`, `both`
 """
     if not isinstance(mode, str):
@@ -404,7 +404,7 @@ Allowed values for mode are the strings: `left`, `right`, `both`
 
 
 def intervals(__a):
-    """intervals(bitarray, /) -> iterator
+    """intervals(pauliebits, /) -> iterator
 
 Compute all uninterrupted intervals of 1s and 0s, and return an
 iterator over tuples `(value, start, stop)`.  The intervals are guaranteed
@@ -429,17 +429,17 @@ to be in order, and their size is always non-zero (`stop - start > 0`).
 
 
 def ba2int(__a, signed=False):
-    """ba2int(bitarray, /, signed=False) -> int
+    """ba2int(pauliebits, /, signed=False) -> int
 
-Convert the given bitarray to an integer.
-The bit-endianness of the bitarray is respected.
+Convert the given pauliebits to an integer.
+The bit-endianness of the pauliebits is respected.
 `signed` indicates whether two's complement is used to represent the integer.
 """
-    if not isinstance(__a, bitarray):
-        raise TypeError("bitarray expected, got '%s'" % type(__a).__name__)
+    if not isinstance(__a, pauliebits):
+        raise TypeError("pauliebits expected, got '%s'" % type(__a).__name__)
     length = len(__a)
     if length == 0:
-        raise ValueError("non-empty bitarray expected")
+        raise ValueError("non-empty pauliebits expected")
 
     if __a.padbits:
         pad = zeros(__a.padbits, __a.endian)
@@ -453,11 +453,11 @@ The bit-endianness of the bitarray is respected.
 
 
 def int2ba(__i, length=None, endian=None, signed=False):
-    """int2ba(int, /, length=None, endian=None, signed=False) -> bitarray
+    """int2ba(int, /, length=None, endian=None, signed=False) -> pauliebits
 
-Convert the given integer to a bitarray (with given bit-endianness,
+Convert the given integer to a pauliebits (with given bit-endianness,
 and no leading (big-endian) / trailing (little-endian) zeros), unless
-the `length` of the bitarray is provided.  An `OverflowError` is raised
+the `length` of the pauliebits is provided.  An `OverflowError` is raised
 if the integer is not representable with the given number of bits.
 `signed` determines whether two's complement is used to represent the integer,
 and requires `length` to be provided.
@@ -482,7 +482,7 @@ and requires `length` to be provided.
             raise OverflowError("unsigned integer not in range(0, %d), "
                                 "got %d" % (1 << length, i))
 
-    a = bitarray(0, endian)
+    a = pauliebits(0, endian)
     b = i.to_bytes(bits2bytes(i.bit_length()), byteorder=a.endian)
     a.frombytes(b)
     le = a.endian == 'little'
@@ -543,7 +543,7 @@ def huffman_code(__freq_map, endian=None):
 
 Given a frequency map, a dictionary mapping symbols to their frequency,
 calculate the Huffman code, i.e. a dict mapping those symbols to
-bitarrays (with given bit-endianness).  Note that the symbols are not limited
+pauliebitss (with given bit-endianness).  Note that the symbols are not limited
 to being strings.  Symbols may be any hashable object.
 """
     if not isinstance(__freq_map, dict):
@@ -559,13 +559,13 @@ to being strings.  Symbols may be any hashable object.
         # particular one 0 bit.  This is an incomplete code, since if a 1 bit
         # is received, it has no meaning and will result in an error.
         sym = list(__freq_map)[0]
-        return {sym: bitarray('0', endian)}
+        return {sym: pauliebits('0', endian)}
 
     result = {}
 
     def traverse(nd, prefix=None):
         if prefix is None:
-            prefix = bitarray(0, endian)
+            prefix = pauliebits(0, endian)
 
         try:                    # leaf
             result[nd.symbol] = prefix
@@ -583,7 +583,7 @@ def canonical_huffman(__freq_map):
 Given a frequency map, a dictionary mapping symbols to their frequency,
 calculate the canonical Huffman code.  Returns a tuple containing:
 
-0. the canonical Huffman code as a dict mapping symbols to bitarrays
+0. the canonical Huffman code as a dict mapping symbols to pauliebitss
 1. a list containing the number of symbols of each code length
 2. a list of symbols in canonical order
 
@@ -597,7 +597,7 @@ Note: the two lists may be used as input for `canonical_decode()`.
             raise ValueError("cannot create Huffman code with no symbols")
         # Only one symbol: see note above in huffman_code()
         sym = list(__freq_map)[0]
-        return {sym: bitarray('0', 'big')}, [0, 1], [sym]
+        return {sym: pauliebits('0', 'big')}, [0, 1], [sym]
 
     code_length = {}  # map symbols to their code length
 

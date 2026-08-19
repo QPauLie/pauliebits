@@ -1,7 +1,7 @@
 Canonical Huffman Coding
 ========================
 
-Bitarray supports creating, encoding and decoding canonical Huffman codes.
+Pauliebits supports creating, encoding and decoding canonical Huffman codes.
 Consider the following frequency map:
 
 .. code-block:: python
@@ -13,14 +13,14 @@ We can now use ``canonical_huffman()`` to create a canonical Huffman code:
 .. code-block:: python
 
     >>> from pprint import pprint
-    >>> from bitarray.util import canonical_huffman
+    >>> from pauliebits.util import canonical_huffman
     >>> codedict, count, symbol = canonical_huffman(cnt)
     >>> pprint(codedict)
-    {'a': bitarray('0'),
-     'b': bitarray('10'),
-     'c': bitarray('1110'),
-     'd': bitarray('1111'),
-     'r': bitarray('110')}
+    {'a': pauliebits('0'),
+     'b': pauliebits('10'),
+     'c': pauliebits('1110'),
+     'd': pauliebits('1111'),
+     'r': pauliebits('110')}
     >>> count
     [0, 1, 1, 1, 2]
     >>> symbol
@@ -28,7 +28,7 @@ We can now use ``canonical_huffman()`` to create a canonical Huffman code:
 
 The output is a tuple with the following elements:
 
-* A dictionary mapping each symbol to a ``bitarray``
+* A dictionary mapping each symbol to a ``pauliebits``
 * A list containing the number of symbols for each code length,
   e.g. `count[3] = 1` because there is one symbol (``r``) with
   code length ``3``.
@@ -57,12 +57,12 @@ Encode a message using this code:
 
 .. code-block:: python
 
-    >>> from bitarray import bitarray
+    >>> from pauliebits import pauliebits
     >>> msg = "abracadabra"
-    >>> a = bitarray()
+    >>> a = pauliebits()
     >>> a.encode(codedict, msg)
     >>> a
-    bitarray('01011001110011110101100')
+    pauliebits('01011001110011110101100')
     >>> assert ''.join(a.decode(codedict)) == msg
 
 And now decode using the canonical decoding
@@ -70,7 +70,7 @@ tables ``count`` and ``symbol`` instead:
 
 .. code-block:: python
 
-    >>> from bitarray.util import canonical_decode
+    >>> from pauliebits.util import canonical_decode
     >>> ''.join(canonical_decode(a, count, symbol))
     'abracadabra'
 
@@ -90,4 +90,4 @@ decode function (``canonical_decode()``) unsuitable for DEFLATE decompression,
 or at least inefficient as we would have to create a new iterator for
 decoding each symbol.  A more efficient implementation can be found
 in  `examples/puff
-<https://github.com/ilanschnell/bitarray/tree/master/examples/puff/>`__
+<https://github.com/ilanschnell/pauliebits/tree/master/examples/puff/>`__

@@ -1,9 +1,9 @@
 /*
    Copyright (c) 2008 - 2026, Ilan Schnell; All Rights Reserved
-   bitarray is published under the PSF license.
+   pauliebits is published under the PSF license.
 
-   This file is the C part of the bitarray package.
-   All functionality of the bitarray object is implemented here.
+   This file is the C part of the pauliebits package.
+   All functionality of the pauliebits object is implemented here.
 
    Author: Ilan Schnell
 */
@@ -12,7 +12,7 @@
 #include "Python.h"
 #include "pythoncapi_compat.h"
 #include "structmember.h"
-#include "bitarray.h"
+#include "pauliebits.h"
 #include <string.h>  // Для memcpy
 
 /* size used when reading / writing blocks from files (in bytes) */
@@ -21,9 +21,9 @@
 /* translation table - setup during module initialization */
 static char reverse_trans[256];
 
-static PyTypeObject Bitarray_Type;
+static PyTypeObject Pauliebits_Type;
 
-#define bitarray_Check(obj)  PyObject_TypeCheck((obj), &Bitarray_Type)
+#define pauliebits_Check(obj)  PyObject_TypeCheck((obj), &Pauliebits_Type)
 
 
 static size_t
@@ -45,7 +45,7 @@ new_allocation(size_t size, size_t allocated, size_t newsize)
           /* overallocate when previous size isn't zero and when growth
              is moderate */
           if (size != 0 && newsize / 2 <= allocated) {
-              /* overallocate proportional to the bitarray size and
+              /* overallocate proportional to the pauliebits size and
                  add padding to make the allocated size multiple of 4 */
               new_alloc += (newsize >> 4) + ((newsize < 8) ? 3 : 7);
               new_alloc &= ~(size_t) 3;
@@ -55,7 +55,7 @@ new_allocation(size_t size, size_t allocated, size_t newsize)
 }
 
 static int
-resize(bitarrayobject *self, Py_ssize_t nbits)
+resize(pauliebitsobject *self, Py_ssize_t nbits)
 {
     const size_t size = Py_SIZE(self);
     const size_t allocated = self->allocated;
@@ -64,7 +64,7 @@ resize(bitarrayobject *self, Py_ssize_t nbits)
 
     if (self->ob_exports > 0) {
         PyErr_SetString(PyExc_BufferError,
-                        "cannot resize bitarray that is exporting buffers");
+                        "cannot resize pauliebits that is exporting buffers");
         return -1;
     }
 
@@ -74,7 +74,7 @@ resize(bitarrayobject *self, Py_ssize_t nbits)
     }
 
     if (nbits < 0) {
-        PyErr_Format(PyExc_OverflowError, "bitarray resize %zd", nbits);
+        PyErr_Format(PyExc_OverflowError, "pauliebits resize %zd", nbits);
         return -1;
     }
 
@@ -123,16 +123,16 @@ resize(bitarrayobject *self, Py_ssize_t nbits)
     return 0;
 }
 
-/* create new bitarray object without initialization of buffer */
-static bitarrayobject *
-newbitarrayobject(PyTypeObject *type, Py_ssize_t nbits, int endian)
+/* create new pauliebits object without initialization of buffer */
+static pauliebitsobject *
+newpauliebitsobject(PyTypeObject *type, Py_ssize_t nbits, int endian)
 {
     const size_t nbytes = BYTES((size_t) nbits);
-    bitarrayobject *obj;
+    pauliebitsobject *obj;
 
     assert(nbits >= 0);
 
-    obj = (bitarrayobject *) type->tp_alloc(type, 0);
+    obj = (pauliebitsobject *) type->tp_alloc(type, 0);
     if (obj == NULL)
         return NULL;
 
@@ -159,13 +159,13 @@ newbitarrayobject(PyTypeObject *type, Py_ssize_t nbits, int endian)
     return obj;
 }
 
-/* return new copy of bitarray object self */
-static bitarrayobject *
-bitarray_cp(bitarrayobject *self)
+/* return new copy of pauliebits object self */
+static pauliebitsobject *
+pauliebits_cp(pauliebitsobject *self)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
 
-    res = newbitarrayobject(Py_TYPE(self), self->nbits, self->endian);
+    res = newpauliebitsobject(Py_TYPE(self), self->nbits, self->endian);
     if (res == NULL)
         return NULL;
     if (Py_SIZE(self))
@@ -174,7 +174,7 @@ bitarray_cp(bitarrayobject *self)
 }
 
 static void
-bitarray_dealloc(bitarrayobject *self)
+pauliebits_dealloc(pauliebitsobject *self)
 {
     if (self->weakreflist)
         PyObject_ClearWeakRefs((PyObject *) self);
@@ -194,12 +194,12 @@ bitarray_dealloc(bitarrayobject *self)
 
 /* return 1 when buffers overlap, 0 otherwise */
 static int
-buffers_overlap(bitarrayobject *self, bitarrayobject *other)
+buffers_overlap(pauliebitsobject *self, pauliebitsobject *other)
 {
     if (Py_SIZE(self) == 0 || Py_SIZE(other) == 0)
         return 0;
 
-/* is pointer ptr in buffer of bitarray a ? */
+/* is pointer ptr in buffer of pauliebits a ? */
 #define PIB(a, ptr)  (a->ob_item <= ptr && ptr < a->ob_item + Py_SIZE(a))
     return PIB(self, other->ob_item) || PIB(other, self->ob_item);
 #undef PIB
@@ -219,7 +219,7 @@ bytereverse(char *p, Py_ssize_t n)
 /* The following two functions operate on first n bytes in buffer.
    Within this region, they shift all bits by k positions to right,
    i.e. towards higher addresses.
-   They operate on little-endian and big-endian bitarrays respectively.
+   They operate on little-endian and big-endian pauliebitss respectively.
    As we shift right, we need to start with the highest address and loop
    downwards such that lower bytes are still unaltered.
    See also devel/shift_r8.c
@@ -286,7 +286,7 @@ shift_r8be(unsigned char *buff, Py_ssize_t n, int k)
 
 /* shift bits in byte-range(a, b) by k bits to right */
 static void
-shift_r8(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b, int k)
+shift_r8(pauliebitsobject *self, Py_ssize_t a, Py_ssize_t b, int k)
 {
     unsigned char *buff = (unsigned char *) self->ob_item + a;
     Py_ssize_t n = b - a;       /* number of bytes to be shifted */
@@ -331,8 +331,8 @@ shift_r8(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b, int k)
        may not overlap
 */
 static void
-copy_n(bitarrayobject *self, Py_ssize_t a,
-       bitarrayobject *other, Py_ssize_t b, Py_ssize_t n)
+copy_n(pauliebitsobject *self, Py_ssize_t a,
+       pauliebitsobject *other, Py_ssize_t b, Py_ssize_t n)
 {
     Py_ssize_t p3 = b / 8, i;
     int sa = a % 8, sb = -(b % 8);
@@ -374,7 +374,7 @@ copy_n(bitarrayobject *self, Py_ssize_t a,
 
 /* starting at start, delete n bits from self */
 static int
-delete_n(bitarrayobject *self, Py_ssize_t start, Py_ssize_t n)
+delete_n(pauliebitsobject *self, Py_ssize_t start, Py_ssize_t n)
 {
     const Py_ssize_t nbits = self->nbits;
 
@@ -389,7 +389,7 @@ delete_n(bitarrayobject *self, Py_ssize_t start, Py_ssize_t n)
 
 /* starting at start, insert n (uninitialized) bits into self */
 static int
-insert_n(bitarrayobject *self, Py_ssize_t start, Py_ssize_t n)
+insert_n(pauliebitsobject *self, Py_ssize_t start, Py_ssize_t n)
 {
     const Py_ssize_t nbits = self->nbits;
 
@@ -404,7 +404,7 @@ insert_n(bitarrayobject *self, Py_ssize_t start, Py_ssize_t n)
 
 /* repeat self m times (negative m is treated as 0) */
 static int
-repeat(bitarrayobject *self, Py_ssize_t m)
+repeat(pauliebitsobject *self, Py_ssize_t m)
 {
     Py_ssize_t q, k = self->nbits;
 
@@ -418,7 +418,7 @@ repeat(bitarrayobject *self, Py_ssize_t m)
     assert(m > 1 && k > 0);
     if (k >= PY_SSIZE_T_MAX / m) {
         PyErr_Format(PyExc_OverflowError,
-                     "cannot repeat bitarray (of size %zd) %zd times", k, m);
+                     "cannot repeat pauliebits (of size %zd) %zd times", k, m);
         return -1;
     }
     q = k * m;  /* number of resulting bits */
@@ -436,14 +436,14 @@ repeat(bitarrayobject *self, Py_ssize_t m)
     return 0;
 }
 
-/* the following functions xyz_span, xyz_range operate on bitarray items:
+/* the following functions xyz_span, xyz_range operate on pauliebits items:
      - xyz_span: contiguous bits - self[a:b] (step=1)
      - xyz_range: self[start:stop:step]      (step > 0 is required)
  */
 
 /* invert bits self[a:b] in-place */
 static void
-invert_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b)
+invert_span(pauliebitsobject *self, Py_ssize_t a, Py_ssize_t b)
 {
     const Py_ssize_t n = b - a;  /* number of bits to invert */
     Py_ssize_t i;
@@ -480,7 +480,7 @@ invert_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b)
 
 /* invert bits self[start:stop:step] in-place */
 static void
-invert_range(bitarrayobject *self,
+invert_range(pauliebitsobject *self,
              Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step)
 {
     assert(step > 0);
@@ -500,7 +500,7 @@ invert_range(bitarrayobject *self,
 
 /* set bits self[a:b] to vi */
 static void
-set_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b, int vi)
+set_span(pauliebitsobject *self, Py_ssize_t a, Py_ssize_t b, int vi)
 {
     assert(0 <= a && a <= self->nbits);
     assert(0 <= b && b <= self->nbits);
@@ -524,7 +524,7 @@ set_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b, int vi)
 
 /* set bits self[start:stop:step] to vi */
 static void
-set_range(bitarrayobject *self,
+set_range(pauliebitsobject *self,
           Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step, int vi)
 {
     assert(step > 0);
@@ -550,7 +550,7 @@ set_range(bitarrayobject *self,
 
 /* Return number of 1 bits in self[a:b]; cannot fail. */
 static Py_ssize_t
-count_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b)
+count_span(pauliebitsobject *self, Py_ssize_t a, Py_ssize_t b)
 {
     const Py_ssize_t n = b - a;
     Py_ssize_t cnt = 0;
@@ -593,7 +593,7 @@ count_span(bitarrayobject *self, Py_ssize_t a, Py_ssize_t b)
 
 /* return number of 1 bits in self[start:stop:step] */
 static Py_ssize_t
-count_range(bitarrayobject *self,
+count_range(pauliebitsobject *self,
             Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step)
 {
     assert(step > 0);
@@ -613,10 +613,10 @@ count_range(bitarrayobject *self,
 /* return first (or rightmost in case right=1) occurrence
    of vi in self[a:b], -1 when not found */
 static Py_ssize_t
-find_bit(bitarrayobject *self, int vi, Py_ssize_t a, Py_ssize_t b, int right);
+find_bit(pauliebitsobject *self, int vi, Py_ssize_t a, Py_ssize_t b, int right);
 
 static Py_ssize_t
-find_bit_words(bitarrayobject *self, int vi,
+find_bit_words(pauliebitsobject *self, int vi,
                Py_ssize_t a, Py_ssize_t b, int right)
 {
     const Py_ssize_t wa = (a + 63) / 64;  /* word-range(wa, wb) */
@@ -648,7 +648,7 @@ find_bit_words(bitarrayobject *self, int vi,
 }
 
 static Py_ssize_t
-find_bit_bytes(bitarrayobject *self, int vi,
+find_bit_bytes(pauliebitsobject *self, int vi,
                Py_ssize_t a, Py_ssize_t b, int right)
 {
     const Py_ssize_t ca = BYTES(a);  /* char-range(ca, cb) */
@@ -680,7 +680,7 @@ find_bit_bytes(bitarrayobject *self, int vi,
 }
 
 static Py_ssize_t
-find_bit(bitarrayobject *self, int vi, Py_ssize_t a, Py_ssize_t b, int right)
+find_bit(pauliebitsobject *self, int vi, Py_ssize_t a, Py_ssize_t b, int right)
 {
     const Py_ssize_t n = b - a;
     Py_ssize_t i;
@@ -709,10 +709,10 @@ find_bit(bitarrayobject *self, int vi, Py_ssize_t a, Py_ssize_t b, int right)
     return -1;
 }
 
-/* Return first/rightmost occurrence of sub-bitarray (in self), such that
+/* Return first/rightmost occurrence of sub-pauliebits (in self), such that
    sub is contained within self[start:stop], or -1 when sub is not found. */
 static Py_ssize_t
-find_sub(bitarrayobject *self, bitarrayobject *sub,
+find_sub(pauliebitsobject *self, pauliebitsobject *sub,
          Py_ssize_t start, Py_ssize_t stop, int right)
 {
     const Py_ssize_t sbits = sub->nbits;
@@ -734,10 +734,10 @@ find_sub(bitarrayobject *self, bitarrayobject *sub,
     return -1;
 }
 
-/* return the number of non-overlapping occurrences of sub-bitarray within
+/* return the number of non-overlapping occurrences of sub-pauliebits within
    self[start:stop] */
 static Py_ssize_t
-count_sub(bitarrayobject *self, bitarrayobject *sub,
+count_sub(pauliebitsobject *self, pauliebitsobject *sub,
           Py_ssize_t start, Py_ssize_t stop)
 {
     const Py_ssize_t sbits = sub->nbits;
@@ -758,7 +758,7 @@ count_sub(bitarrayobject *self, bitarrayobject *sub,
 
 /* set item i in self to given value */
 static int
-set_item(bitarrayobject *self, Py_ssize_t i, PyObject *value)
+set_item(pauliebitsobject *self, Py_ssize_t i, PyObject *value)
 {
     int vi;
 
@@ -770,7 +770,7 @@ set_item(bitarrayobject *self, Py_ssize_t i, PyObject *value)
 }
 
 static int
-extend_bitarray(bitarrayobject *self, bitarrayobject *other)
+extend_pauliebits(pauliebitsobject *self, pauliebitsobject *other)
 {
     /* We have to store the sizes before we resize, and since
        other may be self, we also need to store other->nbits. */
@@ -785,7 +785,7 @@ extend_bitarray(bitarrayobject *self, bitarrayobject *other)
 }
 
 static int
-extend_iter(bitarrayobject *self, PyObject *iter)
+extend_iter(pauliebitsobject *self, PyObject *iter)
 {
     const Py_ssize_t nbits = self->nbits;
     PyObject *item;
@@ -809,7 +809,7 @@ extend_iter(bitarrayobject *self, PyObject *iter)
 }
 
 static int
-extend_sequence(bitarrayobject *self, PyObject *sequence)
+extend_sequence(pauliebitsobject *self, PyObject *sequence)
 {
     const Py_ssize_t nbits = self->nbits;
     Py_ssize_t n, i;
@@ -833,7 +833,7 @@ extend_sequence(bitarrayobject *self, PyObject *sequence)
 }
 
 static int
-extend_unicode01(bitarrayobject *self, PyObject *unicode)
+extend_unicode01(pauliebitsobject *self, PyObject *unicode)
 {
     const Py_ssize_t nbits = self->nbits;
     const Py_ssize_t length = PyUnicode_GET_LENGTH(unicode);
@@ -865,13 +865,13 @@ extend_unicode01(bitarrayobject *self, PyObject *unicode)
 }
 
 static int
-extend_dispatch(bitarrayobject *self, PyObject *obj)
+extend_dispatch(pauliebitsobject *self, PyObject *obj)
 {
     PyObject *iter;
 
     /* dispatch on type */
-    if (bitarray_Check(obj))                              /* bitarray */
-        return extend_bitarray(self, (bitarrayobject *) obj);
+    if (pauliebits_Check(obj))                              /* pauliebits */
+        return extend_pauliebits(self, (pauliebitsobject *) obj);
 
     if (PyUnicode_Check(obj))                       /* Unicode string */
         return extend_unicode01(self, obj);
@@ -895,7 +895,7 @@ extend_dispatch(bitarrayobject *self, PyObject *obj)
 }
 
 /**************************************************************************
-                     Implementation of bitarray methods
+                     Implementation of pauliebits methods
  **************************************************************************/
 
 /*
@@ -916,13 +916,13 @@ extend_dispatch(bitarrayobject *self, PyObject *obj)
 
 /* raise when buffer is readonly */
 #define RAISE_IF_READONLY(self, ret_value)                                  \
-    if (((bitarrayobject *) self)->readonly) {                              \
+    if (((pauliebitsobject *) self)->readonly) {                              \
         PyErr_SetString(PyExc_TypeError, "cannot modify read-only memory"); \
         return ret_value;                                                   \
     }
 
 static PyObject *
-bitarray_all(bitarrayobject *self)
+pauliebits_all(pauliebitsobject *self)
 {
     Py_ssize_t pos;
 
@@ -936,12 +936,12 @@ bitarray_all(bitarrayobject *self)
 PyDoc_STRVAR(all_doc,
 "all() -> bool\n\
 \n\
-Return `True` when all bits in bitarray are 1.\n\
+Return `True` when all bits in pauliebits are 1.\n\
 `a.all()` is a faster version of `all(a)`.");
 
 
 static PyObject *
-bitarray_any(bitarrayobject *self)
+pauliebits_any(pauliebitsobject *self)
 {
     Py_ssize_t pos;
 
@@ -955,12 +955,12 @@ bitarray_any(bitarrayobject *self)
 PyDoc_STRVAR(any_doc,
 "any() -> bool\n\
 \n\
-Return `True` when any bit in bitarray is 1.\n\
+Return `True` when any bit in pauliebits is 1.\n\
 `a.any()` is a faster version of `any(a)`.");
 
 
 static PyObject *
-bitarray_append(bitarrayobject *self, PyObject *value)
+pauliebits_append(pauliebitsobject *self, PyObject *value)
 {
     int ret, vi;
 
@@ -983,11 +983,11 @@ bitarray_append(bitarrayobject *self, PyObject *value)
 PyDoc_STRVAR(append_doc,
 "append(item, /)\n\
 \n\
-Append `item` to the end of the bitarray.");
+Append `item` to the end of the pauliebits.");
 
 
 static PyObject *
-bitarray_bytereverse(bitarrayobject *self, PyObject *args)
+pauliebits_bytereverse(pauliebitsobject *self, PyObject *args)
 {
     Py_ssize_t start = 0, stop = PY_SSIZE_T_MAX;
 
@@ -1013,16 +1013,16 @@ For each byte in byte-range(`start`, `stop`) reverse bits in-place.\n\
 The start and stop indices are given in terms of bytes (not bits) and\n\
 are interpreted like slice bounds and clipped to the buffer size.\n\
 Also note that this method only changes the buffer; it does not change the\n\
-bit-endianness of the bitarray object.  Pad bits are left unchanged such\n\
-that two consecutive calls will always leave the bitarray unchanged.");
+bit-endianness of the pauliebits object.  Pad bits are left unchanged such\n\
+that two consecutive calls will always leave the pauliebits unchanged.");
 
 
 static PyObject *
-bitarray_buffer_info(bitarrayobject *self)
+pauliebits_buffer_info(pauliebitsobject *self)
 {
     PyObject *info, *res, *args, *address, *readonly, *imported;
 
-    info = bitarray_module_attr("BufferInfo");
+    info = pauliebits_module_attr("BufferInfo");
     if (info == NULL)
         return NULL;
 
@@ -1076,7 +1076,7 @@ Return named tuple with following fields:\n\
 
 
 static PyObject *
-bitarray_clear(bitarrayobject *self)
+pauliebits_clear(pauliebitsobject *self)
 {
     int ret;
 
@@ -1094,23 +1094,23 @@ bitarray_clear(bitarrayobject *self)
 PyDoc_STRVAR(clear_doc,
 "clear()\n\
 \n\
-Remove all items from bitarray.");
+Remove all items from pauliebits.");
 
 
-/* Set readonly member to 1 if self is an instance of frozenbitarray.
+/* Set readonly member to 1 if self is an instance of frozenpauliebits.
    Return PyObject of self.  On error, set exception and return NULL. */
 static PyObject *
-freeze_if_frozen(bitarrayobject *self)
+freeze_if_frozen(pauliebitsobject *self)
 {
-    PyObject *frozen;  /* frozenbitarray class object */
+    PyObject *frozen;  /* frozenpauliebits class object */
     int is_frozen;
 
     assert(self->ob_exports == 0 && self->buffer == NULL);
 
-    if (Py_TYPE(self) == &Bitarray_Type)  /* shortcut for common case */
+    if (Py_TYPE(self) == &Pauliebits_Type)  /* shortcut for common case */
         return (PyObject *) self;
 
-    frozen = bitarray_module_attr("frozenbitarray");
+    frozen = pauliebits_module_attr("frozenpauliebits");
     if (frozen == NULL)
         return NULL;
 
@@ -1128,12 +1128,12 @@ freeze_if_frozen(bitarrayobject *self)
 
 
 static PyObject *
-bitarray_copy(bitarrayobject *self)
+pauliebits_copy(pauliebitsobject *self)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_cp(self);
+    res = pauliebits_cp(self);
     Py_END_CRITICAL_SECTION();
 
     if (res == NULL)
@@ -1143,13 +1143,13 @@ bitarray_copy(bitarrayobject *self)
 }
 
 PyDoc_STRVAR(copy_doc,
-"copy() -> bitarray\n\
+"copy() -> pauliebits\n\
 \n\
-Return copy of bitarray (with same bit-endianness).");
+Return copy of pauliebits (with same bit-endianness).");
 
 
 static PyObject *
-bitarray_count(bitarrayobject *self, PyObject *args)
+pauliebits_count(pauliebitsobject *self, PyObject *args)
 {
     PyObject *sub = Py_None;
     Py_ssize_t start = 0, stop = PY_SSIZE_T_MAX, step = 1;
@@ -1179,54 +1179,54 @@ bitarray_count(bitarrayobject *self, PyObject *args)
         return PyLong_FromSsize_t(vi ? cnt : slicelength - cnt);
     }
 
-    if (bitarray_Check(sub)) {   /* sub-bitarray count */
+    if (pauliebits_Check(sub)) {   /* sub-pauliebits count */
         if (step != 1) {
             PyErr_SetString(PyExc_ValueError,
-                            "step must be 1 for sub-bitarray count");
+                            "step must be 1 for sub-pauliebits count");
             return NULL;
         }
         Py_BEGIN_CRITICAL_SECTION2(self, sub);
         if (start <= self->nbits) {
             PySlice_AdjustIndices(self->nbits, &start, &stop, 1);
-            cnt = count_sub(self, (bitarrayobject *) sub, start, stop);
+            cnt = count_sub(self, (pauliebitsobject *) sub, start, stop);
         }
         Py_END_CRITICAL_SECTION2();
         return PyLong_FromSsize_t(cnt);
     }
 
-    return PyErr_Format(PyExc_TypeError, "sub_bitarray must be bitarray or "
+    return PyErr_Format(PyExc_TypeError, "sub_pauliebits must be pauliebits or "
                         "int, not '%s'", Py_TYPE(sub)->tp_name);
 }
 
 PyDoc_STRVAR(count_doc,
 "count(value=1, start=0, stop=<end>, step=1, /) -> int\n\
 \n\
-Number of occurrences of `value` bitarray within `[start:stop:step]`.\n\
+Number of occurrences of `value` pauliebits within `[start:stop:step]`.\n\
 Optional arguments `start`, `stop` and `step` are interpreted in\n\
 slice notation, meaning `a.count(value, start, stop, step)` equals\n\
 `a[start:stop:step].count(value)`.\n\
-The `value` may also be a sub-bitarray.  In this case non-overlapping\n\
+The `value` may also be a sub-pauliebits.  In this case non-overlapping\n\
 occurrences are counted within `[start:stop]` (`step` must be 1).");
 
 
 /* Extend self without running arbitrary Python code while self is locked. */
 static int
-extend_thread_safe(bitarrayobject *self, PyObject *obj)
+extend_thread_safe(pauliebitsobject *self, PyObject *obj)
 {
 #ifdef Py_GIL_DISABLED
     int res1, res2;
-    bitarrayobject *tmp;
+    pauliebitsobject *tmp;
 
-    if (bitarray_Check(obj)) {
+    if (pauliebits_Check(obj)) {
         Py_BEGIN_CRITICAL_SECTION2(self, obj);
-        res1 = extend_bitarray(self, (bitarrayobject *) obj);
+        res1 = extend_pauliebits(self, (pauliebitsobject *) obj);
         Py_END_CRITICAL_SECTION2();
         return res1;
     }
 
-    /* Build input into a temporary bitarray first, so arbitrary iteration
+    /* Build input into a temporary pauliebits first, so arbitrary iteration
        and Python conversions happen outside self's critical section. */
-    tmp = newbitarrayobject(&Bitarray_Type, 0, self->endian);
+    tmp = newpauliebitsobject(&Pauliebits_Type, 0, self->endian);
     if (tmp == NULL)
         return -1;
     /* Even on failure, tmp may contain successfully consumed prefix bits.
@@ -1235,7 +1235,7 @@ extend_thread_safe(bitarrayobject *self, PyObject *obj)
 
     Py_BEGIN_CRITICAL_SECTION(self);
     /* Append accumulated bits to self in one protected operation. */
-    res2 = extend_bitarray(self, tmp);
+    res2 = extend_pauliebits(self, tmp);
     Py_END_CRITICAL_SECTION();
     Py_DECREF(tmp);
     return (res1 < 0 || res2 < 0) ? -1 : 0;
@@ -1245,7 +1245,7 @@ extend_thread_safe(bitarrayobject *self, PyObject *obj)
 }
 
 static PyObject *
-bitarray_extend(bitarrayobject *self, PyObject *obj)
+pauliebits_extend(pauliebitsobject *self, PyObject *obj)
 {
     RAISE_IF_READONLY(self, NULL);
     if (extend_thread_safe(self, obj) < 0)
@@ -1256,13 +1256,13 @@ bitarray_extend(bitarrayobject *self, PyObject *obj)
 PyDoc_STRVAR(extend_doc,
 "extend(iterable, /)\n\
 \n\
-Append items from iterable to the end of the bitarray.\n\
+Append items from iterable to the end of the pauliebits.\n\
 If `iterable` is a (Unicode) string, each `0` and `1` are appended as\n\
 bits (ignoring whitespace and underscore).");
 
 
 static PyObject *
-bitarray_fill(bitarrayobject *self)
+pauliebits_fill(pauliebitsobject *self)
 {
     Py_ssize_t p;
 
@@ -1281,12 +1281,12 @@ bitarray_fill(bitarrayobject *self)
 PyDoc_STRVAR(fill_doc,
 "fill() -> int\n\
 \n\
-Add zeros to the end of the bitarray, such that the length will be\n\
+Add zeros to the end of the pauliebits, such that the length will be\n\
 a multiple of 8, and return the number of bits added [0..7].");
 
 
 static PyObject *
-bitarray_find(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_find(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "", "", "right", NULL};
     Py_ssize_t start = 0, stop = PY_SSIZE_T_MAX, pos = -1;
@@ -1310,56 +1310,56 @@ bitarray_find(bitarrayobject *self, PyObject *args, PyObject *kwds)
         return PyLong_FromSsize_t(pos);
     }
 
-    if (bitarray_Check(sub)) {   /* find sub-bitarray */
+    if (pauliebits_Check(sub)) {   /* find sub-pauliebits */
         Py_BEGIN_CRITICAL_SECTION2(self, sub);
         if (start <= self->nbits) {
             PySlice_AdjustIndices(self->nbits, &start, &stop, 1);
-            pos = find_sub(self, (bitarrayobject *) sub, start, stop, right);
+            pos = find_sub(self, (pauliebitsobject *) sub, start, stop, right);
         }
         Py_END_CRITICAL_SECTION2();
         return PyLong_FromSsize_t(pos);
     }
 
-    return PyErr_Format(PyExc_TypeError, "sub_bitarray must be bitarray or "
+    return PyErr_Format(PyExc_TypeError, "sub_pauliebits must be pauliebits or "
                         "int, not '%s'", Py_TYPE(sub)->tp_name);
 }
 
 PyDoc_STRVAR(find_doc,
-"find(sub_bitarray, start=0, stop=<end>, /, right=False) -> int\n\
+"find(sub_pauliebits, start=0, stop=<end>, /, right=False) -> int\n\
 \n\
-Return lowest (or rightmost when `right=True`) index where sub_bitarray\n\
-is found, such that sub_bitarray is contained within `[start:stop]`.\n\
-Return -1 when sub_bitarray is not found.");
+Return lowest (or rightmost when `right=True`) index where sub_pauliebits\n\
+is found, such that sub_pauliebits is contained within `[start:stop]`.\n\
+Return -1 when sub_pauliebits is not found.");
 
 
 static PyObject *
-bitarray_index(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_index(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *result;
 
-    result = bitarray_find(self, args, kwds);
+    result = pauliebits_find(self, args, kwds);
     if (result == NULL)
         return NULL;
 
     assert(PyLong_Check(result));
     if (PyLong_AsSsize_t(result) < 0) {
         Py_DECREF(result);
-        return PyErr_Format(PyExc_ValueError, "%A not in bitarray",
+        return PyErr_Format(PyExc_ValueError, "%A not in pauliebits",
                             PyTuple_GET_ITEM(args, 0));
     }
     return result;
 }
 
 PyDoc_STRVAR(index_doc,
-"index(sub_bitarray, start=0, stop=<end>, /, right=False) -> int\n\
+"index(sub_pauliebits, start=0, stop=<end>, /, right=False) -> int\n\
 \n\
-Return lowest (or rightmost when `right=True`) index where sub_bitarray\n\
-is found, such that sub_bitarray is contained within `[start:stop]`.\n\
-Raises `ValueError` when sub_bitarray is not present.");
+Return lowest (or rightmost when `right=True`) index where sub_pauliebits\n\
+is found, such that sub_pauliebits is contained within `[start:stop]`.\n\
+Raises `ValueError` when sub_pauliebits is not present.");
 
 
 static int
-insert_lock_held(bitarrayobject *self, Py_ssize_t i, int vi)
+insert_lock_held(pauliebitsobject *self, Py_ssize_t i, int vi)
 {
     const Py_ssize_t n = self->nbits;
 
@@ -1379,7 +1379,7 @@ insert_lock_held(bitarrayobject *self, Py_ssize_t i, int vi)
 }
 
 static PyObject *
-bitarray_insert(bitarrayobject *self, PyObject *args)
+pauliebits_insert(pauliebitsobject *self, PyObject *args)
 {
     Py_ssize_t i;
     int vi, ret;
@@ -1400,11 +1400,11 @@ bitarray_insert(bitarrayobject *self, PyObject *args)
 PyDoc_STRVAR(insert_doc,
 "insert(index, value, /)\n\
 \n\
-Insert `value` into bitarray before `index`.");
+Insert `value` into pauliebits before `index`.");
 
 
 static PyObject *
-bitarray_invert(bitarrayobject *self, PyObject *args)
+pauliebits_invert(pauliebitsobject *self, PyObject *args)
 {
     PyObject *arg = Py_None;
 
@@ -1468,13 +1468,13 @@ When `index` is a slice, invert the selected bits.");
 
 
 static PyObject *
-bitarray_reduce(bitarrayobject *self)
+pauliebits_reduce(pauliebitsobject *self)
 {
     PyObject *reconstructor;
     PyObject *dict, *bytes, *result;
     int padbits;
 
-    reconstructor = bitarray_module_attr("_bitarray_reconstructor");
+    reconstructor = pauliebits_module_attr("_pauliebits_reconstructor");
     if (reconstructor == NULL)
         return NULL;
 
@@ -1510,7 +1510,7 @@ PyDoc_STRVAR(reduce_doc, "Internal. Used for pickling support.");
 
 
 static PyObject *
-bitarray_repr(bitarrayobject *self)
+pauliebits_repr(pauliebitsobject *self)
 {
     PyObject *result;
     Py_ssize_t nbits, strsize, i;
@@ -1522,14 +1522,14 @@ bitarray_repr(bitarrayobject *self)
     Py_END_CRITICAL_SECTION();
 
     if (nbits == 0)
-        return PyUnicode_FromString("bitarray()");
+        return PyUnicode_FromString("pauliebits()");
 
-    strsize = nbits + 12;  /* 12 is length of "bitarray('')" */
+    strsize = nbits + 12;  /* 12 is length of "pauliebits('')" */
     str = PyMem_New(char, strsize);
     if (str == NULL)
         return PyErr_NoMemory();
 
-    strcpy(str, "bitarray('");  /* has length 10 */
+    strcpy(str, "pauliebits('");  /* has length 10 */
 
     Py_BEGIN_CRITICAL_SECTION(self);
     if (self->nbits == nbits) {
@@ -1542,7 +1542,7 @@ bitarray_repr(bitarrayobject *self)
     if (err) {
         PyMem_Free((void *) str);
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during repr()");
+                        "pauliebits changed size during repr()");
         return NULL;
     }
 
@@ -1556,14 +1556,14 @@ bitarray_repr(bitarrayobject *self)
 
 
 static void
-reverse_lock_held(bitarrayobject *self)
+reverse_lock_held(pauliebitsobject *self)
 {
     Py_ssize_t p = PADBITS(self);  /* number of pad bits */
     char *buff = self->ob_item;
 
     /* Increase self->nbits to full buffer size.  The p pad bits will
        later be the leading p bits.  To remove those p leading bits, we
-       must have p extra bits at the end of the bitarray. */
+       must have p extra bits at the end of the pauliebits. */
     self->nbits += p;
 
     /* reverse order of bytes */
@@ -1572,7 +1572,7 @@ reverse_lock_held(bitarrayobject *self)
     /* reverse order of bits within each byte */
     bytereverse(self->ob_item, Py_SIZE(self));
 
-    /* Remove the p pad bits at the end of the original bitarray that
+    /* Remove the p pad bits at the end of the original pauliebits that
        are now the leading p bits.
        The reason why we don't just call delete_n(self, 0, p) here is that
        it calls resize(), and we want to allow reversing an imported
@@ -1582,7 +1582,7 @@ reverse_lock_held(bitarrayobject *self)
 }
 
 static PyObject *
-bitarray_reverse(bitarrayobject *self)
+pauliebits_reverse(pauliebitsobject *self)
 {
     RAISE_IF_READONLY(self, NULL);
     Py_BEGIN_CRITICAL_SECTION(self);
@@ -1594,11 +1594,11 @@ bitarray_reverse(bitarrayobject *self)
 PyDoc_STRVAR(reverse_doc,
 "reverse()\n\
 \n\
-Reverse all bits in bitarray (in-place).");
+Reverse all bits in pauliebits (in-place).");
 
 
 static PyObject *
-bitarray_setall(bitarrayobject *self, PyObject *value)
+pauliebits_setall(pauliebitsobject *self, PyObject *value)
 {
     int vi;
 
@@ -1616,12 +1616,12 @@ bitarray_setall(bitarrayobject *self, PyObject *value)
 PyDoc_STRVAR(setall_doc,
 "setall(value, /)\n\
 \n\
-Set all elements in bitarray to `value`.\n\
+Set all elements in pauliebits to `value`.\n\
 Note that `a.setall(value)` is equivalent to `a[:] = value`.");
 
 
 static void
-sort_lock_held(bitarrayobject *self, int reverse)
+sort_lock_held(pauliebitsobject *self, int reverse)
 {
     Py_ssize_t nbits = self->nbits, cnt1;
 
@@ -1638,7 +1638,7 @@ sort_lock_held(bitarrayobject *self, int reverse)
 }
 
 static PyObject *
-bitarray_sort(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_sort(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"reverse", NULL};
     int reverse = 0;
@@ -1656,17 +1656,17 @@ bitarray_sort(bitarrayobject *self, PyObject *args, PyObject *kwds)
 PyDoc_STRVAR(sort_doc,
 "sort(reverse=False)\n\
 \n\
-Sort all bits in bitarray (in-place).");
+Sort all bits in pauliebits (in-place).");
 
 
 static PyObject *
-bitarray_tolist(bitarrayobject *self)
+pauliebits_tolist(pauliebitsobject *self)
 {
     PyObject *zero = Py_GetConstant(Py_CONSTANT_ZERO);
     PyObject *one = Py_GetConstant(Py_CONSTANT_ONE);
     PyObject *list;
     Py_ssize_t nbits, i;
-    int err = 1;  /* bitarray changed size */
+    int err = 1;  /* pauliebits changed size */
 
     if (zero == NULL || one == NULL)
         goto error;
@@ -1693,7 +1693,7 @@ bitarray_tolist(bitarrayobject *self)
     if (err) {
         Py_DECREF(list);
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during .tolist()");
+                        "pauliebits changed size during .tolist()");
         return NULL;
     }
     return list;
@@ -1706,12 +1706,12 @@ bitarray_tolist(bitarrayobject *self)
 PyDoc_STRVAR(tolist_doc,
 "tolist() -> list\n\
 \n\
-Return bitarray as list of integers.\n\
+Return pauliebits as list of integers.\n\
 `a.tolist()` equals `list(a)`.");
 
 
 static int
-frombytes_lock_held(bitarrayobject *self, const Py_buffer *view)
+frombytes_lock_held(pauliebitsobject *self, const Py_buffer *view)
 {
     Py_ssize_t n = Py_SIZE(self);  /* nbytes before extending */
     Py_ssize_t p = PADBITS(self);  /* number of pad bits */
@@ -1727,7 +1727,7 @@ frombytes_lock_held(bitarrayobject *self, const Py_buffer *view)
 }
 
 static PyObject *
-bitarray_frombytes(bitarrayobject *self, PyObject *buffer)
+pauliebits_frombytes(pauliebitsobject *self, PyObject *buffer)
 {
     Py_buffer view;
     int ret;
@@ -1749,12 +1749,12 @@ bitarray_frombytes(bitarrayobject *self, PyObject *buffer)
 PyDoc_STRVAR(frombytes_doc,
 "frombytes(bytes, /)\n\
 \n\
-Extend bitarray with raw bytes from a bytes-like object.\n\
-Each added byte will add eight bits to the bitarray.");
+Extend pauliebits with raw bytes from a bytes-like object.\n\
+Each added byte will add eight bits to the pauliebits.");
 
 
 static PyObject *
-bitarray_tobytes(bitarrayobject *self)
+pauliebits_tobytes(pauliebitsobject *self)
 {
     PyObject *res;
 
@@ -1768,14 +1768,14 @@ bitarray_tobytes(bitarrayobject *self)
 PyDoc_STRVAR(tobytes_doc,
 "tobytes() -> bytes\n\
 \n\
-Return the bitarray buffer (pad bits are set to zero).\n\
+Return the pauliebits buffer (pad bits are set to zero).\n\
 `a.tobytes()` is equivalent to `bytes(a)`");
 
 
 /* Extend self with bytes from f.read(n).  Return number of bytes actually
    read and extended, or -1 on failure (after setting exception). */
 static Py_ssize_t
-extend_fread(bitarrayobject *self, PyObject *f, Py_ssize_t n)
+extend_fread(pauliebitsobject *self, PyObject *f, Py_ssize_t n)
 {
     PyObject *bytes, *ret;
     Py_ssize_t res;             /* result (size or -1) */
@@ -1792,7 +1792,7 @@ extend_fread(bitarrayobject *self, PyObject *f, Py_ssize_t n)
     res = PyBytes_GET_SIZE(bytes);
     assert(0 <= res && res <= n);
 
-    ret = bitarray_frombytes(self, bytes);
+    ret = pauliebits_frombytes(self, bytes);
     Py_DECREF(bytes);
     if (ret == NULL)
         return -1;
@@ -1802,7 +1802,7 @@ extend_fread(bitarrayobject *self, PyObject *f, Py_ssize_t n)
 }
 
 static PyObject *
-bitarray_fromfile(bitarrayobject *self, PyObject *args)
+pauliebits_fromfile(pauliebitsobject *self, PyObject *args)
 {
     PyObject *f;
     Py_ssize_t nread = 0, n = -1;
@@ -1837,16 +1837,16 @@ bitarray_fromfile(bitarrayobject *self, PyObject *args)
 PyDoc_STRVAR(fromfile_doc,
 "fromfile(f, n=-1, /)\n\
 \n\
-Extend bitarray with up to `n` bytes read from file object `f` (or any\n\
+Extend pauliebits with up to `n` bytes read from file object `f` (or any\n\
 other binary stream that supports a `.read()` method, e.g. `io.BytesIO`).\n\
-Each read byte will add eight bits to the bitarray.  When `n` is omitted\n\
+Each read byte will add eight bits to the pauliebits.  When `n` is omitted\n\
 or negative, reads and extends all data until EOF.\n\
 When `n` is non-negative but exceeds the available data, `EOFError` is\n\
 raised.  However, the available data is still read and extended.");
 
 
 static PyObject *
-bitarray_tofile(bitarrayobject *self, PyObject *f)
+pauliebits_tofile(pauliebitsobject *self, PyObject *f)
 {
     Py_ssize_t nbits, nbytes, offset;
 
@@ -1878,7 +1878,7 @@ bitarray_tofile(bitarrayobject *self, PyObject *f)
         if (err) {
             Py_DECREF(block);
             PyErr_SetString(PyExc_RuntimeError,
-                            "bitarray changed size during .tofile()");
+                            "pauliebits changed size during .tofile()");
             return NULL;
         }
 
@@ -1895,11 +1895,11 @@ bitarray_tofile(bitarrayobject *self, PyObject *f)
 PyDoc_STRVAR(tofile_doc,
 "tofile(f, /)\n\
 \n\
-Write bitarray buffer to file object `f`.");
+Write pauliebits buffer to file object `f`.");
 
 
 static PyObject *
-bitarray_to01(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_to01(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"group", "sep", NULL};
     size_t strsize, j, nsep;
@@ -1946,7 +1946,7 @@ bitarray_to01(bitarrayobject *self, PyObject *args, PyObject *kwds)
     if (err) {
         PyMem_Free((void *) str);
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during .to01()");
+                        "pauliebits changed size during .to01()");
         return NULL;
     }
 
@@ -1958,14 +1958,14 @@ bitarray_to01(bitarrayobject *self, PyObject *args, PyObject *kwds)
 PyDoc_STRVAR(to01_doc,
 "to01(group=0, sep=' ') -> str\n\
 \n\
-Return bitarray as (Unicode) string of `0`s and `1`s.\n\
+Return pauliebits as (Unicode) string of `0`s and `1`s.\n\
 The bits are grouped into `group` bits (default is no grouping).\n\
 When grouped, the string `sep` is inserted between groups\n\
 of `group` characters, default is a space.");
 
 
 static PyObject *
-bitarray_unpack(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_unpack(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"zero", "one", NULL};
     PyObject *res;
@@ -1997,7 +1997,7 @@ bitarray_unpack(bitarrayobject *self, PyObject *args, PyObject *kwds)
     if (err) {
         Py_DECREF(res);
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during .unpack()");
+                        "pauliebits changed size during .unpack()");
         return NULL;
     }
     return res;
@@ -2006,12 +2006,12 @@ bitarray_unpack(bitarrayobject *self, PyObject *args, PyObject *kwds)
 PyDoc_STRVAR(unpack_doc,
 "unpack(zero=b'\\x00', one=b'\\x01') -> bytes\n\
 \n\
-Return bytes that contain one byte for each bit in the bitarray,\n\
+Return bytes that contain one byte for each bit in the pauliebits,\n\
 using the specified mapping.");
 
 
 static PyObject *
-bitarray_pack(bitarrayobject *self, PyObject *buffer)
+pauliebits_pack(pauliebitsobject *self, PyObject *buffer)
 {
     Py_ssize_t nbits, i;
     Py_buffer view;
@@ -2039,21 +2039,21 @@ bitarray_pack(bitarrayobject *self, PyObject *buffer)
 PyDoc_STRVAR(pack_doc,
 "pack(bytes, /)\n\
 \n\
-Extend bitarray from a bytes-like object, where each byte corresponds\n\
+Extend pauliebits from a bytes-like object, where each byte corresponds\n\
 to a single bit.  The byte `b'\\x00'` maps to bit 0 and all other bytes\n\
 map to bit 1.");
 
 
 /* Pop and return bit 0 or 1 while self is locked; return -1 on error. */
 static int
-pop_lock_held(bitarrayobject *self, Py_ssize_t i)
+pop_lock_held(pauliebitsobject *self, Py_ssize_t i)
 {
     Py_ssize_t n = self->nbits;
     int vi;
 
     if (n == 0) {
         /* special case -- most common failure cause */
-        PyErr_SetString(PyExc_IndexError, "pop from empty bitarray");
+        PyErr_SetString(PyExc_IndexError, "pop from empty pauliebits");
         return -1;
     }
 
@@ -2073,7 +2073,7 @@ pop_lock_held(bitarrayobject *self, Py_ssize_t i)
 }
 
 static PyObject *
-bitarray_pop(bitarrayobject *self, PyObject *args)
+pauliebits_pop(pauliebitsobject *self, PyObject *args)
 {
     Py_ssize_t i = -1;
     int vi;
@@ -2097,7 +2097,7 @@ Raises `IndexError` if index is out of range.");
 
 
 static PyObject *
-bitarray_remove(bitarrayobject *self, PyObject *value)
+pauliebits_remove(pauliebitsobject *self, PyObject *value)
 {
     Py_ssize_t i;
     int ret = -1, vi;
@@ -2109,7 +2109,7 @@ bitarray_remove(bitarrayobject *self, PyObject *value)
     Py_BEGIN_CRITICAL_SECTION(self);
     i = find_bit(self, vi, 0, self->nbits, 0);
     if (i < 0) {
-        PyErr_Format(PyExc_ValueError, "%d not in bitarray", vi);
+        PyErr_Format(PyExc_ValueError, "%d not in pauliebits", vi);
     }
     else {
         ret = delete_n(self, i, 1);
@@ -2129,7 +2129,7 @@ Raises `ValueError` if value is not present.");
 
 
 static void
-rotate_lock_held(bitarrayobject *self, bitarrayobject *tmp, Py_ssize_t k)
+rotate_lock_held(pauliebitsobject *self, pauliebitsobject *tmp, Py_ssize_t k)
 {
     Py_ssize_t n = self->nbits;
 
@@ -2151,9 +2151,9 @@ rotate_lock_held(bitarrayobject *self, bitarrayobject *tmp, Py_ssize_t k)
 }
 
 static PyObject *
-bitarray_rotate(bitarrayobject *self, PyObject *args)
+pauliebits_rotate(pauliebitsobject *self, PyObject *args)
 {
-    bitarrayobject *tmp;
+    pauliebitsobject *tmp;
     Py_ssize_t n, k = 1;
     int err = 1;
 
@@ -2176,8 +2176,8 @@ bitarray_rotate(bitarrayobject *self, PyObject *args)
 
     assert(0 < k && k < n);
 
-    /* temporary bitarray to store head or tail (whichever is smaller) */
-    tmp = newbitarrayobject(&Bitarray_Type, Py_MIN(k, n - k), self->endian);
+    /* temporary pauliebits to store head or tail (whichever is smaller) */
+    tmp = newpauliebitsobject(&Pauliebits_Type, Py_MIN(k, n - k), self->endian);
     if (tmp == NULL)
         return NULL;
 
@@ -2191,7 +2191,7 @@ bitarray_rotate(bitarrayobject *self, PyObject *args)
 
     if (err) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during .rotate()");
+                        "pauliebits changed size during .rotate()");
         return NULL;
     }
     Py_RETURN_NONE;
@@ -2200,36 +2200,36 @@ bitarray_rotate(bitarrayobject *self, PyObject *args)
 PyDoc_STRVAR(rotate_doc,
 "rotate(k=1, /)\n\
 \n\
-Rotate bitarray in-place by `k` positions.\n\
+Rotate pauliebits in-place by `k` positions.\n\
 Positive `k` rotates right, negative `k` rotates left.");
 
 
 static PyObject *
-bitarray_sizeof(bitarrayobject *self)
+pauliebits_sizeof(pauliebitsobject *self)
 {
     Py_ssize_t res;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = sizeof(bitarrayobject) + self->allocated;
+    res = sizeof(pauliebitsobject) + self->allocated;
     if (self->buffer)
         res += sizeof(Py_buffer);
     Py_END_CRITICAL_SECTION();
     return PyLong_FromSsize_t(res);
 }
 
-PyDoc_STRVAR(sizeof_doc, "Return size of bitarray object in bytes.");
+PyDoc_STRVAR(sizeof_doc, "Return size of pauliebits object in bytes.");
 
 
-/* private method - called only when frozenbitarray is initialized to
+/* private method - called only when frozenpauliebits is initialized to
    disallow memoryviews to change the buffer */
 static PyObject *
-bitarray_freeze(bitarrayobject *self)
+pauliebits_freeze(pauliebitsobject *self)
 {
     if (self->buffer) {
         assert(self->buffer->readonly == self->readonly);
         if (self->readonly == 0) {
             PyErr_SetString(PyExc_TypeError, "cannot import writable "
-                            "buffer into frozenbitarray");
+                            "buffer into frozenpauliebits");
             return NULL;
         }
     }
@@ -2238,12 +2238,12 @@ bitarray_freeze(bitarrayobject *self)
     Py_RETURN_NONE;
 }
 
-/* -------- bitarray methods exposed in debug mode for testing ---------- */
+/* -------- pauliebits methods exposed in debug mode for testing ---------- */
 
 #ifndef NDEBUG
 
 static PyObject *
-bitarray_shift_r8(bitarrayobject *self, PyObject *args)
+pauliebits_shift_r8(pauliebitsobject *self, PyObject *args)
 {
     Py_ssize_t a, b;
     int n;
@@ -2258,29 +2258,29 @@ bitarray_shift_r8(bitarrayobject *self, PyObject *args)
 }
 
 static PyObject *
-bitarray_copy_n(bitarrayobject *self, PyObject *args)
+pauliebits_copy_n(pauliebitsobject *self, PyObject *args)
 {
     PyObject *other;
     Py_ssize_t a, b, n;
 
-    if (!PyArg_ParseTuple(args, "nO!nn", &a, &Bitarray_Type, &other, &b, &n))
+    if (!PyArg_ParseTuple(args, "nO!nn", &a, &Pauliebits_Type, &other, &b, &n))
         return NULL;
 
     Py_BEGIN_CRITICAL_SECTION2(self, other);
-    copy_n(self, a, (bitarrayobject *) other, b, n);
+    copy_n(self, a, (pauliebitsobject *) other, b, n);
     Py_END_CRITICAL_SECTION2();
     Py_RETURN_NONE;
 }
 
 static PyObject *
-bitarray_overlap(bitarrayobject *self, PyObject *other)
+pauliebits_overlap(pauliebitsobject *self, PyObject *other)
 {
     int res;
 
-    assert(bitarray_Check(other));
+    assert(pauliebits_Check(other));
 
     Py_BEGIN_CRITICAL_SECTION2(self, other);
-    res = buffers_overlap(self, (bitarrayobject *) other);
+    res = buffers_overlap(self, (pauliebitsobject *) other);
     Py_END_CRITICAL_SECTION2();
 
     return PyBool_FromLong(res);
@@ -2288,68 +2288,68 @@ bitarray_overlap(bitarrayobject *self, PyObject *other)
 
 #endif  /* NDEBUG */
 
-/* ---------------------- bitarray getset members ---------------------- */
+/* ---------------------- pauliebits getset members ---------------------- */
 
 static PyObject *
-bitarray_get_endian(bitarrayobject *self, void *Py_UNUSED(ignored))
+pauliebits_get_endian(pauliebitsobject *self, void *Py_UNUSED(ignored))
 {
     return PyUnicode_FromString(ENDIAN_STR(self->endian));
 }
 
 static PyObject *
-bitarray_get_nbytes(bitarrayobject *self, void *Py_UNUSED(ignored))
+pauliebits_get_nbytes(pauliebitsobject *self, void *Py_UNUSED(ignored))
 {
     return PyLong_FromSsize_t(Py_SIZE(self));
 }
 
 static PyObject *
-bitarray_get_padbits(bitarrayobject *self, void *Py_UNUSED(ignored))
+pauliebits_get_padbits(pauliebitsobject *self, void *Py_UNUSED(ignored))
 {
     return PyLong_FromSsize_t(PADBITS(self));
 }
 
 static PyObject *
-bitarray_get_readonly(bitarrayobject *self, void *Py_UNUSED(ignored))
+pauliebits_get_readonly(pauliebitsobject *self, void *Py_UNUSED(ignored))
 {
     return PyBool_FromLong(self->readonly);
 }
 
-static PyGetSetDef bitarray_getsets[] = {
-    {"endian", (getter) bitarray_get_endian, NULL,
+static PyGetSetDef pauliebits_getsets[] = {
+    {"endian", (getter) pauliebits_get_endian, NULL,
      PyDoc_STR("bit-endianness as Unicode string")},
-    {"nbytes", (getter) bitarray_get_nbytes, NULL,
+    {"nbytes", (getter) pauliebits_get_nbytes, NULL,
      PyDoc_STR("buffer size in bytes")},
-    {"padbits", (getter) bitarray_get_padbits, NULL,
+    {"padbits", (getter) pauliebits_get_padbits, NULL,
      PyDoc_STR("number of pad bits")},
-    {"readonly", (getter) bitarray_get_readonly, NULL,
+    {"readonly", (getter) pauliebits_get_readonly, NULL,
      PyDoc_STR("bool indicating whether buffer is read-only")},
     {NULL, NULL, NULL, NULL}
 };
 
-/* ----------------------- bitarray_as_sequence ------------------------ */
+/* ----------------------- pauliebits_as_sequence ------------------------ */
 
 static Py_ssize_t
-bitarray_len(bitarrayobject *self)
+pauliebits_len(pauliebitsobject *self)
 {
     return self->nbits;
 }
 
 static PyObject *
-bitarray_concat(bitarrayobject *self, PyObject *other)
+pauliebits_concat(pauliebitsobject *self, PyObject *other)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     int ret;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_cp(self);
+    res = pauliebits_cp(self);
     Py_END_CRITICAL_SECTION();
 
     if (res == NULL)
         return NULL;
 
-    if (bitarray_Check(other)) {
+    if (pauliebits_Check(other)) {
         Py_BEGIN_CRITICAL_SECTION(other);
-        ret = extend_bitarray(res, (bitarrayobject *) other);
+        ret = extend_pauliebits(res, (pauliebitsobject *) other);
         Py_END_CRITICAL_SECTION();
     }
     else {
@@ -2364,12 +2364,12 @@ bitarray_concat(bitarrayobject *self, PyObject *other)
 }
 
 static PyObject *
-bitarray_repeat(bitarrayobject *self, Py_ssize_t n)
+pauliebits_repeat(pauliebitsobject *self, Py_ssize_t n)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_cp(self);
+    res = pauliebits_cp(self);
     Py_END_CRITICAL_SECTION();
 
     if (res == NULL)
@@ -2383,22 +2383,22 @@ bitarray_repeat(bitarrayobject *self, Py_ssize_t n)
 }
 
 static PyObject *
-bitarray_item_lock_held(bitarrayobject *self, Py_ssize_t i)
+pauliebits_item_lock_held(pauliebitsobject *self, Py_ssize_t i)
 {
     if (i < 0 || i >= self->nbits) {
-        PyErr_SetString(PyExc_IndexError, "bitarray index out of range");
+        PyErr_SetString(PyExc_IndexError, "pauliebits index out of range");
         return NULL;
     }
     return PyLong_FromLong(getbit(self, i));
 }
 
 static PyObject *
-bitarray_item(bitarrayobject *self, Py_ssize_t i)
+pauliebits_item(pauliebitsobject *self, Py_ssize_t i)
 {
     PyObject *res;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_item_lock_held(self, i);
+    res = pauliebits_item_lock_held(self, i);
     Py_END_CRITICAL_SECTION();
 
     return res;
@@ -2406,11 +2406,11 @@ bitarray_item(bitarrayobject *self, Py_ssize_t i)
 
 /* vi is 0 or 1 for assignment, and 2 for deletion. */
 static int
-bitarray_ass_item_lock_held(bitarrayobject *self, Py_ssize_t i, int vi)
+pauliebits_ass_item_lock_held(pauliebitsobject *self, Py_ssize_t i, int vi)
 {
     if (i < 0 || i >= self->nbits) {
         PyErr_SetString(PyExc_IndexError,
-                        "bitarray assignment index out of range");
+                        "pauliebits assignment index out of range");
         return -1;
     }
 
@@ -2423,7 +2423,7 @@ bitarray_ass_item_lock_held(bitarrayobject *self, Py_ssize_t i, int vi)
 }
 
 static int
-bitarray_ass_item(bitarrayobject *self, Py_ssize_t i, PyObject *value)
+pauliebits_ass_item(pauliebitsobject *self, Py_ssize_t i, PyObject *value)
 {
     int vi, res;
 
@@ -2435,16 +2435,16 @@ bitarray_ass_item(bitarrayobject *self, Py_ssize_t i, PyObject *value)
         vi = 2;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_ass_item_lock_held(self, i, vi);
+    res = pauliebits_ass_item_lock_held(self, i, vi);
     Py_END_CRITICAL_SECTION();
 
     return res;
 }
 
-/* return 1 if value (which can be an int or bitarray) is in self,
+/* return 1 if value (which can be an int or pauliebits) is in self,
    0 otherwise, and -1 on error */
 static int
-bitarray_contains(bitarrayobject *self, PyObject *value)
+pauliebits_contains(pauliebitsobject *self, PyObject *value)
 {
     Py_ssize_t pos;
 
@@ -2458,13 +2458,13 @@ bitarray_contains(bitarrayobject *self, PyObject *value)
         pos = find_bit(self, vi, 0, self->nbits, 0);
         Py_END_CRITICAL_SECTION();
     }
-    else if (bitarray_Check(value)) {
+    else if (pauliebits_Check(value)) {
         Py_BEGIN_CRITICAL_SECTION2(self, value);
-        pos = find_sub(self, (bitarrayobject *) value, 0, self->nbits, 0);
+        pos = find_sub(self, (pauliebitsobject *) value, 0, self->nbits, 0);
         Py_END_CRITICAL_SECTION2();
     }
     else {
-        PyErr_Format(PyExc_TypeError, "sub_bitarray must be bitarray or "
+        PyErr_Format(PyExc_TypeError, "sub_pauliebits must be pauliebits or "
                      "int, not '%s'", Py_TYPE(value)->tp_name);
         return -1;
     }
@@ -2472,7 +2472,7 @@ bitarray_contains(bitarrayobject *self, PyObject *value)
 }
 
 static PyObject *
-bitarray_inplace_concat(bitarrayobject *self, PyObject *other)
+pauliebits_inplace_concat(pauliebitsobject *self, PyObject *other)
 {
     RAISE_IF_READONLY(self, NULL);
     if (extend_thread_safe(self, other) < 0)
@@ -2482,7 +2482,7 @@ bitarray_inplace_concat(bitarrayobject *self, PyObject *other)
 }
 
 static PyObject *
-bitarray_inplace_repeat(bitarrayobject *self, Py_ssize_t n)
+pauliebits_inplace_repeat(pauliebitsobject *self, Py_ssize_t n)
 {
     int ret;
 
@@ -2497,29 +2497,29 @@ bitarray_inplace_repeat(bitarrayobject *self, Py_ssize_t n)
     return (PyObject *) self;
 }
 
-static PySequenceMethods bitarray_as_sequence = {
-    (lenfunc) bitarray_len,                     /* sq_length */
-    (binaryfunc) bitarray_concat,               /* sq_concat */
-    (ssizeargfunc) bitarray_repeat,             /* sq_repeat */
-    (ssizeargfunc) bitarray_item,               /* sq_item */
+static PySequenceMethods pauliebits_as_sequence = {
+    (lenfunc) pauliebits_len,                     /* sq_length */
+    (binaryfunc) pauliebits_concat,               /* sq_concat */
+    (ssizeargfunc) pauliebits_repeat,             /* sq_repeat */
+    (ssizeargfunc) pauliebits_item,               /* sq_item */
     0,                                          /* sq_slice */
-    (ssizeobjargproc) bitarray_ass_item,        /* sq_ass_item */
+    (ssizeobjargproc) pauliebits_ass_item,        /* sq_ass_item */
     0,                                          /* sq_ass_slice */
-    (objobjproc) bitarray_contains,             /* sq_contains */
-    (binaryfunc) bitarray_inplace_concat,       /* sq_inplace_concat */
-    (ssizeargfunc) bitarray_inplace_repeat,     /* sq_inplace_repeat */
+    (objobjproc) pauliebits_contains,             /* sq_contains */
+    (binaryfunc) pauliebits_inplace_concat,       /* sq_inplace_concat */
+    (ssizeargfunc) pauliebits_inplace_repeat,     /* sq_inplace_repeat */
 };
 
-/* ----------------------- bitarray_as_mapping ------------------------- */
+/* ----------------------- pauliebits_as_mapping ------------------------- */
 
-/* return new bitarray with item in self, specified by slice indices */
+/* return new pauliebits with item in self, specified by slice indices */
 static PyObject *
-getslice_indices_lock_held(bitarrayobject *self, Py_ssize_t start,
+getslice_indices_lock_held(pauliebitsobject *self, Py_ssize_t start,
                            Py_ssize_t step, Py_ssize_t slicelength)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
 
-    res = newbitarrayobject(Py_TYPE(self), slicelength, self->endian);
+    res = newpauliebitsobject(Py_TYPE(self), slicelength, self->endian);
     if (res == NULL)
         return NULL;
 
@@ -2535,9 +2535,9 @@ getslice_indices_lock_held(bitarrayobject *self, Py_ssize_t start,
     return freeze_if_frozen(res);
 }
 
-/* return new bitarray with item in self, specified by slice */
+/* return new pauliebits with item in self, specified by slice */
 static PyObject *
-getslice(bitarrayobject *self, PyObject *slice)
+getslice(pauliebitsobject *self, PyObject *slice)
 {
     PyObject *res;
     Py_ssize_t start, stop, step, slicelength;
@@ -2555,10 +2555,10 @@ getslice(bitarrayobject *self, PyObject *slice)
 }
 
 static int
-ensure_mask_size(bitarrayobject *self, bitarrayobject *mask)
+ensure_mask_size(pauliebitsobject *self, pauliebitsobject *mask)
 {
     if (self->nbits != mask->nbits) {
-        PyErr_Format(PyExc_IndexError, "bitarray length is %zd, but "
+        PyErr_Format(PyExc_IndexError, "pauliebits length is %zd, but "
                      "mask has length %zd", self->nbits, mask->nbits);
         return -1;
     }
@@ -2566,16 +2566,16 @@ ensure_mask_size(bitarrayobject *self, bitarrayobject *mask)
 }
 
 static PyObject *
-getmask_lock_held(bitarrayobject *self, bitarrayobject *mask)
+getmask_lock_held(pauliebitsobject *self, pauliebitsobject *mask)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     Py_ssize_t n, i, j;
 
     if (ensure_mask_size(self, mask) < 0)
         return NULL;
 
     n = count_span(mask, 0, mask->nbits);
-    res = newbitarrayobject(Py_TYPE(self), n, self->endian);
+    res = newpauliebitsobject(Py_TYPE(self), n, self->endian);
     if (res == NULL)
         return NULL;
 
@@ -2587,9 +2587,9 @@ getmask_lock_held(bitarrayobject *self, bitarrayobject *mask)
     return (PyObject *) res;
 }
 
-/* return a new bitarray with items from 'self' masked by bitarray 'mask' */
+/* return a new pauliebits with items from 'self' masked by pauliebits 'mask' */
 static PyObject *
-getmask(bitarrayobject *self, bitarrayobject *mask)
+getmask(pauliebitsobject *self, pauliebitsobject *mask)
 {
     PyObject *res = NULL;
 
@@ -2599,7 +2599,7 @@ getmask(bitarrayobject *self, bitarrayobject *mask)
 
     if (res == NULL)
         return NULL;
-    return freeze_if_frozen((bitarrayobject *) res);
+    return freeze_if_frozen((pauliebitsobject *) res);
 }
 
 /* Return j-th item from sequence.  The item is considered an index into
@@ -2622,7 +2622,7 @@ index_from_seq(PyObject *sequence, Py_ssize_t j, Py_ssize_t length)
     if (i < 0)
         i += length;
     if (i < 0 || i >= length) {
-        PyErr_SetString(PyExc_IndexError, "bitarray index out of range");
+        PyErr_SetString(PyExc_IndexError, "pauliebits index out of range");
         return -1;
     }
     return i;
@@ -2667,12 +2667,12 @@ sequence_as_array(PyObject *seq, Py_ssize_t length,
     return 0;
 }
 
-/* return a new bitarray with items from 'self' listed by
+/* return a new pauliebits with items from 'self' listed by
    sequence (of indices) 'seq' */
 static PyObject *
-getsequence(bitarrayobject *self, PyObject *seq)
+getsequence(pauliebitsobject *self, PyObject *seq)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     Py_ssize_t *indices = NULL;
     Py_ssize_t nbits, n, j;
     int err = 1;
@@ -2684,7 +2684,7 @@ getsequence(bitarrayobject *self, PyObject *seq)
     if (sequence_as_array(seq, nbits, &indices, &n) < 0)
         return NULL;
 
-    res = newbitarrayobject(Py_TYPE(self), n, self->endian);
+    res = newpauliebitsobject(Py_TYPE(self), n, self->endian);
     if (res == NULL)
         goto error;
 
@@ -2701,7 +2701,7 @@ getsequence(bitarrayobject *self, PyObject *seq)
     if (err) {
         Py_DECREF(res);
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during sequence indexing");
+                        "pauliebits changed size during sequence indexing");
         return NULL;
     }
     return freeze_if_frozen(res);
@@ -2721,14 +2721,14 @@ subscr_seq_check(PyObject *item)
     if (PySequence_Check(item))
         return 0;
 
-    PyErr_Format(PyExc_TypeError, "bitarray subscript must be an index, "
+    PyErr_Format(PyExc_TypeError, "pauliebits subscript must be an index, "
                  "slice or sequence, not '%s'",
                  Py_TYPE(item)->tp_name);
     return -1;
 }
 
 static PyObject *
-bitarray_subscr(bitarrayobject *self, PyObject *item)
+pauliebits_subscr(pauliebitsobject *self, PyObject *item)
 {
     if (PyIndex_Check(item)) {
         PyObject *res;
@@ -2741,7 +2741,7 @@ bitarray_subscr(bitarrayobject *self, PyObject *item)
         Py_BEGIN_CRITICAL_SECTION(self);
         if (i < 0)
             i += self->nbits;
-        res = bitarray_item_lock_held(self, i);
+        res = pauliebits_item_lock_held(self, i);
         Py_END_CRITICAL_SECTION();
 
         return res;
@@ -2750,8 +2750,8 @@ bitarray_subscr(bitarrayobject *self, PyObject *item)
     if (PySlice_Check(item))
         return getslice(self, item);
 
-    if (bitarray_Check(item))
-        return getmask(self, (bitarrayobject *) item);
+    if (pauliebits_Check(item))
+        return getmask(self, (pauliebitsobject *) item);
 
     if (subscr_seq_check(item) < 0)
         return NULL;
@@ -2762,7 +2762,7 @@ bitarray_subscr(bitarrayobject *self, PyObject *item)
 /* The following functions are called from assign_slice(). */
 
 static int
-setslice_lock_held(bitarrayobject *self, bitarrayobject *other,
+setslice_lock_held(pauliebitsobject *self, pauliebitsobject *other,
                    Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step)
 {
     Py_ssize_t slicelength, increase;
@@ -2799,13 +2799,13 @@ setslice_lock_held(bitarrayobject *self, bitarrayobject *other,
     return 0;
 }
 
-/* set items in self, specified by slice, to other bitarray */
+/* set items in self, specified by slice, to other pauliebits */
 static int
-setslice_bitarray(bitarrayobject *self, PyObject *slice,
-                  bitarrayobject *other)
+setslice_pauliebits(pauliebitsobject *self, PyObject *slice,
+                  pauliebitsobject *other)
 {
-    bitarrayobject *copy = NULL;
-    bitarrayobject *src = other;
+    pauliebitsobject *copy = NULL;
+    pauliebitsobject *src = other;
     Py_ssize_t start, stop, step;
     int res;
 
@@ -2816,13 +2816,13 @@ setslice_bitarray(bitarrayobject *self, PyObject *slice,
     Py_BEGIN_CRITICAL_SECTION2(self, other);
     /* Make a copy of other, in case the buffers overlap.  This is obviously
        the case when self and other are the same object, but can also happen
-       when the two bitarrays share memory. */
+       when the two pauliebitss share memory. */
     if (buffers_overlap(self, other)) {
-        copy = bitarray_cp(other);
+        copy = pauliebits_cp(other);
         src = copy;
     }
     if (src == NULL)
-        res = -1;  /* bitarray_cp() failed */
+        res = -1;  /* pauliebits_cp() failed */
     else
         res = setslice_lock_held(self, src, start, stop, step);
     Py_END_CRITICAL_SECTION2();
@@ -2833,7 +2833,7 @@ setslice_bitarray(bitarrayobject *self, PyObject *slice,
 
 /* set items in self, specified by slice, to value */
 static int
-setslice_bool(bitarrayobject *self, PyObject *slice, PyObject *value)
+setslice_bool(pauliebitsobject *self, PyObject *slice, PyObject *value)
 {
     Py_ssize_t start, stop, step, slicelength;
     int vi;
@@ -2854,7 +2854,7 @@ setslice_bool(bitarrayobject *self, PyObject *slice, PyObject *value)
 }
 
 static int
-delslice_lock_held(bitarrayobject *self,
+delslice_lock_held(pauliebitsobject *self,
                    Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step)
 {
     Py_ssize_t slicelength;
@@ -2886,7 +2886,7 @@ delslice_lock_held(bitarrayobject *self,
 
 /* delete items in self, specified by slice */
 static int
-delslice(bitarrayobject *self, PyObject *slice)
+delslice(pauliebitsobject *self, PyObject *slice)
 {
     Py_ssize_t start, stop, step;
     int ret;
@@ -2900,30 +2900,30 @@ delslice(bitarrayobject *self, PyObject *slice)
     return ret;
 }
 
-/* assign slice of bitarray self to value */
+/* assign slice of pauliebits self to value */
 static int
-assign_slice(bitarrayobject *self, PyObject *slice, PyObject *value)
+assign_slice(pauliebitsobject *self, PyObject *slice, PyObject *value)
 {
     if (value == NULL)
         return delslice(self, slice);
 
-    if (bitarray_Check(value))
-        return setslice_bitarray(self, slice, (bitarrayobject *) value);
+    if (pauliebits_Check(value))
+        return setslice_pauliebits(self, slice, (pauliebitsobject *) value);
 
     if (PyIndex_Check(value))
         return setslice_bool(self, slice, value);
 
-    PyErr_Format(PyExc_TypeError, "bitarray or int expected for slice "
+    PyErr_Format(PyExc_TypeError, "pauliebits or int expected for slice "
                  "assignment, not '%s'", Py_TYPE(value)->tp_name);
     return -1;
 }
 
 /* The following functions are called from assign_mask(). */
 
-/* assign mask of bitarray self to bitarray other */
+/* assign mask of pauliebits self to pauliebits other */
 static int
-setmask_bitarray_lock_held(bitarrayobject *self, bitarrayobject *mask,
-                           bitarrayobject *other)
+setmask_pauliebits_lock_held(pauliebitsobject *self, pauliebitsobject *mask,
+                           pauliebitsobject *other)
 {
     Py_ssize_t n, i, j;
 
@@ -2932,7 +2932,7 @@ setmask_bitarray_lock_held(bitarrayobject *self, bitarrayobject *mask,
     n = count_span(mask, 0, mask->nbits);  /* mask size */
     if (n != other->nbits) {
         PyErr_Format(PyExc_IndexError, "attempt to assign mask of size %zd "
-                     "to bitarray of size %zd", n, other->nbits);
+                     "to pauliebits of size %zd", n, other->nbits);
         return -1;
     }
 
@@ -2945,19 +2945,19 @@ setmask_bitarray_lock_held(bitarrayobject *self, bitarrayobject *mask,
 }
 
 static int
-setmask_bitarray(bitarrayobject *self, bitarrayobject *mask,
-                 bitarrayobject *other)
+setmask_pauliebits(pauliebitsobject *self, pauliebitsobject *mask,
+                 pauliebitsobject *other)
 {
-    bitarrayobject *src;
+    pauliebitsobject *src;
     int res = -1;
 
 #ifdef Py_GIL_DISABLED
     /* copy other so the operation below only needs to lock self and mask */
     Py_BEGIN_CRITICAL_SECTION(other);
-    src = bitarray_cp(other);
+    src = pauliebits_cp(other);
     Py_END_CRITICAL_SECTION();
 #else
-    src = (bitarrayobject *) Py_NewRef(other);
+    src = (pauliebitsobject *) Py_NewRef(other);
 #endif
 
     if (src == NULL)
@@ -2965,16 +2965,16 @@ setmask_bitarray(bitarrayobject *self, bitarrayobject *mask,
 
     Py_BEGIN_CRITICAL_SECTION2(self, mask);
     if (ensure_mask_size(self, mask) == 0)
-        res = setmask_bitarray_lock_held(self, mask, src);
+        res = setmask_pauliebits_lock_held(self, mask, src);
     Py_END_CRITICAL_SECTION2();
 
     Py_DECREF(src);
     return res;
 }
 
-/* assign mask of bitarray self to boolean value */
+/* assign mask of pauliebits self to boolean value */
 static int
-setmask_bool(bitarrayobject *self, bitarrayobject *mask, PyObject *value)
+setmask_bool(pauliebitsobject *self, pauliebitsobject *mask, PyObject *value)
 {
     static char *expr[] = {"a &= ~mask",  /* a[mask] = 0 */
                            "a |= mask"};  /* a[mask] = 1 */
@@ -2991,7 +2991,7 @@ setmask_bool(bitarrayobject *self, bitarrayobject *mask, PyObject *value)
 
 /* delete items in self, specified by mask */
 static int
-delmask_lock_held(bitarrayobject *self, bitarrayobject *mask)
+delmask_lock_held(pauliebitsobject *self, pauliebitsobject *mask)
 {
     Py_ssize_t nbits = self->nbits, cnt;
     Py_ssize_t n = 0, i;
@@ -3021,7 +3021,7 @@ delmask_lock_held(bitarrayobject *self, bitarrayobject *mask)
 }
 
 static int
-delmask(bitarrayobject *self, bitarrayobject *mask)
+delmask(pauliebitsobject *self, pauliebitsobject *mask)
 {
     int res = -1;
 
@@ -3033,32 +3033,32 @@ delmask(bitarrayobject *self, bitarrayobject *mask)
     return res;
 }
 
-/* assign mask of bitarray self to value */
+/* assign mask of pauliebits self to value */
 static int
-assign_mask(bitarrayobject *self, bitarrayobject *mask, PyObject *value)
+assign_mask(pauliebitsobject *self, pauliebitsobject *mask, PyObject *value)
 {
     if (value == NULL)
         return delmask(self, mask);
 
-    if (bitarray_Check(value))
-        return setmask_bitarray(self, mask, (bitarrayobject *) value);
+    if (pauliebits_Check(value))
+        return setmask_pauliebits(self, mask, (pauliebitsobject *) value);
 
     if (PyIndex_Check(value))
         return setmask_bool(self, mask, value);
 
-    PyErr_Format(PyExc_TypeError, "bitarray or int expected for mask "
+    PyErr_Format(PyExc_TypeError, "pauliebits or int expected for mask "
                  "assignment, not '%s'", Py_TYPE(value)->tp_name);
     return -1;
 }
 
 /* The following functions are called from assign_sequence(). */
 
-/* assign sequence (of indices) of bitarray self to bitarray */
+/* assign sequence (of indices) of pauliebits self to pauliebits */
 static int
-setseq_bitarray(bitarrayobject *self, PyObject *seq, bitarrayobject *other)
+setseq_pauliebits(pauliebitsobject *self, PyObject *seq, pauliebitsobject *other)
 {
-    bitarrayobject *copy = NULL;
-    bitarrayobject *src = other;
+    pauliebitsobject *copy = NULL;
+    pauliebitsobject *src = other;
     Py_ssize_t *indices = NULL;
     Py_ssize_t nbits, n;
     int res = -1;
@@ -3073,16 +3073,16 @@ setseq_bitarray(bitarrayobject *self, PyObject *seq, bitarrayobject *other)
     Py_BEGIN_CRITICAL_SECTION2(self, other);
     if (n != other->nbits) {
         PyErr_Format(PyExc_ValueError, "attempt to assign sequence of "
-                     "size %zd to bitarray of size %zd", n, other->nbits);
+                     "size %zd to pauliebits of size %zd", n, other->nbits);
     }
     else if (self->nbits != nbits) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during sequence indexing");
+                        "pauliebits changed size during sequence indexing");
     }
     else {
-        /* Make a copy of other, see comment in setslice_bitarray(). */
+        /* Make a copy of other, see comment in setslice_pauliebits(). */
         if (buffers_overlap(self, other)) {
-            copy = bitarray_cp(other);
+            copy = pauliebits_cp(other);
             src = copy;
         }
         if (src) {
@@ -3099,9 +3099,9 @@ setseq_bitarray(bitarrayobject *self, PyObject *seq, bitarrayobject *other)
     return res;
 }
 
-/* assign sequence (of indices) of bitarray self to Boolean value */
+/* assign sequence (of indices) of pauliebits self to Boolean value */
 static int
-setseq_bool(bitarrayobject *self, PyObject *seq, PyObject *value)
+setseq_bool(pauliebitsobject *self, PyObject *seq, PyObject *value)
 {
     Py_ssize_t *indices = NULL;
     Py_ssize_t nbits, n;
@@ -3128,25 +3128,25 @@ setseq_bool(bitarrayobject *self, PyObject *seq, PyObject *value)
 
     if (res < 0)
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during sequence indexing");
+                        "pauliebits changed size during sequence indexing");
 
     PyMem_Free(indices);
     return res;
 }
 
 /* Materialize 'seq' into indices normalized to 'length' as
-   a bitarray of 'length'. */
-static bitarrayobject *
-sequence_as_bitarray(PyObject *seq, Py_ssize_t length)
+   a pauliebits of 'length'. */
+static pauliebitsobject *
+sequence_as_pauliebits(PyObject *seq, Py_ssize_t length)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     Py_ssize_t n, j;
 
     n = PySequence_Size(seq);  /* may execute arbitrary Python code */
     if (n < 0)
         return NULL;
 
-    res = newbitarrayobject(&Bitarray_Type, length, ENDIAN_DEFAULT);
+    res = newpauliebitsobject(&Pauliebits_Type, length, ENDIAN_DEFAULT);
     if (res == NULL)
         return NULL;
 
@@ -3167,17 +3167,17 @@ sequence_as_bitarray(PyObject *seq, Py_ssize_t length)
 
 /* delete items in self, specified by sequence of indices */
 static int
-delsequence(bitarrayobject *self, PyObject *seq)
+delsequence(pauliebitsobject *self, PyObject *seq)
 {
     Py_ssize_t nbits;
-    bitarrayobject *mask;  /* temporary bitarray masking items to remove */
+    pauliebitsobject *mask;  /* temporary pauliebits masking items to remove */
     int res = -1;
 
     Py_BEGIN_CRITICAL_SECTION(self);
     nbits = self->nbits;
     Py_END_CRITICAL_SECTION();
 
-    mask = sequence_as_bitarray(seq, nbits);
+    mask = sequence_as_pauliebits(seq, nbits);
     if (mask == NULL)
         return -1;
 
@@ -3187,7 +3187,7 @@ delsequence(bitarrayobject *self, PyObject *seq)
     }
     else {
         PyErr_SetString(PyExc_RuntimeError,
-                        "bitarray changed size during sequence indexing");
+                        "pauliebits changed size during sequence indexing");
     }
     Py_END_CRITICAL_SECTION();
 
@@ -3195,28 +3195,28 @@ delsequence(bitarrayobject *self, PyObject *seq)
     return res;
 }
 
-/* assign sequence (of indices) of bitarray self to value */
+/* assign sequence (of indices) of pauliebits self to value */
 static int
-assign_sequence(bitarrayobject *self, PyObject *seq, PyObject *value)
+assign_sequence(pauliebitsobject *self, PyObject *seq, PyObject *value)
 {
     assert(PySequence_Check(seq));
 
     if (value == NULL)
         return delsequence(self, seq);
 
-    if (bitarray_Check(value))
-        return setseq_bitarray(self, seq, (bitarrayobject *) value);
+    if (pauliebits_Check(value))
+        return setseq_pauliebits(self, seq, (pauliebitsobject *) value);
 
     if (PyIndex_Check(value))
         return setseq_bool(self, seq, value);
 
-    PyErr_Format(PyExc_TypeError, "bitarray or int expected for sequence "
+    PyErr_Format(PyExc_TypeError, "pauliebits or int expected for sequence "
                  "assignment, not '%s'", Py_TYPE(value)->tp_name);
     return -1;
 }
 
 static int
-bitarray_ass_subscr(bitarrayobject *self, PyObject *item, PyObject *value)
+pauliebits_ass_subscr(pauliebitsobject *self, PyObject *item, PyObject *value)
 {
     RAISE_IF_READONLY(self, -1);
 
@@ -3237,7 +3237,7 @@ bitarray_ass_subscr(bitarrayobject *self, PyObject *item, PyObject *value)
         Py_BEGIN_CRITICAL_SECTION(self);
         if (i < 0)
             i += self->nbits;
-        res = bitarray_ass_item_lock_held(self, i, vi);
+        res = pauliebits_ass_item_lock_held(self, i, vi);
         Py_END_CRITICAL_SECTION();
 
         return res;
@@ -3246,8 +3246,8 @@ bitarray_ass_subscr(bitarrayobject *self, PyObject *item, PyObject *value)
     if (PySlice_Check(item))
         return assign_slice(self, item, value);
 
-    if (bitarray_Check(item))
-        return assign_mask(self, (bitarrayobject *) item, value);
+    if (pauliebits_Check(item))
+        return assign_mask(self, (pauliebitsobject *) item, value);
 
     if (subscr_seq_check(item) < 0)
         return -1;
@@ -3255,21 +3255,21 @@ bitarray_ass_subscr(bitarrayobject *self, PyObject *item, PyObject *value)
     return assign_sequence(self, item, value);
 }
 
-static PyMappingMethods bitarray_as_mapping = {
-    (lenfunc) bitarray_len,
-    (binaryfunc) bitarray_subscr,
-    (objobjargproc) bitarray_ass_subscr,
+static PyMappingMethods pauliebits_as_mapping = {
+    (lenfunc) pauliebits_len,
+    (binaryfunc) pauliebits_subscr,
+    (objobjargproc) pauliebits_ass_subscr,
 };
 
-/* --------------------------- bitarray_as_number ---------------------- */
+/* --------------------------- pauliebits_as_number ---------------------- */
 
 static PyObject *
-bitarray_cpinvert(bitarrayobject *self)
+pauliebits_cpinvert(pauliebitsobject *self)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
 
     Py_BEGIN_CRITICAL_SECTION(self);
-    res = bitarray_cp(self);
+    res = pauliebits_cp(self);
     Py_END_CRITICAL_SECTION();
 
     if (res == NULL)
@@ -3281,7 +3281,7 @@ bitarray_cpinvert(bitarrayobject *self)
 
 /* perform bitwise in-place operation */
 static void
-bitwise(bitarrayobject *self, bitarrayobject *other, const char oper)
+bitwise(pauliebitsobject *self, pauliebitsobject *other, const char oper)
 {
     const Py_ssize_t nbytes = Py_SIZE(self);
     const Py_ssize_t cwords = nbytes / 8;      /* complete 64-bit words */
@@ -3321,25 +3321,25 @@ bitwise(bitarrayobject *self, bitarrayobject *other, const char oper)
     }
 }
 
-/* Return 0 if both a and b are bitarray objects with same length and
+/* Return 0 if both a and b are pauliebits objects with same length and
    bit-endianness.  Otherwise, set exception and return -1. */
 static int
 bitwise_check(PyObject *a, PyObject *b, const char *ostr)
 {
-    if (!bitarray_Check(a) || !bitarray_Check(b)) {
+    if (!pauliebits_Check(a) || !pauliebits_Check(b)) {
         PyErr_Format(PyExc_TypeError,
                      "unsupported operand type(s) for %s: '%s' and '%s'",
                      ostr, Py_TYPE(a)->tp_name, Py_TYPE(b)->tp_name);
         return -1;
     }
-    return ensure_eq_size_endian((bitarrayobject *) a, (bitarrayobject *) b);
+    return ensure_eq_size_endian((pauliebitsobject *) a, (pauliebitsobject *) b);
 }
 
 #define BITWISE_FUNC(name, inplace, ostr)                   \
 static PyObject *                                           \
-bitarray_ ## name (PyObject *self, PyObject *other)         \
+pauliebits_ ## name (PyObject *self, PyObject *other)         \
 {                                                           \
-    bitarrayobject *res = NULL;                             \
+    pauliebitsobject *res = NULL;                             \
                                                             \
     if (inplace)                                            \
         RAISE_IF_READONLY(self, NULL);                      \
@@ -3347,11 +3347,11 @@ bitarray_ ## name (PyObject *self, PyObject *other)         \
     Py_BEGIN_CRITICAL_SECTION2(self, other);                \
     if (bitwise_check(self, other, ostr) == 0) {            \
         res = inplace                                       \
-            ? (bitarrayobject *) Py_NewRef(self)            \
-            : bitarray_cp((bitarrayobject *) self);         \
+            ? (pauliebitsobject *) Py_NewRef(self)            \
+            : pauliebits_cp((pauliebitsobject *) self);         \
                                                             \
         if (res)                                            \
-            bitwise(res, (bitarrayobject *) other, *ostr);  \
+            bitwise(res, (pauliebitsobject *) other, *ostr);  \
     }                                                       \
     Py_END_CRITICAL_SECTION2();                             \
     if (res == NULL)                                        \
@@ -3361,17 +3361,17 @@ bitarray_ ## name (PyObject *self, PyObject *other)         \
     return (PyObject *) res;                                \
 }
 
-BITWISE_FUNC(and,  0, "&")   /* bitarray_and */
-BITWISE_FUNC(or,   0, "|")   /* bitarray_or  */
-BITWISE_FUNC(xor,  0, "^")   /* bitarray_xor */
-BITWISE_FUNC(iand, 1, "&=")  /* bitarray_iand */
-BITWISE_FUNC(ior,  1, "|=")  /* bitarray_ior  */
-BITWISE_FUNC(ixor, 1, "^=")  /* bitarray_ixor */
+BITWISE_FUNC(and,  0, "&")   /* pauliebits_and */
+BITWISE_FUNC(or,   0, "|")   /* pauliebits_or  */
+BITWISE_FUNC(xor,  0, "^")   /* pauliebits_xor */
+BITWISE_FUNC(iand, 1, "&=")  /* pauliebits_iand */
+BITWISE_FUNC(ior,  1, "|=")  /* pauliebits_ior  */
+BITWISE_FUNC(ixor, 1, "^=")  /* pauliebits_ixor */
 
 
-/* shift bitarray n positions to left (right=0) or right (right=1) */
+/* shift pauliebits n positions to left (right=0) or right (right=1) */
 static void
-shift(bitarrayobject *self, Py_ssize_t n, int right)
+shift(pauliebitsobject *self, Py_ssize_t n, int right)
 {
     const Py_ssize_t nbits = self->nbits;
 
@@ -3396,7 +3396,7 @@ shift_check(PyObject *self, PyObject *other, const char *ostr)
 {
     Py_ssize_t n;
 
-    if (!bitarray_Check(self) || !PyIndex_Check(other)) {
+    if (!pauliebits_Check(self) || !PyIndex_Check(other)) {
         PyErr_Format(PyExc_TypeError,
                      "unsupported operand type(s) for %s: '%s' and '%s'",
                      ostr, Py_TYPE(self)->tp_name, Py_TYPE(other)->tp_name);
@@ -3415,9 +3415,9 @@ shift_check(PyObject *self, PyObject *other, const char *ostr)
 
 #define SHIFT_FUNC(name, inplace, ostr)                     \
 static PyObject *                                           \
-bitarray_ ## name (PyObject *self, PyObject *other)         \
+pauliebits_ ## name (PyObject *self, PyObject *other)         \
 {                                                           \
-    bitarrayobject *res = NULL;                             \
+    pauliebitsobject *res = NULL;                             \
     Py_ssize_t n;                                           \
                                                             \
     if ((n = shift_check(self, other, ostr)) < 0)           \
@@ -3428,8 +3428,8 @@ bitarray_ ## name (PyObject *self, PyObject *other)         \
                                                             \
     Py_BEGIN_CRITICAL_SECTION(self);                        \
     res = inplace                                           \
-        ? (bitarrayobject *) Py_NewRef(self)                \
-        : bitarray_cp((bitarrayobject *) self);             \
+        ? (pauliebitsobject *) Py_NewRef(self)                \
+        : pauliebits_cp((pauliebitsobject *) self);             \
                                                             \
     if (res)                                                \
         shift(res, n, *ostr == '>');                        \
@@ -3442,13 +3442,13 @@ bitarray_ ## name (PyObject *self, PyObject *other)         \
     return (PyObject *) res;                                \
 }
 
-SHIFT_FUNC(lshift,  0, "<<")  /* bitarray_lshift */
-SHIFT_FUNC(rshift,  0, ">>")  /* bitarray_rshift */
-SHIFT_FUNC(ilshift, 1, "<<=") /* bitarray_ilshift */
-SHIFT_FUNC(irshift, 1, ">>=") /* bitarray_irshift */
+SHIFT_FUNC(lshift,  0, "<<")  /* pauliebits_lshift */
+SHIFT_FUNC(rshift,  0, ">>")  /* pauliebits_rshift */
+SHIFT_FUNC(ilshift, 1, "<<=") /* pauliebits_ilshift */
+SHIFT_FUNC(irshift, 1, ">>=") /* pauliebits_irshift */
 
 
-static PyNumberMethods bitarray_as_number = {
+static PyNumberMethods pauliebits_as_number = {
     0,                                   /* nb_add */
     0,                                   /* nb_subtract */
     0,                                   /* nb_multiply */
@@ -3459,12 +3459,12 @@ static PyNumberMethods bitarray_as_number = {
     0,                                   /* nb_positive */
     0,                                   /* nb_absolute */
     0,                                   /* nb_bool (was nb_nonzero) */
-    (unaryfunc) bitarray_cpinvert,       /* nb_invert */
-    (binaryfunc) bitarray_lshift,        /* nb_lshift */
-    (binaryfunc) bitarray_rshift,        /* nb_rshift */
-    (binaryfunc) bitarray_and,           /* nb_and */
-    (binaryfunc) bitarray_xor,           /* nb_xor */
-    (binaryfunc) bitarray_or,            /* nb_or */
+    (unaryfunc) pauliebits_cpinvert,       /* nb_invert */
+    (binaryfunc) pauliebits_lshift,        /* nb_lshift */
+    (binaryfunc) pauliebits_rshift,        /* nb_rshift */
+    (binaryfunc) pauliebits_and,           /* nb_and */
+    (binaryfunc) pauliebits_xor,           /* nb_xor */
+    (binaryfunc) pauliebits_or,            /* nb_or */
     0,                                   /* nb_int */
     0,                                   /* nb_reserved (was nb_long) */
     0,                                   /* nb_float */
@@ -3473,11 +3473,11 @@ static PyNumberMethods bitarray_as_number = {
     0,                                   /* nb_inplace_multiply */
     0,                                   /* nb_inplace_remainder */
     0,                                   /* nb_inplace_power */
-    (binaryfunc) bitarray_ilshift,       /* nb_inplace_lshift */
-    (binaryfunc) bitarray_irshift,       /* nb_inplace_rshift */
-    (binaryfunc) bitarray_iand,          /* nb_inplace_and */
-    (binaryfunc) bitarray_ixor,          /* nb_inplace_xor */
-    (binaryfunc) bitarray_ior,           /* nb_inplace_or */
+    (binaryfunc) pauliebits_ilshift,       /* nb_inplace_lshift */
+    (binaryfunc) pauliebits_irshift,       /* nb_inplace_rshift */
+    (binaryfunc) pauliebits_iand,          /* nb_inplace_and */
+    (binaryfunc) pauliebits_ixor,          /* nb_inplace_xor */
+    (binaryfunc) pauliebits_ior,           /* nb_inplace_or */
     0,                                   /* nb_floor_divide */
     0,                                   /* nb_true_divide */
     0,                                   /* nb_inplace_floor_divide */
@@ -3507,19 +3507,19 @@ check_codedict(PyObject *codedict)
 static int
 check_value(PyObject *value)
 {
-     if (!bitarray_Check(value)) {
-         PyErr_SetString(PyExc_TypeError, "bitarray expected for dict value");
+     if (!pauliebits_Check(value)) {
+         PyErr_SetString(PyExc_TypeError, "pauliebits expected for dict value");
          return -1;
      }
-     if (((bitarrayobject *) value)->nbits == 0) {
-         PyErr_SetString(PyExc_ValueError, "non-empty bitarray expected");
+     if (((pauliebitsobject *) value)->nbits == 0) {
+         PyErr_SetString(PyExc_ValueError, "non-empty pauliebits expected");
          return -1;
      }
      return 0;
 }
 
 static PyObject *
-bitarray_encode(bitarrayobject *self, PyObject *args)
+pauliebits_encode(pauliebitsobject *self, PyObject *args)
 {
     PyObject *codedict, *iterable, *iter, *symbol, *value;
 
@@ -3535,7 +3535,7 @@ bitarray_encode(bitarrayobject *self, PyObject *args)
         return PyErr_Format(PyExc_TypeError, "'%s' object is not iterable",
                             Py_TYPE(iterable)->tp_name);
 
-    /* extend self with the bitarrays from codedict */
+    /* extend self with the pauliebitss from codedict */
     while ((symbol = PyIter_Next(iter))) {
         int ret;
 
@@ -3550,7 +3550,7 @@ bitarray_encode(bitarrayobject *self, PyObject *args)
         Py_BEGIN_CRITICAL_SECTION2(self, value);
         ret = check_value(value);
         if (ret == 0)
-            ret = extend_bitarray(self, (bitarrayobject *) value);
+            ret = extend_pauliebits(self, (pauliebitsobject *) value);
         Py_END_CRITICAL_SECTION2();
         if (ret < 0)
             goto error;
@@ -3574,20 +3574,20 @@ bitarray_encode(bitarrayobject *self, PyObject *args)
 PyDoc_STRVAR(encode_doc,
 "encode(code, iterable, /)\n\
 \n\
-Given a prefix code (a dict mapping symbols to bitarrays),\n\
-iterate over the iterable object with symbols, and extend bitarray\n\
-with corresponding bitarray for each symbol.");
+Given a prefix code (a dict mapping symbols to pauliebitss),\n\
+iterate over the iterable object with symbols, and extend pauliebits\n\
+with corresponding pauliebits for each symbol.");
 
 
 static PyObject *
-bitarray_encode_ixyz(bitarrayobject *self, PyObject *args)
+pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
 {
     PyObject *str_obj;
     if (!PyArg_ParseTuple(args, "U", &str_obj)) {
         return NULL;
     }
     if (self->readonly) {
-        PyErr_SetString(PyExc_BufferError, "cannot resize read-only bitarray");
+        PyErr_SetString(PyExc_BufferError, "cannot resize read-only pauliebits");
         return NULL;
     }
 
@@ -3678,14 +3678,14 @@ Optimized 2-bit-per-symbol encoding of IXYZ strings.");
 #endif
 
 static PyObject *
-bitarray_commutes_with(bitarrayobject *self, PyObject *args)
+pauliebits_commutes_with(pauliebitsobject *self, PyObject *args)
 {
     PyObject *other_obj;
-    /* Проверяем тип аргумента (Bitarray_Type — стандартное имя в bitarray) */
-    if (!PyArg_ParseTuple(args, "O!", &Bitarray_Type, &other_obj)) {
+    /* Проверяем тип аргумента (Pauliebits_Type — стандартное имя в pauliebits) */
+    if (!PyArg_ParseTuple(args, "O!", &Pauliebits_Type, &other_obj)) {
         return NULL;
     }
-    bitarrayobject *other = (bitarrayobject *)other_obj;
+    pauliebitsobject *other = (pauliebitsobject *)other_obj;
 
     Py_ssize_t self_bits = self->nbits;
     Py_ssize_t other_bits = other->nbits;
@@ -3730,7 +3730,7 @@ bitarray_commutes_with(bitarrayobject *self, PyObject *args)
         /* Если это последний байт и он неполный, отсекаем лишнее */
         if (i == nbytes - 1 && (min_bits % 8) != 0) {
             int extra_bits = 8 - (min_bits % 8);
-            /* Маска для Big-Endian (оригинальный bitarray использует его по умолчанию) */
+            /* Маска для Big-Endian (оригинальный pauliebits использует его по умолчанию) */
             unsigned char tail_mask = 0xFF << extra_bits; 
             s_byte &= tail_mask;
             o_byte &= tail_mask;
@@ -3749,7 +3749,7 @@ bitarray_commutes_with(bitarrayobject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(commutes_with_doc,
-"commutes_with(bitarray)\n\
+"commutes_with(pauliebits)\n\
 \n\
 Checking two strings for commutativity");
 
@@ -3792,9 +3792,9 @@ binode_delete(binode *nd)
     PyMem_Free((void *) nd);
 }
 
-/* insert symbol (mapping to bitarray a) into tree */
+/* insert symbol (mapping to pauliebits a) into tree */
 static int
-binode_insert_symbol(binode *tree, bitarrayobject *a, PyObject *symbol)
+binode_insert_symbol(binode *tree, pauliebitsobject *a, PyObject *symbol)
 {
     binode *nd = tree, *prev;
     Py_ssize_t i;
@@ -3830,7 +3830,7 @@ binode_insert_symbol(binode *tree, bitarrayobject *a, PyObject *symbol)
 }
 
 /* return a binary tree from a codedict, which is created by inserting
-   all symbols mapping to bitarrays */
+   all symbols mapping to pauliebitss */
 static binode *
 binode_make_tree(PyObject *codedict)
 {
@@ -3852,7 +3852,7 @@ binode_make_tree(PyObject *codedict)
         Py_BEGIN_CRITICAL_SECTION(value);
         ret = check_value(value);
         if (ret == 0) {
-            ret = binode_insert_symbol(tree, (bitarrayobject *) value,
+            ret = binode_insert_symbol(tree, (pauliebitsobject *) value,
                                        symbol);
         }
         Py_END_CRITICAL_SECTION();
@@ -3876,11 +3876,11 @@ binode_make_tree(PyObject *codedict)
 
 /* Traverse using the branches corresponding to bits in ba, starting
    at *indexp.  Return the symbol at the leaf node, or NULL when the end
-   of the bitarray has been reached.  On error, set the appropriate exception
+   of the pauliebits has been reached.  On error, set the appropriate exception
    and also return NULL.
 */
 static PyObject *
-binode_traverse(binode *tree, bitarrayobject *ba, Py_ssize_t *indexp)
+binode_traverse(binode *tree, pauliebitsobject *ba, Py_ssize_t *indexp)
 {
     binode *nd = tree;
     Py_ssize_t start = *indexp;
@@ -3890,7 +3890,7 @@ binode_traverse(binode *tree, bitarrayobject *ba, Py_ssize_t *indexp)
         nd = nd->child[getbit(ba, *indexp)];
         if (nd == NULL)
             return PyErr_Format(PyExc_ValueError,
-                                "prefix code unrecognized in bitarray "
+                                "prefix code unrecognized in pauliebits "
                                 "at position %zd .. %zd", start, *indexp);
         (*indexp)++;
         if (nd->symbol) {       /* leaf */
@@ -3906,7 +3906,7 @@ binode_traverse(binode *tree, bitarrayobject *ba, Py_ssize_t *indexp)
 
 /* add the node's symbol to given dict */
 static int
-binode_to_dict(binode *nd, PyObject *dict, bitarrayobject *prefix)
+binode_to_dict(binode *nd, PyObject *dict, pauliebitsobject *prefix)
 {
     int k;
 
@@ -3919,10 +3919,10 @@ binode_to_dict(binode *nd, PyObject *dict, bitarrayobject *prefix)
     }
 
     for (k = 0; k < 2; k++) {
-        bitarrayobject *t;      /* prefix of the two child nodes */
+        pauliebitsobject *t;      /* prefix of the two child nodes */
         int ret;
 
-        t = bitarray_cp(prefix);
+        t = pauliebits_cp(prefix);
         if (t == NULL)
             return -1;
         if (resize(t, t->nbits + 1) < 0) {
@@ -4013,13 +4013,13 @@ static PyObject *
 decodetree_todict(decodetreeobject *self)
 {
     PyObject *dict;
-    bitarrayobject *prefix;
+    pauliebitsobject *prefix;
 
     dict = PyDict_New();
     if (dict == NULL)
         return NULL;
 
-    prefix = newbitarrayobject(&Bitarray_Type, 0, ENDIAN_DEFAULT);
+    prefix = newpauliebitsobject(&Pauliebits_Type, 0, ENDIAN_DEFAULT);
     if (prefix == NULL)
         goto error;
 
@@ -4038,7 +4038,7 @@ decodetree_todict(decodetreeobject *self)
 PyDoc_STRVAR(todict_doc,
 "todict() -> dict\n\
 \n\
-Return a dict mapping the symbols to bitarrays.  This dict is a\n\
+Return a dict mapping the symbols to pauliebitss.  This dict is a\n\
 reconstruction of the code dict which the object was created with.");
 
 
@@ -4101,12 +4101,12 @@ static PyMethodDef decodetree_methods[] = {
 PyDoc_STRVAR(decodetree_doc,
 "decodetree(code, /) -> decodetree\n\
 \n\
-Given a prefix code (a dict mapping symbols to bitarrays),\n\
+Given a prefix code (a dict mapping symbols to pauliebitss),\n\
 create a binary tree object to be passed to `.decode()`.");
 
 static PyTypeObject DecodeTree_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.decodetree",                    /* tp_name */
+    "pauliebits.decodetree",                    /* tp_name */
     sizeof(decodetreeobject),                 /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
@@ -4164,21 +4164,21 @@ get_tree(PyObject *obj)
     return binode_make_tree(obj);
 }
 
-/*********************** (bitarray) Decode Iterator ***********************/
+/*********************** (pauliebits) Decode Iterator ***********************/
 
 typedef struct {
     PyObject_HEAD
-    bitarrayobject *self;       /* bitarray we're decoding */
+    pauliebitsobject *self;       /* pauliebits we're decoding */
     binode *tree;               /* prefix tree containing symbols */
-    Py_ssize_t index;           /* current index in bitarray */
+    Py_ssize_t index;           /* current index in pauliebits */
     PyObject *decodetree;       /* decodetree or NULL */
 } decodeiterobject;
 
 static PyTypeObject DecodeIter_Type;
 
-/* create a new initialized bitarray decode iterator object */
+/* create a new initialized pauliebits decode iterator object */
 static PyObject *
-bitarray_decode(bitarrayobject *self, PyObject *obj)
+pauliebits_decode(pauliebitsobject *self, PyObject *obj)
 {
     decodeiterobject *it;       /* iterator to be returned */
     binode *tree;
@@ -4207,8 +4207,8 @@ bitarray_decode(bitarrayobject *self, PyObject *obj)
 PyDoc_STRVAR(decode_doc,
 "decode(code, /) -> decodeiterator\n\
 \n\
-Given a prefix code (a dict mapping symbols to bitarrays, or `decodetree`\n\
-object), decode content of bitarray and return an iterator over\n\
+Given a prefix code (a dict mapping symbols to pauliebitss, or `decodetree`\n\
+object), decode content of pauliebits and return an iterator over\n\
 corresponding symbols.");
 
 
@@ -4277,7 +4277,7 @@ decodeiter_skipbits(decodeiterobject *it, PyObject *args)
 }
 
 PyDoc_STRVAR(decodeiter_skipbits_doc,
-"skipbits(n, /) -> bitarray\n\
+"skipbits(n, /) -> pauliebits\n\
 \n\
 Skip over the next `n` bits and return them.\n\
 Raises `ValueError` if count is out of range.");
@@ -4297,7 +4297,7 @@ static PyMemberDef decodeiter_members[] = {
 
 static PyTypeObject DecodeIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.decodeiterator",                /* tp_name */
+    "pauliebits.decodeiterator",                /* tp_name */
     sizeof(decodeiterobject),                 /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
@@ -4328,13 +4328,13 @@ static PyTypeObject DecodeIter_Type = {
     decodeiter_members,                       /* tp_members */
 };
 
-/*********************** (Bitarray) Search Iterator ***********************/
+/*********************** (Pauliebits) Search Iterator ***********************/
 
 /* Note: when .sub is NULL search for single bit value in member .vi */
 typedef struct {
     PyObject_HEAD
-    bitarrayobject *self;   /* bitarray we're searching in */
-    bitarrayobject *sub;    /* bitarray being searched for */
+    pauliebitsobject *self;   /* pauliebits we're searching in */
+    pauliebitsobject *sub;    /* pauliebits being searched for */
     int vi;                 /* single bit being searched for */
     Py_ssize_t start;
     Py_ssize_t stop;
@@ -4343,9 +4343,9 @@ typedef struct {
 
 static PyTypeObject SearchIter_Type;
 
-/* create a new initialized bitarray search iterator object */
+/* create a new initialized pauliebits search iterator object */
 static PyObject *
-bitarray_search(bitarrayobject *self, PyObject *args, PyObject *kwds)
+pauliebits_search(pauliebitsobject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "", "", "right", NULL};
     Py_ssize_t start = 0, stop = PY_SSIZE_T_MAX;
@@ -4361,8 +4361,8 @@ bitarray_search(bitarrayobject *self, PyObject *args, PyObject *kwds)
         if (!conv_pybit(sub, &vi))
             return NULL;
     }
-    else if (!bitarray_Check(sub)) {
-        return PyErr_Format(PyExc_TypeError, "sub_bitarray must be bitarray "
+    else if (!pauliebits_Check(sub)) {
+        return PyErr_Format(PyExc_TypeError, "sub_pauliebits must be pauliebits "
                             "or int, not '%s'", Py_TYPE(sub)->tp_name);
     }
 
@@ -4382,19 +4382,19 @@ bitarray_search(bitarrayobject *self, PyObject *args, PyObject *kwds)
     it->vi = vi;
     it->right = right;
 
-    if (bitarray_Check(sub)) {
+    if (pauliebits_Check(sub)) {
         Py_INCREF(sub);
-        it->sub = (bitarrayobject *) sub;
+        it->sub = (pauliebitsobject *) sub;
     }
     PyObject_GC_Track(it);
     return (PyObject *) it;
 }
 
 PyDoc_STRVAR(search_doc,
-"search(sub_bitarray, start=0, stop=<end>, /, right=False) -> iterator\n\
+"search(sub_pauliebits, start=0, stop=<end>, /, right=False) -> iterator\n\
 \n\
-Return iterator over indices where sub_bitarray is found, such that\n\
-sub_bitarray is contained within `[start:stop]`.\n\
+Return iterator over indices where sub_pauliebits is found, such that\n\
+sub_pauliebits is contained within `[start:stop]`.\n\
 The indices are iterated in ascending order (from lowest to highest),\n\
 unless `right=True`, which will iterate in descending order (starting with\n\
 rightmost match).");
@@ -4468,7 +4468,7 @@ searchiter_traverse(searchiterobject *it, visitproc visit, void *arg)
 
 static PyTypeObject SearchIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.searchiterator",                /* tp_name */
+    "pauliebits.searchiterator",                /* tp_name */
     sizeof(searchiterobject),                 /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
@@ -4498,108 +4498,108 @@ static PyTypeObject SearchIter_Type = {
     0,                                        /* tp_methods */
 };
 
-/*********************** bitarray method definitions **********************/
+/*********************** pauliebits method definitions **********************/
 
-static PyMethodDef bitarray_methods[] = {
-    {"all",          (PyCFunction) bitarray_all,         METH_NOARGS,
+static PyMethodDef pauliebits_methods[] = {
+    {"all",          (PyCFunction) pauliebits_all,         METH_NOARGS,
      all_doc},
-    {"any",          (PyCFunction) bitarray_any,         METH_NOARGS,
+    {"any",          (PyCFunction) pauliebits_any,         METH_NOARGS,
      any_doc},
-    {"append",       (PyCFunction) bitarray_append,      METH_O,
+    {"append",       (PyCFunction) pauliebits_append,      METH_O,
      append_doc},
-    {"buffer_info",  (PyCFunction) bitarray_buffer_info, METH_NOARGS,
+    {"buffer_info",  (PyCFunction) pauliebits_buffer_info, METH_NOARGS,
      buffer_info_doc},
-    {"bytereverse",  (PyCFunction) bitarray_bytereverse, METH_VARARGS,
+    {"bytereverse",  (PyCFunction) pauliebits_bytereverse, METH_VARARGS,
      bytereverse_doc},
-    {"clear",        (PyCFunction) bitarray_clear,       METH_NOARGS,
+    {"clear",        (PyCFunction) pauliebits_clear,       METH_NOARGS,
      clear_doc},
-    {"copy",         (PyCFunction) bitarray_copy,        METH_NOARGS,
+    {"copy",         (PyCFunction) pauliebits_copy,        METH_NOARGS,
      copy_doc},
-    {"count",        (PyCFunction) bitarray_count,       METH_VARARGS,
+    {"count",        (PyCFunction) pauliebits_count,       METH_VARARGS,
      count_doc},
-    {"decode",       (PyCFunction) bitarray_decode,      METH_O,
+    {"decode",       (PyCFunction) pauliebits_decode,      METH_O,
      decode_doc},
-    {"encode",       (PyCFunction) bitarray_encode,      METH_VARARGS,
+    {"encode",       (PyCFunction) pauliebits_encode,      METH_VARARGS,
      encode_doc},
     
-    {"encode_ixyz", (PyCFunction)bitarray_encode_ixyz, METH_VARARGS,
+    {"encode_ixyz", (PyCFunction)pauliebits_encode_ixyz, METH_VARARGS,
      encode_ixyz_doc},
 
-    {"commutes_with", (PyCFunction)bitarray_commutes_with, METH_VARARGS,
+    {"commutes_with", (PyCFunction)pauliebits_commutes_with, METH_VARARGS,
      commutes_with_doc},
 
-    {"extend",       (PyCFunction) bitarray_extend,      METH_O,
+    {"extend",       (PyCFunction) pauliebits_extend,      METH_O,
      extend_doc},
-    {"fill",         (PyCFunction) bitarray_fill,        METH_NOARGS,
+    {"fill",         (PyCFunction) pauliebits_fill,        METH_NOARGS,
      fill_doc},
-    {"find",         (PyCFunction) bitarray_find,        METH_VARARGS |
+    {"find",         (PyCFunction) pauliebits_find,        METH_VARARGS |
                                                          METH_KEYWORDS,
      find_doc},
-    {"frombytes",    (PyCFunction) bitarray_frombytes,   METH_O,
+    {"frombytes",    (PyCFunction) pauliebits_frombytes,   METH_O,
      frombytes_doc},
-    {"fromfile",     (PyCFunction) bitarray_fromfile,    METH_VARARGS,
+    {"fromfile",     (PyCFunction) pauliebits_fromfile,    METH_VARARGS,
      fromfile_doc},
-    {"index",        (PyCFunction) bitarray_index,       METH_VARARGS |
+    {"index",        (PyCFunction) pauliebits_index,       METH_VARARGS |
                                                          METH_KEYWORDS,
      index_doc},
-    {"insert",       (PyCFunction) bitarray_insert,      METH_VARARGS,
+    {"insert",       (PyCFunction) pauliebits_insert,      METH_VARARGS,
      insert_doc},
-    {"invert",       (PyCFunction) bitarray_invert,      METH_VARARGS,
+    {"invert",       (PyCFunction) pauliebits_invert,      METH_VARARGS,
      invert_doc},
-    {"pack",         (PyCFunction) bitarray_pack,        METH_O,
+    {"pack",         (PyCFunction) pauliebits_pack,        METH_O,
      pack_doc},
-    {"pop",          (PyCFunction) bitarray_pop,         METH_VARARGS,
+    {"pop",          (PyCFunction) pauliebits_pop,         METH_VARARGS,
      pop_doc},
-    {"remove",       (PyCFunction) bitarray_remove,      METH_O,
+    {"remove",       (PyCFunction) pauliebits_remove,      METH_O,
      remove_doc},
-    {"reverse",      (PyCFunction) bitarray_reverse,     METH_NOARGS,
+    {"reverse",      (PyCFunction) pauliebits_reverse,     METH_NOARGS,
      reverse_doc},
-    {"rotate",       (PyCFunction) bitarray_rotate,      METH_VARARGS,
+    {"rotate",       (PyCFunction) pauliebits_rotate,      METH_VARARGS,
      rotate_doc},
-    {"search",       (PyCFunction) bitarray_search,      METH_VARARGS |
+    {"search",       (PyCFunction) pauliebits_search,      METH_VARARGS |
                                                          METH_KEYWORDS,
      search_doc},
-    {"setall",       (PyCFunction) bitarray_setall,      METH_O,
+    {"setall",       (PyCFunction) pauliebits_setall,      METH_O,
      setall_doc},
-    {"sort",         (PyCFunction) bitarray_sort,        METH_VARARGS |
+    {"sort",         (PyCFunction) pauliebits_sort,        METH_VARARGS |
                                                          METH_KEYWORDS,
      sort_doc},
-    {"to01",         (PyCFunction) bitarray_to01,        METH_VARARGS |
+    {"to01",         (PyCFunction) pauliebits_to01,        METH_VARARGS |
                                                          METH_KEYWORDS,
      to01_doc},
-    {"tobytes",      (PyCFunction) bitarray_tobytes,     METH_NOARGS,
+    {"tobytes",      (PyCFunction) pauliebits_tobytes,     METH_NOARGS,
      tobytes_doc},
-    {"__bytes__",    (PyCFunction) bitarray_tobytes,     METH_NOARGS,
+    {"__bytes__",    (PyCFunction) pauliebits_tobytes,     METH_NOARGS,
      tobytes_doc},
-    {"tofile",       (PyCFunction) bitarray_tofile,      METH_O,
+    {"tofile",       (PyCFunction) pauliebits_tofile,      METH_O,
      tofile_doc},
-    {"tolist",       (PyCFunction) bitarray_tolist,      METH_NOARGS,
+    {"tolist",       (PyCFunction) pauliebits_tolist,      METH_NOARGS,
      tolist_doc},
-    {"unpack",       (PyCFunction) bitarray_unpack,      METH_VARARGS |
+    {"unpack",       (PyCFunction) pauliebits_unpack,      METH_VARARGS |
                                                          METH_KEYWORDS,
      unpack_doc},
 
-    {"__copy__",     (PyCFunction) bitarray_copy,        METH_NOARGS,
+    {"__copy__",     (PyCFunction) pauliebits_copy,        METH_NOARGS,
      copy_doc},
-    {"__deepcopy__", (PyCFunction) bitarray_copy,        METH_O,
+    {"__deepcopy__", (PyCFunction) pauliebits_copy,        METH_O,
      copy_doc},
-    {"__reduce__",   (PyCFunction) bitarray_reduce,      METH_NOARGS,
+    {"__reduce__",   (PyCFunction) pauliebits_reduce,      METH_NOARGS,
      reduce_doc},
-    {"__sizeof__",   (PyCFunction) bitarray_sizeof,      METH_NOARGS,
+    {"__sizeof__",   (PyCFunction) pauliebits_sizeof,      METH_NOARGS,
      sizeof_doc},
-    {"_freeze",      (PyCFunction) bitarray_freeze,      METH_NOARGS,  0},
+    {"_freeze",      (PyCFunction) pauliebits_freeze,      METH_NOARGS,  0},
 
 #ifndef NDEBUG
     /* functionality exposed in debug mode for testing */
-    {"_shift_r8",    (PyCFunction) bitarray_shift_r8,    METH_VARARGS, 0},
-    {"_copy_n",      (PyCFunction) bitarray_copy_n,      METH_VARARGS, 0},
-    {"_overlap",     (PyCFunction) bitarray_overlap,     METH_O,       0},
+    {"_shift_r8",    (PyCFunction) pauliebits_shift_r8,    METH_VARARGS, 0},
+    {"_copy_n",      (PyCFunction) pauliebits_copy_n,      METH_VARARGS, 0},
+    {"_overlap",     (PyCFunction) pauliebits_overlap,     METH_O,       0},
 #endif
 
     {NULL,           NULL}  /* sentinel */
 };
 
-/* ------------------------ bitarray initialization -------------------- */
+/* ------------------------ pauliebits initialization -------------------- */
 
 /* Given string 'str', return an integer representing the bit-endianness.
    If the string is invalid, set exception and return -1. */
@@ -4620,18 +4620,18 @@ endian_from_string(const char *str)
     return -1;
 }
 
-/* create a new bitarray object whose buffer is imported from another object
+/* create a new pauliebits object whose buffer is imported from another object
    which exposes the buffer protocol */
 static PyObject *
-newbitarray_from_buffer(PyTypeObject *type, PyObject *buffer, int endian)
+newpauliebits_from_buffer(PyTypeObject *type, PyObject *buffer, int endian)
 {
     Py_buffer view;
-    bitarrayobject *obj;
+    pauliebitsobject *obj;
 
     if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) < 0)
         return NULL;
 
-    obj = (bitarrayobject *) type->tp_alloc(type, 0);
+    obj = (pauliebitsobject *) type->tp_alloc(type, 0);
     if (obj == NULL) {
         PyBuffer_Release(&view);
         return NULL;
@@ -4657,13 +4657,13 @@ newbitarray_from_buffer(PyTypeObject *type, PyObject *buffer, int endian)
     return (PyObject *) obj;
 }
 
-/* return new bitarray of length 'index', 'endian', and
+/* return new pauliebits of length 'index', 'endian', and
    'init_zero' (initialize buffer with zeros) */
 static PyObject *
-newbitarray_from_index(PyTypeObject *type, PyObject *index,
+newpauliebits_from_index(PyTypeObject *type, PyObject *index,
                        int endian, int init_zero)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     Py_ssize_t nbits;
 
     assert(PyIndex_Check(index));
@@ -4672,11 +4672,11 @@ newbitarray_from_index(PyTypeObject *type, PyObject *index,
         return NULL;
 
     if (nbits < 0) {
-        PyErr_SetString(PyExc_ValueError, "bitarray length must be >= 0");
+        PyErr_SetString(PyExc_ValueError, "pauliebits length must be >= 0");
         return NULL;
     }
 
-    res = newbitarrayobject(type, nbits, endian);
+    res = newpauliebitsobject(type, nbits, endian);
     if (res == NULL)
         return NULL;
 
@@ -4686,17 +4686,17 @@ newbitarray_from_index(PyTypeObject *type, PyObject *index,
     return (PyObject *) res;
 }
 
-/* return new bitarray from bytes-like object */
+/* return new pauliebits from bytes-like object */
 static PyObject *
-newbitarray_from_bytes(PyTypeObject *type, PyObject *buffer, int endian)
+newpauliebits_from_bytes(PyTypeObject *type, PyObject *buffer, int endian)
 {
-    bitarrayobject *res;
+    pauliebitsobject *res;
     Py_buffer view;
 
     if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) < 0)
         return NULL;
 
-    res = newbitarrayobject(type, 8 * view.len, endian);
+    res = newpauliebitsobject(type, 8 * view.len, endian);
     if (res == NULL) {
         PyBuffer_Release(&view);
         return NULL;
@@ -4711,22 +4711,22 @@ newbitarray_from_bytes(PyTypeObject *type, PyObject *buffer, int endian)
     return (PyObject *) res;
 }
 
-/* As of bitarray version 2.9.0, "bitarray(nbits)" will initialize all items
+/* As of pauliebits version 2.9.0, "pauliebits(nbits)" will initialize all items
    to 0 (previously, the buffer was uninitialized).
-   However, for speed, one might want to create an uninitialized bitarray.
-   In 2.9.1, we added the ability to create uninitialized bitarrays again,
-   using "bitarray(nbits, endian, Ellipsis)".
+   However, for speed, one might want to create an uninitialized pauliebits.
+   In 2.9.1, we added the ability to create uninitialized pauliebitss again,
+   using "pauliebits(nbits, endian, Ellipsis)".
 */
 static PyObject *
-bitarray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+pauliebits_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"", "endian", "buffer", NULL};
     PyObject *initializer = Py_None, *buffer = Py_None;
-    bitarrayobject *res;
+    pauliebitsobject *res;
     char *endian_str = NULL;
     int endian, ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OzO:bitarray", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OzO:pauliebits", kwlist,
                                      &initializer, &endian_str, &buffer))
         return NULL;
 
@@ -4740,40 +4740,40 @@ bitarray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                             "buffer requires no initializer argument");
             return NULL;
         }
-        return newbitarray_from_buffer(type, buffer, endian);
+        return newpauliebits_from_buffer(type, buffer, endian);
     }
 
     /* no arg / None */
     if (initializer == Py_None)
-        return (PyObject *) newbitarrayobject(type, 0, endian);
+        return (PyObject *) newpauliebitsobject(type, 0, endian);
 
     /* bool */
     if (PyBool_Check(initializer)) {
         PyErr_SetString(PyExc_TypeError,
-                        "cannot create bitarray from 'bool' object");
+                        "cannot create pauliebits from 'bool' object");
         return NULL;
     }
 
     /* index (a number) */
     if (PyIndex_Check(initializer))
-        return newbitarray_from_index(type, initializer, endian,
+        return newpauliebits_from_index(type, initializer, endian,
                                       buffer == Py_None);
 
     /* bytes or bytearray */
     if (PyBytes_Check(initializer) || PyByteArray_Check(initializer))
-        return newbitarray_from_bytes(type, initializer, endian);
+        return newpauliebits_from_bytes(type, initializer, endian);
 
-    /* bitarray: use its bit-endianness when endian argument is None */
-    if (bitarray_Check(initializer) && endian_str == NULL)
-        endian = ((bitarrayobject *) initializer)->endian;
+    /* pauliebits: use its bit-endianness when endian argument is None */
+    if (pauliebits_Check(initializer) && endian_str == NULL)
+        endian = ((pauliebitsobject *) initializer)->endian;
 
-    /* empty bitarray to be extended below */
-    if ((res = newbitarrayobject(type, 0, endian)) == NULL)
+    /* empty pauliebits to be extended below */
+    if ((res = newpauliebitsobject(type, 0, endian)) == NULL)
         return NULL;
 
-    if (bitarray_Check(initializer)) {
+    if (pauliebits_Check(initializer)) {
         Py_BEGIN_CRITICAL_SECTION(initializer);
-        ret = extend_bitarray(res, (bitarrayobject *) initializer);
+        ret = extend_pauliebits(res, (pauliebitsobject *) initializer);
         Py_END_CRITICAL_SECTION();
     }
     else {  /* leave remaining type dispatch to extend method */
@@ -4789,7 +4789,7 @@ bitarray_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-richcompare_lock_held(bitarrayobject *va, bitarrayobject *wa, int op)
+richcompare_lock_held(pauliebitsobject *va, pauliebitsobject *wa, int op)
 {
     Py_ssize_t vs = va->nbits, ws = wa->nbits, i, c;
     char *vb = va->ob_item, *wb = wa->ob_item;
@@ -4797,7 +4797,7 @@ richcompare_lock_held(bitarrayobject *va, bitarrayobject *wa, int op)
     if (op == Py_EQ || op == Py_NE) {
         /* shortcuts for EQ/NE */
         if (vs != ws) {
-            /* if sizes differ, the bitarrays differ */
+            /* if sizes differ, the pauliebitss differ */
             return PyBool_FromLong(op == Py_NE);
         }
         else if (va->endian == wa->endian) {
@@ -4844,35 +4844,35 @@ richcompare(PyObject *v, PyObject *w, int op)
 {
     PyObject *res;
 
-    if (!bitarray_Check(v) || !bitarray_Check(w))
+    if (!pauliebits_Check(v) || !pauliebits_Check(w))
         return Py_NewRef(Py_NotImplemented);
 
     Py_BEGIN_CRITICAL_SECTION2(v, w);
-    res = richcompare_lock_held((bitarrayobject *) v,
-                                (bitarrayobject *) w, op);
+    res = richcompare_lock_held((pauliebitsobject *) v,
+                                (pauliebitsobject *) w, op);
     Py_END_CRITICAL_SECTION2();
 
     return res;
 }
 
-/***************************** bitarray iterator **************************/
+/***************************** pauliebits iterator **************************/
 
 typedef struct {
     PyObject_HEAD
-    bitarrayobject *self;            /* bitarray we're iterating over */
-    Py_ssize_t index;                /* current index in bitarray */
-} bitarrayiterobject;
+    pauliebitsobject *self;            /* pauliebits we're iterating over */
+    Py_ssize_t index;                /* current index in pauliebits */
+} pauliebitsiterobject;
 
-static PyTypeObject BitarrayIter_Type;
+static PyTypeObject PauliebitsIter_Type;
 
-/* create a new initialized bitarray iterator object, this object is
+/* create a new initialized pauliebits iterator object, this object is
    returned when calling iter(a) */
 static PyObject *
-bitarray_iter(bitarrayobject *self)
+pauliebits_iter(pauliebitsobject *self)
 {
-    bitarrayiterobject *it;
+    pauliebitsiterobject *it;
 
-    it = PyObject_GC_New(bitarrayiterobject, &BitarrayIter_Type);
+    it = PyObject_GC_New(pauliebitsiterobject, &PauliebitsIter_Type);
     if (it == NULL)
         return NULL;
 
@@ -4884,7 +4884,7 @@ bitarray_iter(bitarrayobject *self)
 }
 
 static PyObject *
-bitarrayiter_next(bitarrayiterobject *it)
+pauliebitsiter_next(pauliebitsiterobject *it)
 {
     int vi;
 
@@ -4901,7 +4901,7 @@ bitarrayiter_next(bitarrayiterobject *it)
 }
 
 static void
-bitarrayiter_dealloc(bitarrayiterobject *it)
+pauliebitsiter_dealloc(pauliebitsiterobject *it)
 {
     PyObject_GC_UnTrack(it);
     Py_DECREF(it->self);
@@ -4909,19 +4909,19 @@ bitarrayiter_dealloc(bitarrayiterobject *it)
 }
 
 static int
-bitarrayiter_traverse(bitarrayiterobject *it, visitproc visit, void *arg)
+pauliebitsiter_traverse(pauliebitsiterobject *it, visitproc visit, void *arg)
 {
     Py_VISIT(it->self);
     return 0;
 }
 
-static PyTypeObject BitarrayIter_Type = {
+static PyTypeObject PauliebitsIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.bitarrayiterator",              /* tp_name */
-    sizeof(bitarrayiterobject),               /* tp_basicsize */
+    "pauliebits.pauliebitsiterator",              /* tp_name */
+    sizeof(pauliebitsiterobject),               /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
-    (destructor) bitarrayiter_dealloc,        /* tp_dealloc */
+    (destructor) pauliebitsiter_dealloc,        /* tp_dealloc */
     0,                                        /* tp_print */
     0,                                        /* tp_getattr */
     0,                                        /* tp_setattr */
@@ -4938,23 +4938,23 @@ static PyTypeObject BitarrayIter_Type = {
     0,                                        /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,  /* tp_flags */
     0,                                        /* tp_doc */
-    (traverseproc) bitarrayiter_traverse,     /* tp_traverse */
+    (traverseproc) pauliebitsiter_traverse,     /* tp_traverse */
     0,                                        /* tp_clear */
     0,                                        /* tp_richcompare */
     0,                                        /* tp_weaklistoffset */
     PyObject_SelfIter,                        /* tp_iter */
-    (iternextfunc) bitarrayiter_next,         /* tp_iternext */
+    (iternextfunc) pauliebitsiter_next,         /* tp_iternext */
     0,                                        /* tp_methods */
 };
 
-/******************** bitarray buffer export interface ********************/
+/******************** pauliebits buffer export interface ********************/
 /*
-   Here we create bitarray_as_buffer for exporting bitarray buffers.
-   Buffer imports are handled in newbitarray_from_buffer().
+   Here we create pauliebits_as_buffer for exporting pauliebits buffers.
+   Buffer imports are handled in newpauliebits_from_buffer().
 */
 
 static int
-bitarray_getbuffer(bitarrayobject *self, Py_buffer *view, int flags)
+pauliebits_getbuffer(pauliebitsobject *self, Py_buffer *view, int flags)
 {
     int ret;
 
@@ -4981,74 +4981,74 @@ bitarray_getbuffer(bitarrayobject *self, Py_buffer *view, int flags)
 }
 
 static void
-bitarray_releasebuffer(bitarrayobject *self, Py_buffer *view)
+pauliebits_releasebuffer(pauliebitsobject *self, Py_buffer *view)
 {
     Py_BEGIN_CRITICAL_SECTION(self);
     self->ob_exports--;
     Py_END_CRITICAL_SECTION();
 }
 
-static PyBufferProcs bitarray_as_buffer = {
-    (getbufferproc) bitarray_getbuffer,
-    (releasebufferproc) bitarray_releasebuffer,
+static PyBufferProcs pauliebits_as_buffer = {
+    (getbufferproc) pauliebits_getbuffer,
+    (releasebufferproc) pauliebits_releasebuffer,
 };
 
-/***************************** Bitarray Type ******************************/
+/***************************** Pauliebits Type ******************************/
 
-PyDoc_STRVAR(bitarraytype_doc,
-"bitarray(initializer=0, /, endian='big', buffer=None) -> bitarray\n\
+PyDoc_STRVAR(pauliebitstype_doc,
+"pauliebits(initializer=0, /, endian='big', buffer=None) -> pauliebits\n\
 \n\
-Return a new bitarray object whose items are bits initialized from\n\
+Return a new pauliebits object whose items are bits initialized from\n\
 the optional initializer, and bit-endianness.\n\
 The initializer may be one of the following types:\n\
-a.) `int` bitarray, initialized to zeros, of given length\n\
+a.) `int` pauliebits, initialized to zeros, of given length\n\
 b.) `bytes` or `bytearray` to initialize buffer directly\n\
 c.) `str` of 0s and 1s, ignoring whitespace and \"_\"\n\
 d.) iterable of integers 0 or 1.\n\
 \n\
 Optional keyword arguments:\n\
 \n\
-`endian`: Specifies the bit-endianness of the created bitarray object.\n\
+`endian`: Specifies the bit-endianness of the created pauliebits object.\n\
 Allowed values are `big` and `little` (the default is `big`).\n\
-The bit-endianness affects the buffer representation of the bitarray.\n\
+The bit-endianness affects the buffer representation of the pauliebits.\n\
 \n\
 `buffer`: Any object which exposes a buffer.  When provided, `initializer`\n\
 cannot be present (or has to be `None`).  The imported buffer may be\n\
 read-only or writable, depending on the object type.");
 
 
-static PyTypeObject Bitarray_Type = {
+static PyTypeObject Pauliebits_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "bitarray.bitarray",                      /* tp_name */
-    sizeof(bitarrayobject),                   /* tp_basicsize */
+    "pauliebits.pauliebits",                      /* tp_name */
+    sizeof(pauliebitsobject),                   /* tp_basicsize */
     0,                                        /* tp_itemsize */
     /* methods */
-    (destructor) bitarray_dealloc,            /* tp_dealloc */
+    (destructor) pauliebits_dealloc,            /* tp_dealloc */
     0,                                        /* tp_print */
     0,                                        /* tp_getattr */
     0,                                        /* tp_setattr */
     0,                                        /* tp_compare */
-    (reprfunc) bitarray_repr,                 /* tp_repr */
-    &bitarray_as_number,                      /* tp_as_number */
-    &bitarray_as_sequence,                    /* tp_as_sequence */
-    &bitarray_as_mapping,                     /* tp_as_mapping */
+    (reprfunc) pauliebits_repr,                 /* tp_repr */
+    &pauliebits_as_number,                      /* tp_as_number */
+    &pauliebits_as_sequence,                    /* tp_as_sequence */
+    &pauliebits_as_mapping,                     /* tp_as_mapping */
     PyObject_HashNotImplemented,              /* tp_hash */
     0,                                        /* tp_call */
     0,                                        /* tp_str */
     PyObject_GenericGetAttr,                  /* tp_getattro */
     0,                                        /* tp_setattro */
-    &bitarray_as_buffer,                      /* tp_as_buffer */
+    &pauliebits_as_buffer,                      /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-    bitarraytype_doc,                         /* tp_doc */
+    pauliebitstype_doc,                         /* tp_doc */
     0,                                        /* tp_traverse */
     0,                                        /* tp_clear */
     richcompare,                              /* tp_richcompare */
-    offsetof(bitarrayobject, weakreflist),    /* tp_weaklistoffset */
-    (getiterfunc) bitarray_iter,              /* tp_iter */
+    offsetof(pauliebitsobject, weakreflist),    /* tp_weaklistoffset */
+    (getiterfunc) pauliebits_iter,              /* tp_iter */
     0,                                        /* tp_iternext */
-    bitarray_methods,                         /* tp_methods */
+    pauliebits_methods,                         /* tp_methods */
     0,                                        /* tp_members */
-    bitarray_getsets,                         /* tp_getset */
+    pauliebits_getsets,                         /* tp_getset */
     0,                                        /* tp_base */
     0,                                        /* tp_dict */
     0,                                        /* tp_descr_get */
@@ -5056,7 +5056,7 @@ static PyTypeObject Bitarray_Type = {
     0,                                        /* tp_dictoffset */
     0,                                        /* tp_init */
     PyType_GenericAlloc,                      /* tp_alloc */
-    bitarray_new,                             /* tp_new */
+    pauliebits_new,                             /* tp_new */
     PyObject_Del,                             /* tp_free */
 };
 
@@ -5114,11 +5114,11 @@ reconstructor(PyObject *module, PyObject *args)
     PyTypeObject *type;
     Py_ssize_t nbytes;
     PyObject *bytes;
-    bitarrayobject *res;
+    pauliebitsobject *res;
     char *endian_str;
     int endian, padbits, readonly;
 
-    if (!PyArg_ParseTuple(args, "OOsii:_bitarray_reconstructor",
+    if (!PyArg_ParseTuple(args, "OOsii:_pauliebits_reconstructor",
                           &type, &bytes, &endian_str, &padbits, &readonly))
         return NULL;
 
@@ -5126,9 +5126,9 @@ reconstructor(PyObject *module, PyObject *args)
         return PyErr_Format(PyExc_TypeError, "first argument must be a type "
                             "object, got '%s'", Py_TYPE(type)->tp_name);
 
-    if (!PyType_IsSubtype(type, &Bitarray_Type))
+    if (!PyType_IsSubtype(type, &Pauliebits_Type))
         return PyErr_Format(PyExc_TypeError, "'%s' is not a subtype of "
-                            "bitarray", type->tp_name);
+                            "pauliebits", type->tp_name);
 
     if (!PyBytes_Check(bytes))
         return PyErr_Format(PyExc_TypeError, "second argument must be bytes, "
@@ -5142,7 +5142,7 @@ reconstructor(PyObject *module, PyObject *args)
         return PyErr_Format(PyExc_ValueError,
                             "invalid number of pad bits: %d", padbits);
 
-    res = newbitarrayobject(type, 8 * nbytes - padbits, endian);
+    res = newpauliebitsobject(type, 8 * nbytes - padbits, endian);
     if (res == NULL)
         return NULL;
     assert(Py_SIZE(res) == nbytes);
@@ -5165,7 +5165,7 @@ get_default_endian(PyObject *module)
 PyDoc_STRVAR(get_default_endian_doc,
 "get_default_endian() -> str\n\
 \n\
-Return the default bit-endianness for new bitarray objects being created.");
+Return the default bit-endianness for new pauliebits objects being created.");
 
 
 static PyObject *
@@ -5182,7 +5182,7 @@ sysinfo(PyObject *module, PyObject *args)
 
     R("void*", sizeof(void *));
     R("size_t", sizeof(size_t));
-    R("bitarrayobject", sizeof(bitarrayobject));
+    R("pauliebitsobject", sizeof(pauliebitsobject));
     R("decodetreeobject", sizeof(decodetreeobject));
     R("binode", sizeof(binode));
     R("PY_LITTLE_ENDIAN", PY_LITTLE_ENDIAN);
@@ -5198,7 +5198,7 @@ sysinfo(PyObject *module, PyObject *args)
 #else
     R("Py_DEBUG", 0);
 #endif
-#ifndef NDEBUG           /* bitarray compiled without -DNDEBUG */
+#ifndef NDEBUG           /* pauliebits compiled without -DNDEBUG */
     R("DEBUG", 1);
 #else
     R("DEBUG", 0);
@@ -5218,7 +5218,7 @@ Return system- and compile-specific information given a key.");
 static PyMethodDef module_functions[] = {
     {"bits2bytes",          (PyCFunction) bits2bytes,         METH_O,
      bits2bytes_doc},
-    {"_bitarray_reconstructor",
+    {"_pauliebits_reconstructor",
                             (PyCFunction) reconstructor,      METH_VARARGS,
      reduce_doc},
     {"get_default_endian",  (PyCFunction) get_default_endian, METH_NOARGS,
@@ -5230,7 +5230,7 @@ static PyMethodDef module_functions[] = {
 
 /******************************* Install Module ***************************/
 
-/* register bitarray as collections.abc.MutableSequence */
+/* register pauliebits as collections.abc.MutableSequence */
 static int
 register_abc(void)
 {
@@ -5246,7 +5246,7 @@ register_abc(void)
         return -1;
 
     res = PyObject_CallMethod(mutablesequence, "register", "O",
-                              (PyObject *) &Bitarray_Type);
+                              (PyObject *) &Pauliebits_Type);
     Py_DECREF(mutablesequence);
     if (res == NULL)
         return -1;
@@ -5256,11 +5256,11 @@ register_abc(void)
 }
 
 static PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT, "_bitarray", 0, -1, module_functions,
+    PyModuleDef_HEAD_INIT, "_pauliebits", 0, -1, module_functions,
 };
 
 PyMODINIT_FUNC
-PyInit__bitarray(void)
+PyInit__pauliebits(void)
 {
     PyObject *m;
 
@@ -5275,11 +5275,11 @@ PyInit__bitarray(void)
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
 
-    if (PyType_Ready(&Bitarray_Type) < 0)
+    if (PyType_Ready(&Pauliebits_Type) < 0)
         return NULL;
-    Py_SET_TYPE(&Bitarray_Type, &PyType_Type);
-    Py_INCREF((PyObject *) &Bitarray_Type);
-    PyModule_AddObject(m, "bitarray", (PyObject *) &Bitarray_Type);
+    Py_SET_TYPE(&Pauliebits_Type, &PyType_Type);
+    Py_INCREF((PyObject *) &Pauliebits_Type);
+    PyModule_AddObject(m, "pauliebits", (PyObject *) &Pauliebits_Type);
 
     if (register_abc() < 0)
         return NULL;
@@ -5296,15 +5296,15 @@ PyInit__bitarray(void)
     Py_INCREF((PyObject *) &DecodeIter_Type);
     PyModule_AddObject(m, "decodeiterator", (PyObject *) &DecodeIter_Type);
 
-    if (PyType_Ready(&BitarrayIter_Type) < 0)
+    if (PyType_Ready(&PauliebitsIter_Type) < 0)
         return NULL;
-    Py_SET_TYPE(&BitarrayIter_Type, &PyType_Type);
+    Py_SET_TYPE(&PauliebitsIter_Type, &PyType_Type);
 
     if (PyType_Ready(&SearchIter_Type) < 0)
         return NULL;
     Py_SET_TYPE(&SearchIter_Type, &PyType_Type);
 
-    if (PyModule_AddStringMacro(m, BITARRAY_VERSION) < 0)
+    if (PyModule_AddStringMacro(m, PAULIEBITS_VERSION) < 0)
         return NULL;
 
     return m;

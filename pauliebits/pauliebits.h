@@ -1,10 +1,10 @@
 /*
    Copyright (c) 2008 - 2026, Ilan Schnell; All Rights Reserved
-   bitarray is published under the PSF license.
+   pauliebits is published under the PSF license.
 
    Author: Ilan Schnell
 */
-#define BITARRAY_VERSION  "3.9.2"
+#define PAULIEBITS_VERSION  "0.0.1"
 
 #ifdef STDC_HEADERS
 #  include <stddef.h>
@@ -33,7 +33,7 @@
 #define Py_UNREACHABLE()  assert(0)
 #endif
 
-/* --- bitarrayobject --- */
+/* --- pauliebitsobject --- */
 
 /* .ob_size is the buffer size (in bytes), not the number of elements.
    The number of elements (bits) is .nbits. */
@@ -41,13 +41,13 @@ typedef struct {
     PyObject_VAR_HEAD
     char *ob_item;              /* buffer */
     Py_ssize_t allocated;       /* allocated buffer size (in bytes) */
-    Py_ssize_t nbits;           /* length of bitarray, i.e. elements */
-    int endian;                 /* bit-endianness of bitarray */
+    Py_ssize_t nbits;           /* length of pauliebits, i.e. elements */
+    int endian;                 /* bit-endianness of pauliebits */
     int ob_exports;             /* how many buffer exports */
     PyObject *weakreflist;      /* list of weak references */
     Py_buffer *buffer;          /* used when importing a buffer */
     int readonly;               /* buffer is readonly */
-} bitarrayobject;
+} pauliebitsobject;
 
 /* --- bit-endianness --- */
 #define ENDIAN_LITTLE  0
@@ -77,10 +77,10 @@ typedef struct {
 /* assert that .nbits is in agreement with .ob_size */
 #define assert_nbits(self)  assert(BYTES((self)->nbits) == Py_SIZE(self))
 
-/* ------------ low level access to bits in bitarrayobject ------------- */
+/* ------------ low level access to bits in pauliebitsobject ------------- */
 
 static inline int
-getbit(bitarrayobject *self, Py_ssize_t i)
+getbit(pauliebitsobject *self, Py_ssize_t i)
 {
     assert_nbits(self);
     assert(0 <= i && i < self->nbits);
@@ -88,7 +88,7 @@ getbit(bitarrayobject *self, Py_ssize_t i)
 }
 
 static inline void
-setbit(bitarrayobject *self, Py_ssize_t i, int vi)
+setbit(pauliebitsobject *self, Py_ssize_t i, int vi)
 {
     char *cp, mask;
 
@@ -116,10 +116,10 @@ static const char ones_table[2][8] = {
 };
 
 /* Return last byte in buffer with pad bits zeroed out.
-   If the length of the bitarray is a multiple of 8 (which includes an empty
-   bitarray), 0 is returned. */
+   If the length of the pauliebits is a multiple of 8 (which includes an empty
+   pauliebits), 0 is returned. */
 static inline char
-zlc(bitarrayobject *self)       /* zlc = zeroed last char */
+zlc(pauliebitsobject *self)       /* zlc = zeroed last char */
 {
     const int r = self->nbits % 8;     /* index into mask table */
 
@@ -131,10 +131,10 @@ zlc(bitarrayobject *self)       /* zlc = zeroed last char */
 /* Return a uint64_t word representing the last (up to 63) remaining bits
    of the buffer.  All missing bytes (to complete the word) and padbits are
    treated as zeros.
-   If the length of the bitarray is a multiple of 64 (which also includes
-   an empty bitarray), 0 is returned. */
+   If the length of the pauliebits is a multiple of 64 (which also includes
+   an empty pauliebits), 0 is returned. */
 static inline uint64_t
-zlw(bitarrayobject *self)       /* zlw = zeroed last word */
+zlw(pauliebitsobject *self)       /* zlw = zeroed last word */
 {
     const size_t nbits = self->nbits;
     const size_t nw = (nbits / 64) * 8;   /* bytes in complete words */
@@ -152,7 +152,7 @@ zlw(bitarrayobject *self)       /* zlw = zeroed last word */
 
 /* unless buffer is readonly, zero out pad bits - self->nbits is unchanged */
 static inline void
-set_padbits(bitarrayobject *self)
+set_padbits(pauliebitsobject *self)
 {
     if (self->readonly == 0) {
         int r = self->nbits % 8;     /* index into mask table */
@@ -317,35 +317,35 @@ conv_pybit(PyObject *value, int *vi)
     return 1;
 }
 
-/* Return 0 if bitarrays have equal length and bit-endianness.
+/* Return 0 if pauliebitss have equal length and bit-endianness.
    Otherwise, set exception and return -1. */
 static inline int
-ensure_eq_size_endian(bitarrayobject *a, bitarrayobject *b)
+ensure_eq_size_endian(pauliebitsobject *a, pauliebitsobject *b)
 {
     if (a->nbits != b->nbits) {
         PyErr_SetString(PyExc_ValueError,
-                        "bitarrays of equal length expected");
+                        "pauliebitss of equal length expected");
         return -1;
     }
     if (a->endian != b->endian) {
         PyErr_SetString(PyExc_ValueError,
-                        "bitarrays of equal bit-endianness expected");
+                        "pauliebitss of equal bit-endianness expected");
         return -1;
     }
     return 0;
 }
 
-/* Equivalent to: import bitarray; return getattr(bitarray, name) */
+/* Equivalent to: import pauliebits; return getattr(pauliebits, name) */
 static inline PyObject *
-bitarray_module_attr(char *name)
+pauliebits_module_attr(char *name)
 {
-    PyObject *bitarray_module, *result;
+    PyObject *pauliebits_module, *result;
 
-    bitarray_module = PyImport_ImportModule("bitarray");
-    if (bitarray_module == NULL)
+    pauliebits_module = PyImport_ImportModule("pauliebits");
+    if (pauliebits_module == NULL)
         return NULL;
 
-    result = PyObject_GetAttrString(bitarray_module, name);
-    Py_DECREF(bitarray_module);
+    result = PyObject_GetAttrString(pauliebits_module, name);
+    Py_DECREF(pauliebits_module);
     return result;
 }

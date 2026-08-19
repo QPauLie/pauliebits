@@ -1,7 +1,7 @@
 from struct import pack, unpack
 
-from bitarray import bitarray
-from bitarray.util import ba2int, int2ba
+from pauliebits import pauliebits
+from pauliebits.util import ba2int, int2ba
 
 
 class Double:
@@ -15,11 +15,11 @@ class Double:
             raise TypeError("float or str expected")
 
     def __float__(self):
-        a = self.to_bitarray()
+        a = self.to_pauliebits()
         return unpack("<d", a.tobytes())[0]
 
     def __str__(self):
-        a = self.to_bitarray()
+        a = self.to_pauliebits()
         a.reverse()
         return "%s %s %s" % (a[0], a[1:12].to01(), a[12:].to01())
 
@@ -27,27 +27,27 @@ class Double:
         return 'Double("%s")' % str(self)
 
     def from_float(self, x):
-        a = bitarray(pack("<d", x), endian="little")
-        self.from_bitarray(a)
+        a = pauliebits(pack("<d", x), endian="little")
+        self.from_pauliebits(a)
 
     def from_string(self, s):
-        a = bitarray(s, endian="little")
+        a = pauliebits(s, endian="little")
         if len(a) != 64:
             raise ValueError("64 bits expected")
         a.reverse()
-        self.from_bitarray(a)
+        self.from_pauliebits(a)
 
-    def from_bitarray(self, a):
+    def from_pauliebits(self, a):
         if len(a) != 64 or a.endian != "little":
-            raise ValueError("litten endian bitarray of length 64 expected")
+            raise ValueError("litten endian pauliebits of length 64 expected")
         self.sign = a[63]
         self.exponent = ba2int(a[52:63]) - 1023
         self.fraction = a[0:52]
 
-    def to_bitarray(self):
+    def to_pauliebits(self):
         if len(self.fraction) != 52:
-            raise ValueError("fraction must be a bitarray of length 52")
-        a = bitarray(self.fraction, endian="little")
+            raise ValueError("fraction must be a pauliebits of length 52")
+        a = pauliebits(self.fraction, endian="little")
         a.extend(int2ba(self.exponent + 1023, length=11, endian="little"))
         a.append(self.sign)
         return a
@@ -80,7 +80,7 @@ from random import getrandbits, randint
 import re
 import unittest
 
-from bitarray.util import urandom, gen_primes
+from pauliebits.util import urandom, gen_primes
 
 
 EXAMPLES = [
@@ -142,7 +142,7 @@ class DoubleTests(unittest.TestCase):
         self.assertEqual(float(d), 0.0)
         self.assertEqual(d.sign, 0)
         self.assertEqual(d.exponent, -1023)
-        self.assertEqual(d.fraction, bitarray(52))
+        self.assertEqual(d.fraction, pauliebits(52))
 
     def test_examples(self):
         for x, s in EXAMPLES:
@@ -202,7 +202,7 @@ class DoubleTests(unittest.TestCase):
             n = len(a)
             self.assertEqual(d.exponent, n)
 
-            a = bitarray(52 - n, endian="little") + a
+            a = pauliebits(52 - n, endian="little") + a
             self.assertEqual(d.fraction, a)
 
 if __name__ == '__main__':

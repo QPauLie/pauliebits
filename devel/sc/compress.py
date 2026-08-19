@@ -3,7 +3,7 @@ import gzip
 import random
 from time import perf_counter
 
-from bitarray.util import (
+from pauliebits.util import (
     ones, random_p,
     serialize, deserialize,
     sc_encode, sc_decode,

@@ -1,23 +1,23 @@
 # gene sequence example from @yoch, see
-# https://github.com/ilanschnell/bitarray/pull/54
+# https://github.com/ilanschnell/pauliebits/pull/54
 
 from random import choice
 from timeit import timeit
 
-from bitarray import bitarray
+from pauliebits import pauliebits
 
 
 trans = {
-    "A": bitarray("00"),
-    "T": bitarray("01"),
-    "G": bitarray("10"),
-    "C": bitarray("11")
+    "A": pauliebits("00"),
+    "T": pauliebits("01"),
+    "G": pauliebits("10"),
+    "C": pauliebits("11")
 }
 
 N = 10_000
 seq = [choice("ATGC") for _ in range(N)]
 
-arr = bitarray()
+arr = pauliebits()
 arr.encode(trans, seq)
 
 assert list(arr.decode(trans)) == seq

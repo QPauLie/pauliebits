@@ -1,25 +1,25 @@
 Buffer protocol
 ===============
 
-Bitarray objects support the buffer protocol.  They can both export their
+Pauliebits objects support the buffer protocol.  They can both export their
 own buffer, as well as import another object's buffer.
 
 
 Exporting buffers
 -----------------
 
-Here is an example where the bitarray's buffer is exported:
+Here is an example where the pauliebits's buffer is exported:
 
 .. code-block:: python
 
-    >>> from bitarray import bitarray
-    >>> a = bitarray('01000001 01000010 01000011', endian='big')
+    >>> from pauliebits import pauliebits
+    >>> a = pauliebits('01000001 01000010 01000011', endian='big')
     >>> v = memoryview(a)
     >>> v.tobytes()
     b'ABC'
     >>> v[1] = 255
     >>> a
-    bitarray('010000011111111101000011')
+    pauliebits('010000011111111101000011')
 
 Note that it is possible to change the shared buffer from both ``a`` and ``v``:
 
@@ -36,15 +36,15 @@ However, as ``a``'s buffer is shared, it is not possible to resize it:
     >>> a.append(0)
     Traceback (most recent call last):
         ...
-    BufferError: cannot resize bitarray that is exporting buffers
+    BufferError: cannot resize pauliebits that is exporting buffers
 
-When exporting the buffer of a ``frozenbitarray``, it is not possible to
+When exporting the buffer of a ``frozenpauliebits``, it is not possible to
 change its ``memoryview`` either:
 
 .. code-block:: python
 
-    >>> from bitarray import frozenbitarray
-    >>> a = frozenbitarray('01000001 01000010')
+    >>> from pauliebits import frozenpauliebits
+    >>> a = frozenpauliebits('01000001 01000010')
     >>> v = memoryview(a)
     >>> v.readonly
     True
@@ -57,53 +57,53 @@ change its ``memoryview`` either:
 Importing buffers
 -----------------
 
-As of bitarray version 2.3, it is also possible to import the buffer
+As of pauliebits version 2.3, it is also possible to import the buffer
 from an object that exposes its buffer.  Here a ``bytearray`` object:
 
 .. code-block:: python
 
     >>> c = bytearray([0x41, 0xff, 0x01])
-    >>> a = bitarray(buffer=c, endian='big')
+    >>> a = pauliebits(buffer=c, endian='big')
     >>> a
-    bitarray('010000011111111100000001')
+    pauliebits('010000011111111100000001')
     >>> a <<= 3  # shift all bits by 3 to the left
     >>> c
     bytearray(b'\x0f\xf8\x08')
     >>> a[20:] = 1
     >>> a
-    bitarray('000011111111100000001111')
+    pauliebits('000011111111100000001111')
 
 Again, the shared buffer can be represented and modified by either object
-``a`` or ``c``.  When importing a buffer into a bitarray, the length of the
-bitarray will always be a multiple of 8 bits, as buffers are based on bytes.
-Also, we may specify the endianness of the bitarray:
+``a`` or ``c``.  When importing a buffer into a pauliebits, the length of the
+pauliebits will always be a multiple of 8 bits, as buffers are based on bytes.
+Also, we may specify the endianness of the pauliebits:
 
 .. code-block:: python
 
-   >>> b = bitarray(buffer=c, endian='little')
+   >>> b = pauliebits(buffer=c, endian='little')
    >>> b
-   bitarray('111100000001111111110000')
+   pauliebits('111100000001111111110000')
 
 The bytearray ``c`` is now exporting its buffer twice:
-to big-endian bitarray ``a``, and a little-endian bitarray ``b``.
+to big-endian pauliebits ``a``, and a little-endian pauliebits ``b``.
 At this point all three objects ``a``, ``b`` and ``c`` share the same buffer.
 Using the ``.buffer_info()`` method, we can actually verify that the
-bitarrays ``a`` and ``b`` point to the same address:
+pauliebitss ``a`` and ``b`` point to the same address:
 
 .. code-block:: python
 
     >>> def address(a):
     ...     info = a.buffer_info()
-    ...     return info[0]  # using bitarray 3.7, we can also: info.address
+    ...     return info[0]  # using pauliebits 3.7, we can also: info.address
     >>> assert address(a) == address(b)
 
-As bitarrays expose their buffer, we can also directly create a bitarray
-which imports the buffer from another bitarray:
+As pauliebitss expose their buffer, we can also directly create a pauliebits
+which imports the buffer from another pauliebits:
 
 .. code-block:: python
 
-    >>> a = bitarray(32)
-    >>> b = bitarray(buffer=a)
+    >>> a = pauliebits(32)
+    >>> b = pauliebits(buffer=a)
     >>> # the buffer address is the same
     >>> assert address(a) == address(b)
     >>> a.setall(0)
@@ -111,24 +111,24 @@ which imports the buffer from another bitarray:
     >>> b[::7] = 1
     >>> assert a == b
     >>> a
-    bitarray('10000001000000100000010000001000')
+    pauliebits('10000001000000100000010000001000')
 
-We can also create bitarrays which share part of the buffer.  Let's create
-a large bitarray ``a``, and then have ``b`` and ``c`` share different portions
+We can also create pauliebitss which share part of the buffer.  Let's create
+a large pauliebits ``a``, and then have ``b`` and ``c`` share different portions
 of ``a``'s buffer:
 
 .. code-block:: python
 
-    >>> a = bitarray(1 << 23)
+    >>> a = pauliebits(1 << 23)
     >>> a.setall(0)
-    >>> b = bitarray(buffer=memoryview(a)[0x10000:0x30000])
+    >>> b = pauliebits(buffer=memoryview(a)[0x10000:0x30000])
     >>> assert address(a) + 0x10000 == address(b)
-    >>> c = bitarray(buffer=memoryview(a)[0x20000:0x50000])
+    >>> c = pauliebits(buffer=memoryview(a)[0x20000:0x50000])
     >>> assert address(a) + 0x20000 == address(c)
     >>> c[0] = 1
     >>> assert b[8 * 0x10000] == 1
     >>> assert a[8 * 0x20000] == 1
 
-Finally, importing buffers allows creating bitarrays that are memory mapped
+Finally, importing buffers allows creating pauliebitss that are memory mapped
 to a file.  Please see the `mmapped-file.py <../examples/mmapped-file.py>`__
 example.

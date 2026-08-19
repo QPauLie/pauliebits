@@ -1,12 +1,12 @@
 """
 In both ssqi() (in _util.c) and sum_indices() (in util.py), we divide our
-bitarray into equally sized blocks in order to calculate the sum of active
+pauliebits into equally sized blocks in order to calculate the sum of active
 indices.  We use the same trick but for different reasons:
 
   (a) in ssqi(), we want to loop over bytes (blocks of 8 bits) and use
       lookup tables (for sum z_j [**2])
 
-  (b) in sum_indices() we want to loop over blocks of smaller bitarrays
+  (b) in sum_indices() we want to loop over blocks of smaller pauliebitss
       in order to keep the summation in ssqi() from overflowing
 
 The trick is to write
@@ -29,7 +29,7 @@ we are interested in.
 
                    (a)  ssqi()          (b)  sum_indices()
 ------------------------------------------------------------
-block              c (char)             block (bitarray)
+block              c (char)             block (pauliebits)
 block size         8                    n
 i                  byte index           block index
 y                  8 * i                n * i
@@ -41,17 +41,17 @@ import math
 import unittest
 from random import choice, getrandbits, randint, randrange, sample
 
-from bitarray import bitarray, frozenbitarray
-from bitarray.util import (zeros, ones, gen_primes, urandom,
+from pauliebits import pauliebits, frozenpauliebits
+from pauliebits.util import (zeros, ones, gen_primes, urandom,
                            _ssqi, sum_indices)
 
 
-# Limits of bitarray size in _ssqi()
+# Limits of pauliebits size in _ssqi()
 # ----------------------------------
 # These limits are calculated and tested in SSQI_Tests below.
 # They are used in the C implementation of the internal function _ssqi().
 # The public Python function sum_indices() does NOT impose any limits
-# on the size of bitarrays it can compute.
+# on the size of pauliebitss it can compute.
 SSQI_LIMIT = (None, 6_074_001_000, 3_810_778)
 
 
@@ -133,7 +133,7 @@ class ExampleImplementationTests(unittest.TestCase):
 
             # x is the sum [of squares] of indices for each block
             self.assertEqual(
-                # Note that here t are indices of the full bitarray a.
+                # Note that here t are indices of the full pauliebits a.
                 x, sum(t ** mode for t in range(y, y + len(block)) if a[t]))
 
             sm += x
@@ -156,18 +156,18 @@ class SumIndicesUtil(unittest.TestCase):
                 ("011", 3, 5), ("001", 2, 4), ("0001100", 7, 25),
                 ("00001111", 22, 126), ("01100111 1101", 49, 381),
         ]:
-            for a in [bitarray(s, choice(ENDIANS)),
-                      frozenbitarray(s, choice(ENDIANS))]:
+            for a in [pauliebits(s, choice(ENDIANS)),
+                      frozenpauliebits(s, choice(ENDIANS))]:
                 self.assertEqual(S(a, 1), r1)
                 self.assertEqual(S(a, 2), r2)
-                self.assertEqual(a, bitarray(s))
+                self.assertEqual(a, pauliebits(s))
 
     def check_wrong_args(self, S):
         self.assertRaises(TypeError, S, '')
         self.assertRaises(TypeError, S, 1.0)
         self.assertRaises(TypeError, S)
         for mode in -1, 0, 3, 4:
-            self.assertRaises(ValueError, S, bitarray("110"), mode)
+            self.assertRaises(ValueError, S, pauliebits("110"), mode)
 
     def check_sparse(self, S, n, k, mode=1, freeze=False, inv=False):
         a = zeros(n, choice(ENDIANS))
@@ -183,7 +183,7 @@ class SumIndicesUtil(unittest.TestCase):
             res = sum_ones - res
 
         if freeze:
-            a = frozenbitarray(a)
+            a = frozenpauliebits(a)
 
         c = a.copy()
         self.assertEqual(a.count(), n - k if inv else k)
@@ -209,7 +209,7 @@ class SSQI_Tests(SumIndicesUtil):
             self.assertEqual(n, SSQI_LIMIT[mode])
 
     def test_overflow(self):
-        # _ssqi() is limited to bitarrays of about 6 Gbit (4 Mbit mode=2).
+        # _ssqi() is limited to pauliebits of about 6 Gbit (4 Mbit mode=2).
         # This limit is never reached because sum_indices() uses
         # a much smaller block size for practical reasons.
         for mode, f in MODES:

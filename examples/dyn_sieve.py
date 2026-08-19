@@ -1,15 +1,15 @@
 import math
 import itertools
 
-from bitarray import bitarray
-from bitarray.util import ones, count_n
+from pauliebits import pauliebits
+from pauliebits.util import ones, count_n
 
 
 class Sieve:
     """
     Prime numbers, implemented as a dynamically growing sieve of
     Eratosthenes.  Similar to prime number sieve in SymPy, but implemented
-    using a bitarray.
+    using a pauliebits.
     """
     a = ones(105)
     a[1::3] = 0
@@ -17,7 +17,7 @@ class Sieve:
     a[3::7] = 0
 
     def __init__(self):
-        self.data = bitarray()
+        self.data = pauliebits()
 
     def extend(self, i):
         "grow to accomodate i, ie. self.data[i//2] will not raise IndexError"
@@ -25,7 +25,7 @@ class Sieve:
             raise ValueError("positive integer expected")
 
         if i == 0:  # reset
-            self.data = bitarray()
+            self.data = pauliebits()
             return
 
         n = i // 2 + 1  # n is minimal length of self.data
@@ -35,7 +35,7 @@ class Sieve:
         fresh_data = not self.data
         if fresh_data:
             self.data = self.a.copy()
-            self.data[:8] = bitarray("01110110")
+            self.data[:8] = pauliebits("01110110")
 
         a = self.data
         n1 = len(a)
@@ -87,7 +87,7 @@ class Sieve:
 import unittest
 from random import randrange
 
-from bitarray.util import gen_primes
+from pauliebits.util import gen_primes
 
 
 N = 1_000_000

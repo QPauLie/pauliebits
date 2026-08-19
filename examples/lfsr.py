@@ -1,14 +1,14 @@
 # Linear Feedback Shift Register
 # https://www.youtube.com/watch?v=Ks1pw1X22y4
 # https://en.wikipedia.org/wiki/Linear-feedback_shift_register
-from bitarray import bitarray
-from bitarray.util import parity
+from pauliebits import pauliebits
+from pauliebits.util import parity
 
 
 def get_period(tabs, verbose=False):
-    "given a bitarray of tabs return period of lfsr"
+    "given a pauliebits of tabs return period of lfsr"
     n = len(tabs)
-    state0 = bitarray(n)
+    state0 = pauliebits(n)
     state0[0] = state0[-1] = 1
     state = state0.copy()
     period = 0
@@ -33,7 +33,7 @@ def simple():
         newbit = (state ^ (state >> 1)) & 1
         state = (state >> 1) | (newbit << 3)
     print()
-    get_period(bitarray("1100"), True)
+    get_period(pauliebits("1100"), True)
 
 def test_wiki():
     "test list of tabs shown on Wikipedia"
@@ -63,7 +63,7 @@ def test_wiki():
         "111000010000000000000000",
     ]
     for tabs in all_tabs:
-        tabs = bitarray(tabs)
+        tabs = pauliebits(tabs)
         period = get_period(tabs)
         print(period)
         n = len(tabs)
@@ -71,10 +71,10 @@ def test_wiki():
         assert parity(tabs) == 0
 
 def n128():
-    tabs = bitarray(128)
+    tabs = pauliebits(128)
     tabs[[0, 1, 2, 7]] = 1
 
-    state = bitarray(128)
+    state = pauliebits(128)
     state[0] = state[-1] = 1
 
     while True:

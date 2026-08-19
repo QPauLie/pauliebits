@@ -1,11 +1,11 @@
 PYTHON=python
 
 
-bitarray/_bitarray.so: bitarray/_bitarray.c
+pauliebits/_pauliebits.so: pauliebits/_pauliebits.c
 	$(PYTHON) setup.py build_ext --inplace
 
 
-test: bitarray/_bitarray.so
+test: pauliebits/_pauliebits.so
 	$(PYTHON) setup.py test
 
 
@@ -13,15 +13,15 @@ install:
 	$(PYTHON) -m pip install -vv .
 
 
-doc: bitarray/_bitarray.so
+doc: pauliebits/_pauliebits.so
 	$(PYTHON) update_doc.py
 	$(PYTHON) setup.py sdist
 	twine check dist/*
 
 
 mypy:
-	mypy bitarray/*.pyi
-	mypy bitarray/test_*.py
+	mypy pauliebits/*.pyi
+	mypy pauliebits/test_*.py
 	mypy examples/*.py
 	mypy examples/huffman/*.py
 	mypy examples/sparse/*.py
@@ -29,10 +29,10 @@ mypy:
 
 clean:
 	rm -rf build dist
-	rm -f bitarray/*.o bitarray/*.so
-	rm -f bitarray/*.pyc
+	rm -f pauliebits/*.o pauliebits/*.so
+	rm -f pauliebits/*.pyc
 	rm -f examples/*.pyc
-	rm -rf bitarray/__pycache__ *.egg-info
+	rm -rf pauliebits/__pycache__ *.egg-info
 	rm -rf examples/__pycache__ examples/*/__pycache__
-	rm -rf .mypy_cache bitarray/.mypy_cache
+	rm -rf .mypy_cache pauliebits/.mypy_cache
 	rm -rf examples/.mypy_cache examples/*/.mypy_cache

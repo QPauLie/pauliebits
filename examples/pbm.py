@@ -1,11 +1,11 @@
-from bitarray import bitarray, bits2bytes
+from pauliebits import pauliebits, bits2bytes
 
 
 class PBM: # Portable Bitmap
     def __init__(self, w = 0, h = 0):
         self.size = w, h
         self.update()
-        self.data = bitarray(self.bits, endian='big')
+        self.data = pauliebits(self.bits, endian='big')
 
     def update(self):
         w, h = self.size
@@ -18,7 +18,7 @@ class PBM: # Portable Bitmap
         print('size: %d x %d' % self.size)
         print('bytes per row: %d' % self.bytes_per_row)
         print('bits per row: %d' % self.bits_per_row)
-        print('bitarray: ' + repr(self.data.buffer_info()))
+        print('pauliebits: ' + repr(self.data.buffer_info()))
 
     def clear(self):
         self.data.setall(0)
@@ -39,7 +39,7 @@ class PBM: # Portable Bitmap
                     self.size = tuple(map(int, line.split()))
                     break
             self.update()
-            self.data = bitarray(endian='big')
+            self.data = pauliebits(endian='big')
             self.data.fromfile(fi)
             fi.close()
         assert self.data.nbytes == self.bytes

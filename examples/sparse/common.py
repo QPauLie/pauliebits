@@ -1,7 +1,7 @@
 class Common:
 
     def __repr__(self):
-        return "SparseBitarray('%s')" % (''.join(str(v) for v in self))
+        return "SparsePauliebits('%s')" % (''.join(str(v) for v in self))
 
     def pop(self, i = -1):
         if i < 0:

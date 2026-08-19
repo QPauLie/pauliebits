@@ -3,20 +3,20 @@ import sys
 import unittest
 from random import randint, randrange
 
-from bitarray import bitarray, _sysinfo
-from bitarray.util import zeros, ones, int2ba, parity
+from pauliebits import pauliebits, _sysinfo
+from pauliebits.util import zeros, ones, int2ba, parity
 
-from bitarray.test_bitarray import Util, urandom_2, PTRSIZE
+from pauliebits.test_pauliebits import Util, urandom_2, PTRSIZE
 
 # --------------------- internal C-level debug tests ------------------------
 
-from bitarray._util import (
-    _setup_table, _zlw,                          # defined in bitarray.h
+from pauliebits._util import (
+    _setup_table, _zlw,                          # defined in pauliebits.h
     _cfw, _d2i, _read_n, _write_n, _sc_rts, _SEGSIZE,       # _util.h
 )
 SEGBITS = 8 * _SEGSIZE
 
-# ---------------------------- bitarray.h -----------------------------------
+# ---------------------------- pauliebits.h -----------------------------------
 
 class SetupTableTests(unittest.TestCase):
 
@@ -144,7 +144,7 @@ class ZLW_Tests(unittest.TestCase, Util):
             q, r = divmod(n, 64)
             self.assertEqual(b, a[64 * q:] + zeros(64 - r))
 
-# ----------------------------  _bitarray.c  --------------------------------
+# ----------------------------  _pauliebits.c  --------------------------------
 
 class SysInfo_Tests(unittest.TestCase):
 
@@ -155,13 +155,13 @@ class SysInfo_Tests(unittest.TestCase):
 class ShiftR8_Tests(unittest.TestCase, Util):
 
     def test_empty(self):
-        a = bitarray()
+        a = pauliebits()
         a._shift_r8(0, 0, 3)
-        self.assertEqual(a, bitarray())
+        self.assertEqual(a, pauliebits())
 
     def test_explicit(self):
-        x = bitarray('11000100 11111111 11100111 10111111 00001000')
-        y = bitarray('11000100 00000111 11111111 00111101 00001000')
+        x = pauliebits('11000100 11111111 11100111 10111111 00001000')
+        y = pauliebits('11000100 00000111 11111111 00111101 00001000')
         x._shift_r8(1, 4, 5)
         self.assertEqual(x, y)
         x._shift_r8(2, 1, 5)  # start > stop  --  do nothing
@@ -169,13 +169,13 @@ class ShiftR8_Tests(unittest.TestCase, Util):
         x._shift_r8(0, 5, 0)  # shift = 0  --  do nothing
         self.assertEqual(x, y)
 
-        x = bitarray('11000100 11110')
-        y = bitarray('00011000 10011')
+        x = pauliebits('11000100 11110')
+        y = pauliebits('00011000 10011')
         x._shift_r8(0, 2, 3)
         self.assertEqual(x, y)
 
-        x = bitarray('1100011')
-        y = bitarray('0110001')
+        x = pauliebits('1100011')
+        y = pauliebits('0110001')
         x._shift_r8(0, 1, 1)
         self.assertEqual(x, y)
 
@@ -203,30 +203,30 @@ class ShiftR8_Tests(unittest.TestCase, Util):
 class CopyN_Tests(unittest.TestCase, Util):
 
     def test_explicit(self):
-        x = bitarray('11000100 11110')
+        x = pauliebits('11000100 11110')
         #                 ^^^^ ^
-        y = bitarray('0101110001')
+        y = pauliebits('0101110001')
         #              ^^^^^
         x._copy_n(4, y, 1, 5)
-        self.assertEqual(x, bitarray('11001011 11110'))
+        self.assertEqual(x, pauliebits('11001011 11110'))
         #                                 ^^^^ ^
-        x = bitarray('10110111 101', 'little')
+        x = pauliebits('10110111 101', 'little')
         y = x.copy()
         x._copy_n(3, x, 3, 7)  # copy region of x onto x
         self.assertEqual(x, y)
-        x._copy_n(3, bitarray(x, 'big'), 3, 7)  # as before but other endian
+        x._copy_n(3, pauliebits(x, 'big'), 3, 7)  # as before but other endian
         self.assertEqual(x, y)
-        x._copy_n(5, bitarray(), 0, 0)  # copy empty bitarray onto x
+        x._copy_n(5, pauliebits(), 0, 0)  # copy empty pauliebits onto x
         self.assertEqual(x, y)
 
     def test_example(self):
         # example given in devel/copy_n.py
-        y = bitarray(
+        y = pauliebits(
             '00101110 11111001 01011101 11001011 10110000 01011110 011')
-        x =  bitarray(
+        x =  pauliebits(
             '01011101 11100101 01110101 01011001 01110100 10001010 01111011')
         x._copy_n(21, y, 6, 31)
-        self.assertEqual(x, bitarray(
+        self.assertEqual(x, pauliebits(
             '01011101 11100101 01110101 11110010 10111011 10010111 01101011'))
 
     def check_copy_n(self, N, M, a, b, n):
@@ -236,13 +236,13 @@ class CopyN_Tests(unittest.TestCase, Util):
         y_lst = y.tolist()
         x_lst[a:a + n] = y_lst[b:b + n]
         x._copy_n(a, y, b, n)
-        self.assertEqual(x, bitarray(x_lst))
+        self.assertEqual(x, pauliebits(x_lst))
         self.assertEqual(len(x), N)
         self.check_obj(x)
 
         if M < 0:
             return
-        self.assertEqual(y, bitarray(y_lst))
+        self.assertEqual(y, pauliebits(y_lst))
         self.assertEqual(len(y), M)
         self.check_obj(y)
 
@@ -263,12 +263,12 @@ class CopyN_Tests(unittest.TestCase, Util):
     @staticmethod
     def getslice(a, start, slicelength):
         # this is the Python eqivalent of __getitem__ for slices with step=1
-        b = bitarray(slicelength, a.endian)
+        b = pauliebits(slicelength, a.endian)
         b._copy_n(0, a, start, slicelength)
         return b
 
     def test_getslice(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             a_lst = a.tolist()
             n = len(a)
             i = randint(0, n)
@@ -288,45 +288,45 @@ class Overlap_Tests(unittest.TestCase, Util):
         self.check_obj(b)
 
     def test_empty(self):
-        a = bitarray()
+        a = pauliebits()
         self.check_overlap(a, a, False)
-        b = bitarray()
+        b = pauliebits()
         self.check_overlap(a, b, False)
 
     def test_distinct(self):
-        for a in self.randombitarrays():
+        for a in self.randompauliebitss():
             # buffers overlaps with itself, unless buffer is NULL
             self.check_overlap(a, a, bool(a))
             b = a.copy()
             self.check_overlap(a, b, False)
 
     def test_shared(self):
-        a = bitarray(64)
-        b = bitarray(buffer=a)
+        a = pauliebits(64)
+        b = pauliebits(buffer=a)
         self.check_overlap(b, a, True)
 
-        c = bitarray(buffer=memoryview(a)[2:4])
+        c = pauliebits(buffer=memoryview(a)[2:4])
         self.check_overlap(c, a, True)
 
-        d = bitarray(buffer=memoryview(a)[5:])
+        d = pauliebits(buffer=memoryview(a)[5:])
         self.check_overlap(d, c, False)
         self.check_overlap(d, b, True)
 
-        e = bitarray(buffer=memoryview(a)[3:3])
+        e = pauliebits(buffer=memoryview(a)[3:3])
         self.check_overlap(e, c, False)
         self.check_overlap(e, d, False)
 
     def test_shared_random(self):
         n = 100  # buffer size in bytes
-        a = bitarray(8 * n)
+        a = pauliebits(8 * n)
         for _ in range(1000):
             i1 = randint(0, n)
             j1 = randint(i1, n)
-            b1 = bitarray(buffer=memoryview(a)[i1:j1])
+            b1 = pauliebits(buffer=memoryview(a)[i1:j1])
 
             i2 = randint(0, n)
             j2 = randint(i2, n)
-            b2 = bitarray(buffer=memoryview(a)[i2:j2])
+            b2 = pauliebits(buffer=memoryview(a)[i2:j2])
 
             r1, r2 = range(i1, j1), range(i2, j2)
             res = bool(r1) and bool(r2) and (i2 in r1 or i1 in r2)
@@ -394,7 +394,7 @@ class RTS_Tests(unittest.TestCase):
         self.assertTrue(_SEGSIZE in [8, 16, 32])
 
     def test_empty(self):
-        rts = _sc_rts(bitarray())
+        rts = _sc_rts(pauliebits())
         self.assertEqual(len(rts), 1)
         self.assertEqual(rts, [0])
 

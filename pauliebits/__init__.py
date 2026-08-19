@@ -1,47 +1,47 @@
 # Copyright (c) 2008 - 2026, Ilan Schnell; All Rights Reserved
 """
 This package defines an object type which can efficiently represent
-a bitarray.  Bitarrays are sequence types and behave very much like lists.
+a pauliebits.  Pauliebitss are sequence types and behave very much like lists.
 
 Please find a description of this package at:
 
-    https://github.com/ilanschnell/bitarray
+    https://github.com/ilanschnell/pauliebits
 
 Author: Ilan Schnell
 """
 from collections import namedtuple
 
-from bitarray._bitarray import (
-    bitarray, decodetree, decodeiterator, _bitarray_reconstructor,
+from pauliebits._pauliebits import (
+    pauliebits, decodetree, decodeiterator, _pauliebits_reconstructor,
     get_default_endian, bits2bytes, _sysinfo,
-    BITARRAY_VERSION as __version__
+    PAULIEBITS_VERSION as __version__
 )
 
-__all__ = ['bitarray', 'frozenbitarray', 'decodetree', 'decodeiterator',
+__all__ = ['pauliebits', 'frozenpauliebits', 'decodetree', 'decodeiterator',
            'bits2bytes']
 
 BufferInfo = namedtuple('BufferInfo',
                         ['address', 'nbytes', 'endian', 'padbits',
                          'alloc', 'readonly', 'imported', 'exports'])
 
-class frozenbitarray(bitarray):
-    """frozenbitarray(initializer=0, /, endian='big', buffer=None) -> \
-frozenbitarray
+class frozenpauliebits(pauliebits):
+    """frozenpauliebits(initializer=0, /, endian='big', buffer=None) -> \
+frozenpauliebits
 
-Return a `frozenbitarray` object.  Initialized the same way a `bitarray`
-object is initialized.  A `frozenbitarray` is immutable and hashable,
+Return a `frozenpauliebits` object.  Initialized the same way a `pauliebits`
+object is initialized.  A `frozenpauliebits` is immutable and hashable,
 and may therefore be used as a dictionary key.
 """
     def __init__(self, *args, **kwargs):
         self._freeze()
 
     def __repr__(self):
-        return 'frozen' + bitarray.__repr__(self)
+        return 'frozen' + pauliebits.__repr__(self)
 
     def __hash__(self):
         "Return hash(self)."
         # ensure hash is independent of endianness
-        a = bitarray(self, 'big')
+        a = pauliebits(self, 'big')
         return hash((len(a), a.tobytes()))
 
     # Technically the code below is not necessary, as all these methods will
@@ -49,7 +49,7 @@ and may therefore be used as a dictionary key.
     # message.
     def __delitem__(self, *args, **kwargs):
         ""  # no docstring
-        raise TypeError("frozenbitarray is immutable")
+        raise TypeError("frozenpauliebits is immutable")
 
     append = bytereverse = clear = extend = encode = fill = encode_ixyz = __delitem__
     frombytes = fromfile = insert = invert = pack = pop = __delitem__
@@ -63,5 +63,5 @@ def test(verbosity=1):
 
 Run self-test, and return `unittest.runner.TextTestResult` object.
 """
-    from bitarray import test_bitarray
-    return test_bitarray.run(verbosity=verbosity)
+    from pauliebits import test_pauliebits
+    return test_pauliebits.run(verbosity=verbosity)

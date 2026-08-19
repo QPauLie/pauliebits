@@ -2,14 +2,14 @@
 Demonstrates the implementation of "Sieve of Eratosthenes" algorithm for
 finding all prime numbers up to any given limit.
 
-It should be noted that bitarray version 3.7 added util.gen_primes().
+It should be noted that pauliebits version 3.7 added util.gen_primes().
 The library function basically uses an optimized version of the same
 algorithm.
 """
 from math import isqrt
 
-from bitarray import bitarray
-from bitarray.util import ones, count_n, sum_indices
+from pauliebits import pauliebits
+from pauliebits.util import ones, count_n, sum_indices
 
 
 N = 100_000_000
@@ -35,9 +35,9 @@ print('there are {:,d} primes up to {:,d}'.format(x, N))
 assert x == 5_761_455 or N != 100_000_000
 
 # The number of twin primes up to 100 million is 440,312
-# we need to add 1 as .count() only counts non-overlapping sub_bitarrays
+# we need to add 1 as .count() only counts non-overlapping sub_pauliebitss
 # and (3, 5) as well as (5, 7) are both twin primes
-x = a.count(bitarray('101')) + 1
+x = a.count(pauliebits('101')) + 1
 print('number of twin primes up to {:,d} is {:,d}'.format(N, x))
 assert x == 440_312 or N != 100_000_000
 

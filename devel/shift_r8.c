@@ -50,7 +50,7 @@ builtin_bswap64(uint64_t word)
 /* The following two functions operate on first n bytes in buffer.
    Within this region, they shift all bits by k positions to right,
    i.e. towards higher addresses.
-   They operate on little-endian and bit-endian bitarrays respectively.
+   They operate on little-endian and bit-endian pauliebits respectively.
    As we shift right, we need to start with the highest address and loop
    downwards such that lower bytes are still unaltered.
 */

@@ -4,44 +4,44 @@ from doctest import testfile
 from glob import glob
 from io import StringIO
 
-import bitarray.util
+import pauliebits.util
 
 
-BASE_URL = "https://github.com/ilanschnell/bitarray"
+BASE_URL = "https://github.com/ilanschnell/pauliebits"
 
 NEW_IN = {
-    'bitarray':              ['2.3: optional `buffer` argument',
+    'pauliebits':              ['2.3: optional `buffer` argument',
                               '3.4: allow initializer `bytes` or `bytearray` '
                                    'to set buffer directly'],
-    'bitarray.buffer_info':   '3.7: return named tuple',
-    'bitarray.bytereverse':  ['2.2.5: optional start and stop arguments',
+    'pauliebits.buffer_info':   '3.7: return named tuple',
+    'pauliebits.bytereverse':  ['2.2.5: optional start and stop arguments',
                               '3.9.1: clip arguments instead of raising '
                                      '`IndexError`'],
-    'bitarray.clear':         '1.4',
-    'bitarray.count':        ['1.1.0: optional start and stop arguments',
+    'pauliebits.clear':         '1.4',
+    'pauliebits.count':        ['1.1.0: optional start and stop arguments',
                               '2.3.7: optional step argument',
-                              '2.9: add non-overlapping sub-bitarray count'],
-    'bitarray.decode':       ['3.0: returns iterator (equivalent to past '
+                              '2.9: add non-overlapping sub-pauliebits count'],
+    'pauliebits.decode':       ['3.0: returns iterator (equivalent to past '
                                    '`.iterdecode()`)',
                               '3.9: returns public `decodeiterator` object'],
-    'bitarray.endian':        '3.4: replaces former `.endian()` method',
-    'bitarray.extend':        '3.4: allow `bytes` object',
-    'bitarray.find':         ['2.1',
+    'pauliebits.endian':        '3.4: replaces former `.endian()` method',
+    'pauliebits.extend':        '3.4: allow `bytes` object',
+    'pauliebits.find':         ['2.1',
                               '2.9: add optional keyword argument `right`'],
-    'bitarray.frombytes':     '2.5.0: allow bytes-like argument',
-    'bitarray.index':         '2.9: add optional keyword argument `right`',
-    'bitarray.invert':        '1.5.3: optional index argument',
-    'bitarray.pack':          '2.5.0: allow bytes-like argument',
-    'bitarray.search':       ['2.9: optional start and stop arguments - '
+    'pauliebits.frombytes':     '2.5.0: allow bytes-like argument',
+    'pauliebits.index':         '2.9: add optional keyword argument `right`',
+    'pauliebits.invert':        '1.5.3: optional index argument',
+    'pauliebits.pack':          '2.5.0: allow bytes-like argument',
+    'pauliebits.search':       ['2.9: optional start and stop arguments - '
                                    'add optional keyword argument `right`',
                               '3.0: returns iterator (equivalent to past '
                                    '`.itersearch()`)'],
-    'bitarray.to01':          '3.3: optional `group` and `sep` arguments',
-    'bitarray.rotate':        '3.9',
+    'pauliebits.to01':          '3.3: optional `group` and `sep` arguments',
+    'pauliebits.rotate':        '3.9',
     'decodeiterator.index':   '3.9',
     'decodeiterator.skipbits':'3.9',
     'decodetree':             '1.6',
-    'frozenbitarray':         '1.1',
+    'frozenpauliebits':         '1.1',
     'get_default_endian':     '1.3',
     'util.any_and':           '2.7',
     'util.byteswap':          '3.4',
@@ -76,17 +76,17 @@ NEW_IN = {
 }
 
 DOCS = {
-    'ba3': ('Bitarray 3 transition', 'bitarray3.rst'),
+    'ba3': ('pauliebits 3 transition', 'pauliebits3.rst'),
     'chc': ('Canonical Huffman Coding', 'canonical.rst'),
-    'rep': ('Bitarray representations', 'represent.rst'),
-    'rnd': ('Random Bitarrays', 'random_p.rst'),
-    'sc':  ('Compression of sparse bitarrays', 'sparse_compression.rst'),
-    'vlf': ('Variable length bitarray format', 'variable_length.rst'),
+    'rep': ('pauliebits representations', 'represent.rst'),
+    'rnd': ('Random pauliebitss', 'random_p.rst'),
+    'sc':  ('Compression of sparse pauliebitss', 'sparse_compression.rst'),
+    'vlf': ('Variable length pauliebits format', 'variable_length.rst'),
 }
 
 DOC_LINKS = {
-    'bitarray.decode':         'ba3',
-    'bitarray.search':         'ba3',
+    'pauliebits.decode':         'ba3',
+    'pauliebits.search':         'ba3',
     'util.canonical_huffman':  'chc',
     'util.canonical_decode':   'chc',
     'util.ba2base':            'rep',
@@ -101,46 +101,46 @@ DOC_LINKS = {
 }
 
 NOTES = {
-    'bitarray.pack': """\
+    'pauliebits.pack': """\
    This method, as well as the ``.unpack()`` method, are meant for efficient
-   transfer of data between bitarray objects to other Python objects (for
+   transfer of data between pauliebits objects to other Python objects (for
    example NumPy's ndarray object) which have a different memory view.""",
 
-    'bitarray.rotate': """\
-   When bitarray ``a`` is not empty, rotating one step to the right is
+    'pauliebits.rotate': """\
+   When pauliebits ``a`` is not empty, rotating one step to the right is
    equivalent to ``a.insert(0, a.pop())``, and rotating one step to the left
    is equivalent to ``a.append(a.pop(0))``.
    The same convention is used by the ``.rotate()`` method of
    the ``collections.deque`` object.""",
 
-    'bitarray.search': """\
+    'pauliebits.search': """\
    For example, ``a.search(1)`` is the easiest (and most efficient) way
    to create an iterator over all active indices in ``a``.""",
 
-    'bitarray.tolist': """\
+    'pauliebits.tolist': """\
    Note that the list object being created will require 32 or 64 times more
-   memory (depending on the machine architecture) than the bitarray object,
-   which may cause a memory error if the bitarray is very large.""",
+   memory (depending on the machine architecture) than the pauliebits object,
+   which may cause a memory error if the pauliebits is very large.""",
 
     'util.byteswap': """\
    We should mention that Python's ``array.array`` object has a
    method ``.byteswap()`` with similar functionality.  However, unlike
-   bitarray's ``util.byteswap()`` function, this method is limited to
+   pauliebits's ``util.byteswap()`` function, this method is limited to
    swapping 2, 4, or 8 consecutive bytes.""",
 
     'util.gen_primes': """\
    Apart from working with prime numbers, this function is useful for
-   testing, as it provides a simple way to create a well-defined bitarray
+   testing, as it provides a simple way to create a well-defined pauliebits
    of any length.""",
 
     'util.count_xor': "   This is also known as the Hamming distance.",
 }
 
 GETSET = {
-    'bitarray.endian':      'str',
-    'bitarray.nbytes':      'int',
-    'bitarray.padbits':     'int',
-    'bitarray.readonly':    'bool',
+    'pauliebits.endian':      'str',
+    'pauliebits.nbytes':      'int',
+    'pauliebits.padbits':     'int',
+    'pauliebits.readonly':    'bool',
     'decodeiterator.index': 'int',
 }
 
@@ -158,7 +158,7 @@ sig_pat = re.compile(r"""
 
 def get_doc(name):
     parts = name.split('.')
-    obj = bitarray
+    obj = pauliebits
     while parts:
         obj = getattr(obj, parts.pop(0))
 
@@ -224,7 +224,7 @@ def write_reference_for_class(fo, cl):
     if getset_names:
         heading = "%s data descriptors:" % class_name
         fo.write("%s\n%s\n\n" % (heading, '-' * len(heading)))
-        if class_name == "bitarray":
+        if class_name == "pauliebits":
             fo.write("Data descriptors were added in version 2.6.\n\n")
         for name in getset_names:
             write_doc(fo, name)
@@ -235,37 +235,37 @@ def write_reference(fo):
 Reference
 =========
 
-bitarray version: %s -- `change log <%s>`__
+pauliebits version: %s -- `change log <%s>`__
 
 In the following, ``item`` and ``value`` are usually a single bit -
 an integer 0 or 1.
 
-Also, ``sub_bitarray`` refers to either a bitarray, or an ``item``.
+Also, ``sub_pauliebits`` refers to either a pauliebits, or an ``item``.
 
 
-The bitarray object:
+The pauliebits object:
 --------------------
 
-""" % (bitarray.__version__, BASE_URL + "/blob/master/doc/changelog.rst"))
-    write_doc(fo, 'bitarray')
+""" % (pauliebits.__version__, BASE_URL + "/blob/master/doc/changelog.rst"))
+    write_doc(fo, 'pauliebits')
 
-    write_reference_for_class(fo, bitarray.bitarray)
-    write_reference_for_class(fo, bitarray.decodeiterator)
+    write_reference_for_class(fo, pauliebits.pauliebits)
+    write_reference_for_class(fo, pauliebits.decodeiterator)
 
     fo.write("Other objects:\n"
              "--------------\n\n")
-    write_doc(fo, 'frozenbitarray')
+    write_doc(fo, 'frozenpauliebits')
     write_doc(fo, 'decodetree')
 
-    fo.write("Functions defined in the `bitarray` module:\n"
+    fo.write("Functions defined in the `pauliebits` module:\n"
              "-------------------------------------------\n\n")
     for func in sorted(['test', 'bits2bytes', 'get_default_endian']):
         write_doc(fo, func)
 
-    fo.write("Functions defined in `bitarray.util` module:\n"
+    fo.write("Functions defined in `pauliebits.util` module:\n"
              "--------------------------------------------\n\n"
              "This sub-module was added in version 1.2.\n\n")
-    for func in sorted(bitarray.util.__all__):
+    for func in sorted(pauliebits.util.__all__):
         write_doc(fo, 'util.%s' % func)
 
     for name in list(NEW_IN) + list(DOC_LINKS):
@@ -273,7 +273,7 @@ The bitarray object:
 
 
 def update_readme(path):
-    ver_pat = re.compile(r'(bitarray.+?)\s(\d+\.\d+\.\d+)')
+    ver_pat = re.compile(r'(pauliebits.+?)\s(\d+\.\d+\.\d+)')
 
     with open(path, 'r') as fi:
         data = fi.read()
@@ -282,7 +282,7 @@ def update_readme(path):
         for line in data.splitlines():
             if line == 'Reference':
                 break
-            line = ver_pat.sub(r'\1 ' + bitarray.__version__, line)
+            line = ver_pat.sub(r'\1 ' + pauliebits.__version__, line)
             fo.write("%s\n" % line.rstrip())
 
         write_reference(fo)
