@@ -40,10 +40,10 @@ SMALL_P = _r.SMALL_P
 
 def count_each_index(arrays):
     """
-    Given an iterable of pauliebitss, count the sums of all bits at each
+    Given an iterable of pauliebits, count the sums of all bits at each
     index and return those counts in a Counter object.
     For example, for a returned Counter c, c[2] = 4 means that a sum of 2
-    across all pauliebitss occurs at 4 indices.
+    across all pauliebits occurs at 4 indices.
     """
     b = pauliebits()
     n = None         # length of each pauliebits
@@ -51,7 +51,7 @@ def count_each_index(arrays):
         if n is None:
             n = len(a)
         elif len(a) != n:
-            raise ValueError("pauliebitss of same length expected")
+            raise ValueError("pauliebits of same length expected")
         b.extend(a)
     if n is None:
         return Counter()
@@ -258,7 +258,7 @@ class Random_K_Tests(Util):
         self.assertTrue(abs(C[3] -  4_376) <=   647)  # p = 0.043762
 
     def test_apply_masks(self):
-        Na = 25_000  # number of pauliebitss to test against masks
+        Na = 25_000  # number of pauliebits to test against masks
         Nm = 12      # number of masks
         n = 1 << Nm  # length of each mask
         # Create masks for selecting half elements in random pauliebits a.
@@ -606,7 +606,7 @@ class VerificationTests(Util):
                 # increasing and decreasing the count is equally expensive.
                 p = k / n  # p <= 0.5
                 # Numerator: f(p)=(1-2*p)*c  ->  f(0)=c, f(1/2)=0
-                # As the standard deviation of the .combine_half() pauliebitss
+                # As the standard deviation of the .combine_half() pauliebits
                 # gets smaller with larger n, we divide by sqrt(n).
                 p -= (0.2 - 0.4 * p) / sqrt(n)
                 # Note that we divide by K+1.  This will round towards the

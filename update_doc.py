@@ -79,8 +79,8 @@ DOCS = {
     'ba3': ('pauliebits 3 transition', 'pauliebits3.rst'),
     'chc': ('Canonical Huffman Coding', 'canonical.rst'),
     'rep': ('pauliebits representations', 'represent.rst'),
-    'rnd': ('Random pauliebitss', 'random_p.rst'),
-    'sc':  ('Compression of sparse pauliebitss', 'sparse_compression.rst'),
+    'rnd': ('Random pauliebits', 'random_p.rst'),
+    'sc':  ('Compression of sparse pauliebits', 'sparse_compression.rst'),
     'vlf': ('Variable length pauliebits format', 'variable_length.rst'),
 }
 

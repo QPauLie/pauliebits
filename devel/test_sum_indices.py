@@ -6,7 +6,7 @@ indices.  We use the same trick but for different reasons:
   (a) in ssqi(), we want to loop over bytes (blocks of 8 bits) and use
       lookup tables (for sum z_j [**2])
 
-  (b) in sum_indices() we want to loop over blocks of smaller pauliebitss
+  (b) in sum_indices() we want to loop over blocks of smaller pauliebits
       in order to keep the summation in ssqi() from overflowing
 
 The trick is to write
@@ -51,7 +51,7 @@ from pauliebits.util import (zeros, ones, gen_primes, urandom,
 # These limits are calculated and tested in SSQI_Tests below.
 # They are used in the C implementation of the internal function _ssqi().
 # The public Python function sum_indices() does NOT impose any limits
-# on the size of pauliebitss it can compute.
+# on the size of pauliebits it can compute.
 SSQI_LIMIT = (None, 6_074_001_000, 3_810_778)
 
 

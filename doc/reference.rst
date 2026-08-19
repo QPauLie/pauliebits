@@ -107,7 +107,7 @@ pauliebits methods:
 
 
 ``decode(code, /)`` -> decodeiterator
-   Given a prefix code (a dict mapping symbols to pauliebitss, or ``decodetree``
+   Given a prefix code (a dict mapping symbols to pauliebits, or ``decodetree``
    object), decode content of pauliebits and return an iterator over
    corresponding symbols.
 
@@ -119,7 +119,7 @@ pauliebits methods:
 
 
 ``encode(code, iterable, /)``
-   Given a prefix code (a dict mapping symbols to pauliebitss),
+   Given a prefix code (a dict mapping symbols to pauliebits),
    iterate over the iterable object with symbols, and extend pauliebits
    with corresponding pauliebits for each symbol.
 
@@ -331,7 +331,7 @@ Other objects:
 
 
 ``decodetree(code, /)`` -> decodetree
-   Given a prefix code (a dict mapping symbols to pauliebitss),
+   Given a prefix code (a dict mapping symbols to pauliebits),
    create a binary tree object to be passed to ``.decode()``.
 
    New in version 1.6
@@ -439,7 +439,7 @@ This sub-module was added in version 1.2.
    Given a frequency map, a dictionary mapping symbols to their frequency,
    calculate the canonical Huffman code.  Returns a tuple containing:
 
-   0. the canonical Huffman code as a dict mapping symbols to pauliebitss
+   0. the canonical Huffman code as a dict mapping symbols to pauliebits
    1. a list containing the number of symbols of each code length
    2. a list of symbols in canonical order
 
@@ -515,7 +515,7 @@ This sub-module was added in version 1.2.
 ``huffman_code(dict, /, endian=None)`` -> dict
    Given a frequency map, a dictionary mapping symbols to their frequency,
    calculate the Huffman code, i.e. a dict mapping those symbols to
-   pauliebitss (with given bit-endianness).  Note that the symbols are not limited
+   pauliebits (with given bit-endianness).  Note that the symbols are not limited
    to being strings.  Symbols may be any hashable object.
 
 
@@ -562,7 +562,7 @@ This sub-module was added in version 1.2.
    Return (pseudo-) random pauliebits of length ``n`` with ``k`` elements
    set to one.  Mathematically equivalent to setting (in a pauliebits of
    length ``n``) all bits at indices ``random.sample(range(n), k)`` to one.
-   The random pauliebitss are reproducible when giving Python's ``random.seed()``
+   The random pauliebits are reproducible when giving Python's ``random.seed()``
    a specific seed value.
 
    New in version 3.6
@@ -572,14 +572,14 @@ This sub-module was added in version 1.2.
    Return (pseudo-) random pauliebits of length ``n``, where each bit has
    probability ``p`` of being one (independent of any other bits).  Mathematically
    equivalent to ``pauliebits((random() < p for _ in range(n)), endian)``, but much
-   faster for large ``n``.  The random pauliebitss are reproducible when giving
+   faster for large ``n``.  The random pauliebits are reproducible when giving
    Python's ``random.seed()`` with a specific seed value.
 
    This function requires Python 3.12 or higher, as it depends on the standard
    library function ``random.binomialvariate()``.  Raises ``NotImplementedError``
    when Python version is too low.
 
-   See also: `Random Pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
+   See also: `Random pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
 
    New in version 3.5
 
@@ -590,7 +590,7 @@ This sub-module was added in version 1.2.
    This function consumes only one pauliebits and leaves the remaining stream
    untouched.  Use ``sc_encode()`` for compressing (encoding).
 
-   See also: `Compression of sparse pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -598,9 +598,9 @@ This sub-module was added in version 1.2.
 ``sc_encode(pauliebits, /)`` -> bytes
    Compress a pauliebits using sparse encoding and return its binary
    representation.  This representation is useful for efficiently storing
-   sparse pauliebitss.  Use ``sc_decode()`` for decompressing (decoding).
+   sparse pauliebits.  Use ``sc_decode()`` for decompressing (decoding).
 
-   See also: `Compression of sparse pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 

@@ -64,14 +64,14 @@ class Util:
         return choice(['little', 'big'])
 
     @staticmethod
-    def randompauliebitss(start=0):
+    def randompauliebits(start=0):
         for n in range(start, 10):
             yield urandom_2(n)
         for _ in range(3):
             yield urandom_2(randrange(start, 1000))
 
     def randomlists(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             yield a.tolist()
 
     @staticmethod
@@ -426,7 +426,7 @@ class CreateObjectTests(unittest.TestCase, Util):
             self.assertEqual(b.endian, endian2)
             self.assertEqual(a, b)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             endian2 = self.opposite_endian(a.endian)
             b = pauliebits(a, endian2)
             self.assertEqual(a, b)
@@ -495,11 +495,11 @@ class ToObjectsTests(unittest.TestCase, Util):
         self.assertRaises(Exception, complex, a)
 
     def test_list(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertEqual(list(a), a.tolist())
 
     def test_tuple(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertEqual(tuple(a), tuple(a.tolist()))
 
     def test_bytes_bytearray(self):
@@ -517,7 +517,7 @@ class ToObjectsTests(unittest.TestCase, Util):
             self.assertEqual(bytes(a), res)
 
     def test_set(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertEqual(set(a), set(a.tolist()))
 
 # -------------------------- (Number) index tests ---------------------------
@@ -551,7 +551,7 @@ class GetItemTests(unittest.TestCase, Util):
         self.assertRaises(IndexError, a.__getitem__, -8)
 
     def test_range(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.tolist()
             for i in range(len(a)):
                 self.assertEqual(a[i], aa[i])
@@ -582,7 +582,7 @@ class SetItemTests(unittest.TestCase, Util):
         self.assertEqual(a, pauliebits('10'))
 
     def test_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             i = randrange(len(a))
             aa = a.tolist()
             v = getrandbits(1)
@@ -614,7 +614,7 @@ class DelItemTests(unittest.TestCase, Util):
         self.assertRaises(IndexError, a.__delitem__, -4)
 
     def test_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             n = len(a)
             b = a.copy()
             i = randrange(n)
@@ -686,7 +686,7 @@ class GetSliceTests(unittest.TestCase, Util):
 class SetSliceTests(unittest.TestCase, Util):
 
     def test_simple(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             n = len(a)
             b = pauliebits(n)
             b[0:n] = pauliebits(a)
@@ -703,7 +703,7 @@ class SetSliceTests(unittest.TestCase, Util):
             self.assertEqual(b.tolist(), a.tolist()[::-1])
 
     def test_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             len_a = len(a)
             for _ in range(10):
                 s = self.random_slice(len_a)
@@ -717,7 +717,7 @@ class SetSliceTests(unittest.TestCase, Util):
                 self.assertEqual(c, pauliebits(cc))
 
     def test_self_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             for step in -1, 1:
                 s = slice(None, None, step)
@@ -801,7 +801,7 @@ class SetSliceTests(unittest.TestCase, Util):
         self.assertEqual(a, pauliebits('010111'))
 
     def test_self_shared_buffer(self):
-        # This is a special case.  We have two pauliebitss which share the
+        # This is a special case.  We have two pauliebits which share the
         # same buffer, and then do a slice assignment.  The pauliebits is
         # copied onto itself in reverse order.  So we need to make a copy
         # in setslice_pauliebits().  However, since a and b are two distinct
@@ -814,7 +814,7 @@ class SetSliceTests(unittest.TestCase, Util):
         self.assertEqual(a, pauliebits('00000111'))
 
     def test_self_shared_buffer_2(self):
-        # This is an even more special case.  We have a pauliebitss which
+        # This is an even more special case.  We have a pauliebits which
         # shares part of anothers pauliebits buffer.  So in setslice_pauliebits(),
         # we need to make a copy of other if:
         #
@@ -1176,7 +1176,7 @@ class GetMaskTests(unittest.TestCase, Util):
         self.check_obj(b)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             # select items from a wehre a is 1  ->  all 1 items
             self.assertEqual(a[a], a.count() * pauliebits('1'))
@@ -1225,14 +1225,14 @@ class SetMaskTests(unittest.TestCase, Util):
         self.assertEqual(a, pauliebits('1000100'))
 
     def test_zeros_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             mask = zeros(len(a))
             a[mask] = pauliebits()
             self.assertEqual(a, b)
 
     def test_ones_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             mask = ones(n)
             c = urandom_2(n)
@@ -1240,7 +1240,7 @@ class SetMaskTests(unittest.TestCase, Util):
             self.assertEqual(a, c)
 
     def test_random_mask_set_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             mask = urandom_2(len(a))
             other = urandom_2(mask.count())
@@ -1261,7 +1261,7 @@ class SetMaskTests(unittest.TestCase, Util):
             self.assertEQUAL(a, b)
 
     def test_random_mask_set_zeros(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             mask = urandom_2(len(a), endian=a.endian)
             b = a.copy()
             self.assertRaisesMessage(
@@ -1274,7 +1274,7 @@ class SetMaskTests(unittest.TestCase, Util):
             self.assertEqual(a, b)
 
     def test_random_mask_set_ones(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             mask = urandom_2(len(a), endian=a.endian)
             b = a.copy()
             self.assertRaisesMessage(
@@ -1305,7 +1305,7 @@ class DelMaskTests(unittest.TestCase, Util):
         self.assertRaises(IndexError, a.__delitem__, pauliebits('101'))
 
     def test_zeros_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             # mask has only zeros - nothing will be removed
             mask = zeros(len(a))
@@ -1313,14 +1313,14 @@ class DelMaskTests(unittest.TestCase, Util):
             self.assertEqual(b, a)
 
     def test_ones_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             # mask has only ones - everything will be removed
             mask = ones(len(a))
             del a[mask]
             self.assertEqual(a, pauliebits())
 
     def test_self_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             cnt0 = a.count(0)
             # mask is pauliebits itself - all 1 items are removed -
             # only all the 0's remain
@@ -1328,7 +1328,7 @@ class DelMaskTests(unittest.TestCase, Util):
             self.assertEqual(a, zeros(cnt0))
 
     def test_random_mask(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = a.copy()
             mask = urandom_2(n)
@@ -1423,7 +1423,7 @@ class GetSequenceTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__getitem__, tuple(lst))
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             lst = choices(range(n), k=n//2)
             b = a[lst]
@@ -1456,7 +1456,7 @@ class SetSequenceTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__setitem__, a)
 
     def test_bool_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             lst = choices(range(n), k=n//2)
             b = a.copy()
@@ -1490,7 +1490,7 @@ class SetSequenceTests(unittest.TestCase, Util):
                                  a.__setitem__, [1, 2], pauliebits('001'))
 
     def test_pauliebits_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             lst = choices(range(n), k=n//2)
             c = urandom_2(len(lst))
@@ -1512,7 +1512,7 @@ class SetSequenceTests(unittest.TestCase, Util):
             self.assertEQUAL(a, b)
 
     def test_pauliebits_random_self(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             lst = list(range(len(a)))
             shuffle(lst)
             b = a.copy()
@@ -1554,7 +1554,7 @@ class DelSequenceTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__delitem__, (1, 3))
 
     def test_delete_one(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = a.copy()
             i = randrange(len(a))
             del a[i], b[[i]]
@@ -1585,7 +1585,7 @@ class DelSequenceTests(unittest.TestCase, Util):
             self.assertEqual(a, b)
 
     def test_shuffle(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             lst = list(range(len(a)))
             shuffle(lst)
             del a[lst]
@@ -1641,7 +1641,7 @@ class MiscTests(unittest.TestCase, Util):
         self.assertRaises(StopIteration, next, it)
 
     def test_iter2(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.tolist()
             self.assertEqual(list(a), aa)
             self.assertEqual(list(iter(a)), aa)
@@ -1665,7 +1665,7 @@ class MiscTests(unittest.TestCase, Util):
             def __getitem__(self, i):
                 return pauliebits.__getitem__(self, i - self.offset)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = ExaggeratingPauliebits(a, 1234)
             for i in range(len(a)):
                 self.assertEqual(a[i], b[i + 1234])
@@ -1777,7 +1777,7 @@ class PickleTests(unittest.TestCase, Util):
 
     @unittest.skipIf(is_pypy, "skip test on PyPy")
     def test_reduce_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.check_reduce(a)
             b = frozenpauliebits(a)
             self.check_reduce(b)
@@ -1867,7 +1867,7 @@ class PickleTests(unittest.TestCase, Util):
         self.check_file('test_281.pickle')
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = pickle.loads(pickle.dumps(a))
             self.assertFalse(b.readonly)
             self.assertIsNot(b, a)
@@ -1927,7 +1927,7 @@ class RichCompareTests(unittest.TestCase, Util):
             self.assertFalse(a == b)
 
     def test_eq_ne_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = pauliebits(a, self.random_endian())
             self.assertTrue(a == b)
             self.assertFalse(a != b)
@@ -1944,7 +1944,7 @@ class RichCompareTests(unittest.TestCase, Util):
         self.assertEqual(a >  b, c >  d)
 
     def test_invert_random_element(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             n = len(a)
             b = pauliebits(a, self.random_endian())
             i = randrange(n)
@@ -1958,11 +1958,11 @@ class RichCompareTests(unittest.TestCase, Util):
             self.check(a, b, len(a), len(b))
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.tolist()
             if getrandbits(1):
                 a = frozenpauliebits(a)
-            for b in self.randompauliebitss():
+            for b in self.randompauliebits():
                 bb = b.tolist()
                 if getrandbits(1):
                     b = frozenpauliebits(b)
@@ -1982,7 +1982,7 @@ class SpecialMethodTests(unittest.TestCase, Util):
         self.assertEqual(r, "pauliebits('10111')")
         self.assertIs(type(r), str)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertEqual(repr(a), str(a))
             b = eval(repr(a))
             self.assertIsNot(b, a)
@@ -1990,7 +1990,7 @@ class SpecialMethodTests(unittest.TestCase, Util):
             self.check_obj(b)
 
     def test_copy(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             self.assertIsNot(b, a)
             self.assertEQUAL(b, a)
@@ -2039,9 +2039,9 @@ class SequenceTests(unittest.TestCase, Util):
         self.assertRaises(ValueError, a.__add__, b'1101')
 
     def test_concat_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.copy()
-            for b in self.randompauliebitss():
+            for b in self.randompauliebits():
                 bb = b.copy()
                 c = a + b
                 self.assertEqual(c, pauliebits(a.tolist() + b.tolist()))
@@ -2077,8 +2077,8 @@ class SequenceTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__iadd__, 42)
         self.assertRaises(ValueError, a.__iadd__, b'101')
 
-        for a in self.randompauliebitss():
-            for b in self.randompauliebitss():
+        for a in self.randompauliebits():
+            for b in self.randompauliebits():
                 c = pauliebits(a)
                 d = c
                 d += b
@@ -2119,7 +2119,7 @@ class SequenceTests(unittest.TestCase, Util):
         self.check_obj(b)
 
     def test_repeat_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             for m in list(range(-3, 5)) + [randint(5, 200)]:
                 res = pauliebits(m * a.to01(), endian=a.endian)
@@ -2190,7 +2190,7 @@ class SequenceTests(unittest.TestCase, Util):
 class NumberTests(unittest.TestCase, Util):
 
     def test_misc(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = ~a
             c = a & b
             self.assertFalse(c.any())
@@ -2312,7 +2312,7 @@ class NumberTests(unittest.TestCase, Util):
         self.assertEqual(error, 1)
 
     def test_bitwise_self(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.copy()
             self.assertEQUAL(a & a, aa)
             self.assertEQUAL(a | a, aa)
@@ -2320,7 +2320,7 @@ class NumberTests(unittest.TestCase, Util):
             self.assertEQUAL(a, aa)
 
     def test_bitwise_inplace_self(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.copy()
             a &= a
             self.assertEQUAL(a, aa)
@@ -2337,7 +2337,7 @@ class NumberTests(unittest.TestCase, Util):
         self.check_obj(b)
 
     def test_invert_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = pauliebits(a)
             b.invert()
             for i in range(len(a)):
@@ -2374,7 +2374,7 @@ class NumberTests(unittest.TestCase, Util):
         self.assertRaises(ValueError, lambda: a << -1)
         self.assertRaises(OverflowError, a.__lshift__, 1 << 63)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             c = a.copy()
             n = randrange(len(a) + 4)
             b = a << n
@@ -2390,7 +2390,7 @@ class NumberTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__rshift__, 1.2)
         self.assertRaises(ValueError, lambda: a >> -1)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             c = a.copy()
             n = randrange(len(a) + 4)
             b = a >> n
@@ -2418,7 +2418,7 @@ class NumberTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__ilshift__, 1.2)
         self.assertRaises(ValueError, a.__ilshift__, -3)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             n = randrange(len(a) + 4)
             b <<= n
@@ -2432,7 +2432,7 @@ class NumberTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.__irshift__, 1.2)
         self.assertRaises(ValueError, a.__irshift__, -4)
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             n = randrange(len(a) + 4)
             b >>= n
@@ -2460,7 +2460,7 @@ class NumberTests(unittest.TestCase, Util):
                     self.check_random(100, endian, n_shift, direction)
 
     def test_zero_shift(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.copy()
             self.assertEQUAL(a << 0, aa)
             self.assertEQUAL(a >> 0, aa)
@@ -2470,8 +2470,8 @@ class NumberTests(unittest.TestCase, Util):
             self.assertEQUAL(a, aa)
 
     def test_len_or_larger_shift(self):
-        # ensure shifts with len(a) (or larger) result in all zero pauliebitss
-        for a in self.randompauliebitss():
+        # ensure shifts with len(a) (or larger) result in all zero pauliebits
+        for a in self.randompauliebits():
             c = a.copy()
             z = zeros(len(a), a.endian)
             n = randint(len(a), len(a) + 10)
@@ -2540,9 +2540,9 @@ class ExtendTests(unittest.TestCase, Util):
         self.assertEqual(a, pauliebits('00001111 00100111'))
 
     def test_pauliebits_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             sa = a.to01()
-            for b in self.randompauliebitss():
+            for b in self.randompauliebits():
                 bb = b.copy()
                 c = pauliebits(a)
                 c.extend(b)
@@ -2704,7 +2704,7 @@ class ExtendTests(unittest.TestCase, Util):
             a.extend(a)
             self.assertEqual(a, pauliebits(2 * s))
 
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             endian = a.endian
             s = a.to01()
             a.extend(a)
@@ -2722,7 +2722,7 @@ class AllTests(unittest.TestCase, Util):
             self.assertIs(pauliebits(s).all(), r)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertIs(a.all(), all(a))
 
     def test_large(self):
@@ -2744,7 +2744,7 @@ class AnyTests(unittest.TestCase, Util):
             self.assertIs(pauliebits(s).any(), r)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertIs(a.any(), any(a))
 
     def test_large(self):
@@ -2856,7 +2856,7 @@ class InsertTests(unittest.TestCase, Util):
         self.check_obj(a)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             aa = a.tolist()
             for _ in range(20):
                 item = getrandbits(1)
@@ -2889,7 +2889,7 @@ class FillTests(unittest.TestCase, Util):
         self.assertEqual(v.nbytes, 1)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             res = b.fill()
             self.assertTrue(0 <= res < 8)
@@ -2928,7 +2928,7 @@ class InvertTests(unittest.TestCase, Util):
         self.check_obj(a)
 
     def test_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             n = len(a)
             b = a.copy()
             i = randint(-n, n - 1)
@@ -2938,7 +2938,7 @@ class InvertTests(unittest.TestCase, Util):
             self.check_obj(b)
 
     def test_all(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             a.invert()
             self.assertEqual(a, pauliebits([not v for v in b]))
@@ -2947,7 +2947,7 @@ class InvertTests(unittest.TestCase, Util):
             self.assertEQUAL(b, ~a)
 
     def test_span(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = a.copy()
             for _ in range(10):
@@ -2958,7 +2958,7 @@ class InvertTests(unittest.TestCase, Util):
                 self.assertEqual(a, b)
 
     def test_random_slice(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = a.copy()
             for _ in range(10):
@@ -2998,7 +2998,7 @@ class SortTests(unittest.TestCase, Util):
 
     def test_random(self):
         for rev in False, True, 0, 1, 7, -1, -7, None:
-            for a in self.randompauliebitss():
+            for a in self.randompauliebits():
                 lst = a.tolist()
                 if rev is None:
                     lst.sort()
@@ -3087,7 +3087,7 @@ class PackTests(unittest.TestCase, Util):
         self.assertEqual(a.unpack(one=b't', zero=b'f'), b'ft')
 
     def test_unpack_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertEqual(a.unpack(b'0', b'1'), a.to01().encode())
             # round trip
             b = pauliebits()
@@ -3136,7 +3136,7 @@ class PopTests(unittest.TestCase, Util):
             self.check_obj(a)
 
     def test_reverse(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             c = a.copy()
             b = pauliebits()
             while a:
@@ -3148,7 +3148,7 @@ class PopTests(unittest.TestCase, Util):
             self.assertEqual(b, c)
 
     def test_random_1(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.assertRaises(IndexError, a.pop, len(a))
             self.assertRaises(IndexError, a.pop, -len(a) - 1)
             if len(a) == 0:
@@ -3160,7 +3160,7 @@ class PopTests(unittest.TestCase, Util):
             self.assertEqual(a.endian, enda)
 
     def test_random_2(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             n = randrange(-len(a), len(a))
             aa = a.tolist()
             x = a.pop(n)
@@ -3189,7 +3189,7 @@ class ReverseTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.reverse, 42)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             a.reverse()
             self.assertEqual(a.to01(), b.to01()[::-1])
@@ -3235,7 +3235,7 @@ class RemoveTests(unittest.TestCase, Util):
         self.assertRaises(ValueError, a.remove, 0)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.tolist()
             v = getrandbits(1)
             if v not in a:
@@ -3284,7 +3284,7 @@ class RotateTests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.rotate, 1, 2)
 
     def test_pop(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = a.copy()
             a.insert(0, a.pop())  # shift 1 to right
             b.rotate(1)
@@ -3349,7 +3349,7 @@ class SetAllTests(unittest.TestCase, Util):
             self.check_obj(a)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             endian = a.endian
             val = getrandbits(1)
             a.setall(val)
@@ -3400,7 +3400,7 @@ class To01Tests(unittest.TestCase, Util):
         self.assertRaises(TypeError, a.to01, 4, b"_")
 
     def test_sep(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             sep = "".join(chr(randint(32, 126))
                           for _ in range(randrange(10)))
             self.assertEqual(a.to01(1, sep), sep.join(str(v) for v in a))
@@ -3411,7 +3411,7 @@ class To01Tests(unittest.TestCase, Util):
         self.assertEqual(s, "111\u2605001\u260511")
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             group = randrange(10)
             nsep = randrange(6)
@@ -3469,7 +3469,7 @@ class ByteReverseTests(unittest.TestCase, Util):
             self.check_obj(b)
 
     def test_consecutive(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             # two consecutive calls to .bytereverse() leave the pauliebits
             # unchanged (even when the length is not a multiple of 8).
@@ -3525,7 +3525,7 @@ class ToListTests(unittest.TestCase, Util):
             self.assertIs(type(item), int)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             res = a.tolist()
             self.assertEqual(res, list(a))
             self.assertEqual(res, [int(v) for v in a.to01()])
@@ -3538,7 +3538,7 @@ class ClearTests(unittest.TestCase, Util):
         self.assertEqual(len(a), 0)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             endian = a.endian
             a.clear()
             self.assertFalse(a)
@@ -3928,7 +3928,7 @@ class SearchTests(unittest.TestCase, Util):
             self.assertEqual(list(a.search(b)), res)
 
     def test_bool_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             b.setall(0)
             b[list(a.search(1))] = 1
@@ -3942,7 +3942,7 @@ class SearchTests(unittest.TestCase, Util):
             self.assertEqual(len(s), len(a))
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             if a:
                 # search for a in itself
                 self.assertEqual(list(a.search(a)), [0])
@@ -4074,7 +4074,7 @@ class BytesTests(unittest.TestCase, Util):
             a.frombytes, a)
 
     def test_frombytes_empty(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             a.frombytes(b'')
             a.frombytes(bytearray())
@@ -4095,7 +4095,7 @@ class BytesTests(unittest.TestCase, Util):
             b = pauliebits(0, self.random_endian())
             b.frombytes(s)
             self.assertEqual(len(b), 8 * n)
-            for a in self.randompauliebitss():
+            for a in self.randompauliebits():
                 c = pauliebits(a, b.endian)
                 c.frombytes(s)
                 self.assertEqual(len(c), len(a) + 8 * n)
@@ -4183,7 +4183,7 @@ class FileTests(unittest.TestCase, Util):
         self.assertEqual(os.path.getsize(self.tmpfname), size)
 
     def test_pickle(self):
-        d1 = {i: a for i, a in enumerate(self.randompauliebitss())}
+        d1 = {i: a for i, a in enumerate(self.randompauliebits())}
         with open(self.tmpfname, 'wb') as fo:
             pickle.dump(d1, fo)
         with open(self.tmpfname, 'rb') as fi:
@@ -4195,7 +4195,7 @@ class FileTests(unittest.TestCase, Util):
     def test_shelve(self):
         d1 = shelve.open(self.tmpfname)
         stored = []
-        for i, a in enumerate(self.randompauliebitss()):
+        for i, a in enumerate(self.randompauliebits()):
             key = str(i)
             d1[key] = a
             stored.append((key, a))
@@ -4363,7 +4363,7 @@ class FileTests(unittest.TestCase, Util):
         self.assertEqual(self.read_file(), b'Foo')
 
     def test_tofile_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             with open(self.tmpfname, 'wb') as fo:
                 a.tofile(fo)
             n = a.nbytes
@@ -4786,7 +4786,7 @@ class PrefixCodeTests(unittest.TestCase, Util):
         pat1 = re.compile(r'incomplete prefix code.+\s(\d+)')
         pat2 = re.compile(r'prefix code unrecognized.+\s(\d+)\s*\.\.\s*(\d+)')
         t = decodetree(alphabet_code)
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             try:
                 a.decode(t)
             except ValueError as e:
@@ -4993,7 +4993,7 @@ class BufferImportTests(unittest.TestCase, Util):
     def test_pauliebits(self):
         a = urandom_2(10000, 'little')
         b = pauliebits(endian='little', buffer=a)
-        # a and b are two distinct pauliebitss that share the same buffer now
+        # a and b are two distinct pauliebits that share the same buffer now
         self.assertIsNot(a, b)
 
         a_info = a.buffer_info()
@@ -5177,7 +5177,7 @@ class BufferExportTests(unittest.TestCase, Util):
 
     def test_many_exports(self):
         a = pauliebits('01000111 01011111')
-        d = {}  # put pauliebitss in dict to key object around
+        d = {}  # put pauliebits in dict to key object around
         for n in range(1, 20):
             d[n] = pauliebits(buffer=a)
             self.assertEqual(a.buffer_info().exports, n)
@@ -5296,7 +5296,7 @@ class FrozenpauliebitsTests(unittest.TestCase, Util):
         self.check_obj(a)
 
     def test_init_from_pauliebits(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = frozenpauliebits(a)
             self.assertIsNot(b, a)
             self.assertEQUAL(b, a)
@@ -5455,7 +5455,7 @@ class FrozenpauliebitsTests(unittest.TestCase, Util):
         self.assertEqual(len(set([a, b])), 1)
 
     def test_hash_endianness_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             a = frozenpauliebits(a)
             b = frozenpauliebits(a, self.opposite_endian(a.endian))
             self.assertEqual(a, b)
@@ -5465,7 +5465,7 @@ class FrozenpauliebitsTests(unittest.TestCase, Util):
             self.assertEqual(len(d), 1)
 
     def test_pickle(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             f = frozenpauliebits(a)
             f.foo = 42  # unlike pauliebits itself, we can have attributes
             g = pickle.loads(pickle.dumps(f))
@@ -5479,7 +5479,7 @@ class FrozenpauliebitsTests(unittest.TestCase, Util):
             self.assertEqual(g.foo, 42)
 
     def test_bytes_bytearray(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             a = frozenpauliebits(a)
             self.assertEqual(bytes(a), a.tobytes())
             self.assertEqual(bytearray(a), a.tobytes())

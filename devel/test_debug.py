@@ -268,7 +268,7 @@ class CopyN_Tests(unittest.TestCase, Util):
         return b
 
     def test_getslice(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             a_lst = a.tolist()
             n = len(a)
             i = randint(0, n)
@@ -294,7 +294,7 @@ class Overlap_Tests(unittest.TestCase, Util):
         self.check_overlap(a, b, False)
 
     def test_distinct(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             # buffers overlaps with itself, unless buffer is NULL
             self.check_overlap(a, a, bool(a))
             b = a.copy()

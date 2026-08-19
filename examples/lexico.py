@@ -8,7 +8,7 @@ from pauliebits.util import zeros, ba2int, int2ba
 def lexico_all(n, k, endian=None):
     """lexico_all(n, k, endian=None) -> iterator
 
-Return an iterator over all pauliebitss of length `n` and
+Return an iterator over all pauliebits of length `n` and
 population count `k` in lexicographical order.
 """
     if n < 0:

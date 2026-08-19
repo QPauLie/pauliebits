@@ -20,7 +20,7 @@ double.py
 
 
 dubner.rst
-    We show how pauliebitss can be used to calculate twin primes
+    We show how pauliebits can be used to calculate twin primes
     and "middle numbers" very efficiently, and verify the some
     conjectures in: https://oeis.org/A007534/a007534.pdf
 
@@ -33,12 +33,12 @@ dyn_sieve.py
 extend_json.py
     Demonstrates how to construct a json encoder and decoder (using the
     'json' standard library) which can handle extended Python data structures
-    containing pauliebitss.
+    containing pauliebits.
 
 
 gene.py
     Shows how gene sequences (ATGC) can be very easily and efficiently
-    represented by pauliebitss.
+    represented by pauliebits.
 
 
 hamming.py
@@ -53,7 +53,7 @@ huffman/
 
 lexico.py
     Contains two functions, all_perm and next_perm, which are handle
-    lexicographical permutations of pauliebitss.
+    lexicographical permutations of pauliebits.
 
 
 lfsr.py
@@ -69,7 +69,7 @@ mandel.py
 
 
 masked.py
-    Illustrate masked indexing, i.e. using pauliebitss to select indices
+    Illustrate masked indexing, i.e. using pauliebits to select indices
 
 
 mmapped-file.py

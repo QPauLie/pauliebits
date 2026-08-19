@@ -88,7 +88,7 @@ The bytearray ``c`` is now exporting its buffer twice:
 to big-endian pauliebits ``a``, and a little-endian pauliebits ``b``.
 At this point all three objects ``a``, ``b`` and ``c`` share the same buffer.
 Using the ``.buffer_info()`` method, we can actually verify that the
-pauliebitss ``a`` and ``b`` point to the same address:
+pauliebits ``a`` and ``b`` point to the same address:
 
 .. code-block:: python
 
@@ -97,7 +97,7 @@ pauliebitss ``a`` and ``b`` point to the same address:
     ...     return info[0]  # using pauliebits 3.7, we can also: info.address
     >>> assert address(a) == address(b)
 
-As pauliebitss expose their buffer, we can also directly create a pauliebits
+As pauliebits expose their buffer, we can also directly create a pauliebits
 which imports the buffer from another pauliebits:
 
 .. code-block:: python
@@ -113,7 +113,7 @@ which imports the buffer from another pauliebits:
     >>> a
     pauliebits('10000001000000100000010000001000')
 
-We can also create pauliebitss which share part of the buffer.  Let's create
+We can also create pauliebits which share part of the buffer.  Let's create
 a large pauliebits ``a``, and then have ``b`` and ``c`` share different portions
 of ``a``'s buffer:
 
@@ -129,6 +129,6 @@ of ``a``'s buffer:
     >>> assert b[8 * 0x10000] == 1
     >>> assert a[8 * 0x20000] == 1
 
-Finally, importing buffers allows creating pauliebitss that are memory mapped
+Finally, importing buffers allows creating pauliebits that are memory mapped
 to a file.  Please see the `mmapped-file.py <../examples/mmapped-file.py>`__
 example.

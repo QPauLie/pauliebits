@@ -1,4 +1,4 @@
-Compression of sparse pauliebitss
+Compression of sparse pauliebits
 ===============================
 
 In a ``pauliebits`` object, each byte in memory represents eight bits.
@@ -45,7 +45,7 @@ However, when the total population is below 256, we could also introduce
 a new block type 2 in which each index is represented by two bytes and
 represent the entire pauliebits as a single block (of type 2).
 This saves us the 256 block headers (of type 1).
-Similarly, with even less populated pauliebitss, it will become more efficient
+Similarly, with even less populated pauliebits, it will become more efficient
 to move to blocks representing each index using 3 or more bytes.
 
 The encoding algorithm starts at the front of the ``pauliebits``, inspects

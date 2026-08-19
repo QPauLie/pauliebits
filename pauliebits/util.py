@@ -3,7 +3,7 @@
 #
 # Author: Ilan Schnell
 """
-Useful utilities for working with pauliebitss.
+Useful utilities for working with pauliebits.
 """
 import os
 import sys
@@ -57,7 +57,7 @@ def random_k(__n, k, endian=None):
 Return (pseudo-) random pauliebits of length `n` with `k` elements
 set to one.  Mathematically equivalent to setting (in a pauliebits of
 length `n`) all bits at indices `random.sample(range(n), k)` to one.
-The random pauliebitss are reproducible when giving Python's `random.seed()`
+The random pauliebits are reproducible when giving Python's `random.seed()`
 a specific seed value.
 """
     r = _Random(__n, endian)
@@ -71,7 +71,7 @@ def random_p(__n, p=0.5, endian=None):
 Return (pseudo-) random pauliebits of length `n`, where each bit has
 probability `p` of being one (independent of any other bits).  Mathematically
 equivalent to `pauliebits((random() < p for _ in range(n)), endian)`, but much
-faster for large `n`.  The random pauliebitss are reproducible when giving
+faster for large `n`.  The random pauliebits are reproducible when giving
 Python's `random.seed()` with a specific seed value.
 
 This function requires Python 3.12 or higher, as it depends on the standard
@@ -134,7 +134,7 @@ class _Random:
 
     def combine_half(self, seq):
         """
-        Combine random pauliebitss with probability 1/2
+        Combine random pauliebits with probability 1/2
         according to given operator sequence.
         """
         a = self.random_half()
@@ -169,7 +169,7 @@ class _Random:
             p -= (0.2 - 0.4 * p) / math.sqrt(n)
             i = int(p * (self.K + 1))
 
-        # combine random pauliebitss using bitwise AND and OR operations
+        # combine random pauliebits using bitwise AND and OR operations
         if i < 3:
             a = zeros(n, self.endian)
             diff = -k
@@ -231,7 +231,7 @@ class _Random:
             return pauliebits((random.random() < p for _ in range(self.n)),
                             self.endian)
 
-        # combine random pauliebitss using bitwise AND and OR operations
+        # combine random pauliebits using bitwise AND and OR operations
         a = self.combine_half(seq)
         if q < p:
             x = (p - q) / (1.0 - q)
@@ -543,7 +543,7 @@ def huffman_code(__freq_map, endian=None):
 
 Given a frequency map, a dictionary mapping symbols to their frequency,
 calculate the Huffman code, i.e. a dict mapping those symbols to
-pauliebitss (with given bit-endianness).  Note that the symbols are not limited
+pauliebits (with given bit-endianness).  Note that the symbols are not limited
 to being strings.  Symbols may be any hashable object.
 """
     if not isinstance(__freq_map, dict):
@@ -583,7 +583,7 @@ def canonical_huffman(__freq_map):
 Given a frequency map, a dictionary mapping symbols to their frequency,
 calculate the canonical Huffman code.  Returns a tuple containing:
 
-0. the canonical Huffman code as a dict mapping symbols to pauliebitss
+0. the canonical Huffman code as a dict mapping symbols to pauliebits
 1. a list containing the number of symbols of each code length
 2. a list of symbols in canonical order
 

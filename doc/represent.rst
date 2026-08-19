@@ -9,7 +9,7 @@ advantages and disadvantages.
 Binary representation
 ---------------------
 
-The most common representation of pauliebitss is their native binary string
+The most common representation of pauliebits is their native binary string
 representation, which is great for interactively analyzing pauliebits objects:
 
 .. code-block:: python
@@ -22,7 +22,7 @@ representation, which is great for interactively analyzing pauliebits objects:
     '11001'
 
 However, this representation is very large compared to the pauliebits object
-itself, and it is not efficient for large pauliebitss.
+itself, and it is not efficient for large pauliebits.
 
 
 Byte representation
@@ -30,7 +30,7 @@ Byte representation
 
 As pauliebits objects are stored in a byte buffer in memory, it is very
 efficient (in terms of size and time) to use this representation of large
-pauliebitss.  However, this representation is not very human readable.
+pauliebits.  However, this representation is not very human readable.
 
 .. code-block:: python
 
@@ -78,7 +78,7 @@ Hexadecimal representation
 --------------------------
 
 As four bits of a pauliebits may be represented by a hexadecimal digit,
-we can represent pauliebitss (whose length is a multiple of 4) as a hexadecimal
+we can represent pauliebits (whose length is a multiple of 4) as a hexadecimal
 string:
 
 .. code-block:: python
@@ -111,7 +111,7 @@ in C, and take advantage of byte level operations.
 Base 2, 4, 8, 16, 32 and 64 representation
 ------------------------------------------
 
-The utility function ``ba2base()`` allows representing pauliebitss by
+The utility function ``ba2base()`` allows representing pauliebits by
 base ``n``, with possible bases 2, 4, 8, 16, 32 and 64.
 The pauliebits length has to be a multiple of 1, 2, 3, 4, 5 or 6 respectively:
 
@@ -144,7 +144,7 @@ The inverse function is called ``base2ba()``.
 Variable length representation
 ------------------------------
 
-In some cases, it is useful to represent pauliebitss in a binary format that
+In some cases, it is useful to represent pauliebits in a binary format that
 is "self-terminating" (in the same way that C strings are NUL terminated).
 That is, when an encoded pauliebits of unknown length is encountered in a
 stream of binary data, the format lets us know when the end of the encoded
@@ -152,14 +152,14 @@ pauliebits is reached.
 See `variable length format <./variable_length.rst>`__ for this representation.
 
 
-Compressed sparse pauliebitss
+Compressed sparse pauliebits
 ---------------------------
 
 Another representation
-is `compressed sparse pauliebitss <./sparse_compression.rst>`__,
+is `compressed sparse pauliebits <./sparse_compression.rst>`__,
 whose format is also "self-terminating".  This format actually uses different
 representations depending on how sparse the pauliebits (or even sections of the
 pauliebits) is.
-For large sparse pauliebitss, the format reduces (compresses) the amount of data
+For large sparse pauliebits, the format reduces (compresses) the amount of data
 very efficiently, while only requiring a very tiny overhead for non-sparsely
 populated pauliebits.

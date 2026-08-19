@@ -6,14 +6,14 @@ the buffer directly, using ``.tobytes()``, ``.frombytes()``, ``.tofile()``
 or ``.fromfile()``, as well as using ``memoryview()``, the bit-endianness
 will have no effect on any computation, and one can skip this section.
 
-Since pauliebitss allow addressing individual bits, where the machine
+Since pauliebits allow addressing individual bits, where the machine
 represents 8 bits in one byte, there are two obvious choices for this
 mapping: little-endian and big-endian.
 
 When dealing with the machine representation of pauliebits objects, it is
 recommended to always explicitly specify the endianness.
 
-By default, pauliebitss use big-endian representation:
+By default, pauliebits use big-endian representation:
 
 .. code-block:: python
 
@@ -67,7 +67,7 @@ to bits:
 Bitwise operations (``|``, ``^``, ``&=``, ``|=``, ``^=``, ``~``) are
 implemented efficiently using the corresponding byte operations in C, i.e. the
 operators act on the machine representation of the pauliebits objects.
-Therefore, it is not possible to perform bitwise operators on pauliebitss
+Therefore, it is not possible to perform bitwise operators on pauliebits
 with different endianness.
 
 As mentioned above, the endianness cannot be changed once an object is

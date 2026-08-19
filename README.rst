@@ -2,12 +2,12 @@ pauliebits: efficient arrays of booleans
 ======================================
 
 This library provides an object type which efficiently represents an array
-of booleans.  pauliebitss are sequence types and behave very much like usual
+of booleans.  pauliebits are sequence types and behave very much like usual
 lists.  Eight bits are represented by one byte in a contiguous block of
 memory.  The user can select between two representations: little-endian
 and big-endian.  All functionality is implemented in C.
 Methods for accessing the machine representation are provided, including the
-ability to import and export buffers.  This allows creating pauliebitss that
+ability to import and export buffers.  This allows creating pauliebits that
 are mapped to other objects, including memory-mapped files.
 
 
@@ -31,11 +31,11 @@ Key features
 * Utility module ``pauliebits.util``:
 
   * conversion to and from hexadecimal strings
-  * generating random pauliebitss
+  * generating random pauliebits
   * pretty printing
   * conversion to and from integers
   * creating Huffman codes
-  * compression of sparse pauliebitss
+  * compression of sparse pauliebits
   * (de-) serialization
   * various count functions
   * other helpful functions
@@ -180,7 +180,7 @@ is setting ranges:
     pauliebits('000000000011111111111111100000')
 
 As of pauliebits version 2.8, indices may also be lists of arbitrary
-indices (like in NumPy), or pauliebitss that are treated as masks,
+indices (like in NumPy), or pauliebits that are treated as masks,
 see `pauliebits indexing <https://github.com/ilanschnell/pauliebits/blob/master/doc/indexing.rst>`__.
 
 
@@ -217,7 +217,7 @@ This Python pauliebits library specifies the behavior as follows:
 * blanks are filled by 0
 * negative shifts raise ``ValueError``
 * shifts larger or equal to the length of the pauliebits result in
-  pauliebitss with all values 0
+  pauliebits with all values 0
 
 It is worth noting that (regardless of bit-endianness) the pauliebits left
 shift (``<<``) always shifts towards lower indices, and the right
@@ -250,7 +250,7 @@ to memory-map a file to a pauliebits: `mmapped-file.py <https://github.com/ilans
 Variable bit length prefix codes
 --------------------------------
 
-The ``.encode()`` method takes a dictionary mapping symbols to pauliebitss
+The ``.encode()`` method takes a dictionary mapping symbols to pauliebits
 and an iterable, and extends the pauliebits object with the encoded symbols
 found while iterating.  For example:
 
@@ -300,7 +300,7 @@ The sole purpose of the immutable ``decodetree`` object is to be passed
 to pauliebits's ``.decode()`` method.
 
 
-Frozenpauliebitss
+Frozenpauliebits
 ---------------
 
 A ``frozenpauliebits`` object is very similar to the pauliebits object.
@@ -428,7 +428,7 @@ pauliebits methods:
 
 
 ``decode(code, /)`` -> decodeiterator
-   Given a prefix code (a dict mapping symbols to pauliebitss, or ``decodetree``
+   Given a prefix code (a dict mapping symbols to pauliebits, or ``decodetree``
    object), decode content of pauliebits and return an iterator over
    corresponding symbols.
 
@@ -440,7 +440,7 @@ pauliebits methods:
 
 
 ``encode(code, iterable, /)``
-   Given a prefix code (a dict mapping symbols to pauliebitss),
+   Given a prefix code (a dict mapping symbols to pauliebits),
    iterate over the iterable object with symbols, and extend pauliebits
    with corresponding pauliebits for each symbol.
 
@@ -652,7 +652,7 @@ Other objects:
 
 
 ``decodetree(code, /)`` -> decodetree
-   Given a prefix code (a dict mapping symbols to pauliebitss),
+   Given a prefix code (a dict mapping symbols to pauliebits),
    create a binary tree object to be passed to ``.decode()``.
 
    New in version 1.6
@@ -760,7 +760,7 @@ This sub-module was added in version 1.2.
    Given a frequency map, a dictionary mapping symbols to their frequency,
    calculate the canonical Huffman code.  Returns a tuple containing:
 
-   0. the canonical Huffman code as a dict mapping symbols to pauliebitss
+   0. the canonical Huffman code as a dict mapping symbols to pauliebits
    1. a list containing the number of symbols of each code length
    2. a list of symbols in canonical order
 
@@ -836,7 +836,7 @@ This sub-module was added in version 1.2.
 ``huffman_code(dict, /, endian=None)`` -> dict
    Given a frequency map, a dictionary mapping symbols to their frequency,
    calculate the Huffman code, i.e. a dict mapping those symbols to
-   pauliebitss (with given bit-endianness).  Note that the symbols are not limited
+   pauliebits (with given bit-endianness).  Note that the symbols are not limited
    to being strings.  Symbols may be any hashable object.
 
 
@@ -883,7 +883,7 @@ This sub-module was added in version 1.2.
    Return (pseudo-) random pauliebits of length ``n`` with ``k`` elements
    set to one.  Mathematically equivalent to setting (in a pauliebits of
    length ``n``) all bits at indices ``random.sample(range(n), k)`` to one.
-   The random pauliebitss are reproducible when giving Python's ``random.seed()``
+   The random pauliebits are reproducible when giving Python's ``random.seed()``
    a specific seed value.
 
    New in version 3.6
@@ -893,14 +893,14 @@ This sub-module was added in version 1.2.
    Return (pseudo-) random pauliebits of length ``n``, where each bit has
    probability ``p`` of being one (independent of any other bits).  Mathematically
    equivalent to ``pauliebits((random() < p for _ in range(n)), endian)``, but much
-   faster for large ``n``.  The random pauliebitss are reproducible when giving
+   faster for large ``n``.  The random pauliebits are reproducible when giving
    Python's ``random.seed()`` with a specific seed value.
 
    This function requires Python 3.12 or higher, as it depends on the standard
    library function ``random.binomialvariate()``.  Raises ``NotImplementedError``
    when Python version is too low.
 
-   See also: `Random pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
+   See also: `Random pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
 
    New in version 3.5
 
@@ -911,7 +911,7 @@ This sub-module was added in version 1.2.
    This function consumes only one pauliebits and leaves the remaining stream
    untouched.  Use ``sc_encode()`` for compressing (encoding).
 
-   See also: `Compression of sparse pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -919,9 +919,9 @@ This sub-module was added in version 1.2.
 ``sc_encode(pauliebits, /)`` -> bytes
    Compress a pauliebits using sparse encoding and return its binary
    representation.  This representation is useful for efficiently storing
-   sparse pauliebitss.  Use ``sc_decode()`` for decompressing (decoding).
+   sparse pauliebits.  Use ``sc_decode()`` for decompressing (decoding).
 
-   See also: `Compression of sparse pauliebitss <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 

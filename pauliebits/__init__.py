@@ -1,7 +1,7 @@
 # Copyright (c) 2008 - 2026, Ilan Schnell; All Rights Reserved
 """
 This package defines an object type which can efficiently represent
-a pauliebits.  Pauliebitss are sequence types and behave very much like lists.
+a pauliebits.  pauliebits are sequence types and behave very much like lists.
 
 Please find a description of this package at:
 

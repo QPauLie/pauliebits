@@ -48,7 +48,7 @@ and work as they do with single indices or slices.  For example:
 Masked indexing
 ---------------
 
-Also, as of pauliebits version 2.8, indices may be pauliebitss which are
+Also, as of pauliebits version 2.8, indices may be pauliebits which are
 considered masks.  For example:
 
 .. code-block:: python
@@ -64,7 +64,7 @@ considered masks.  For example:
 Note that ``del a[mask]`` is equivalent to the in-place version of
 selecting the reverse mask ``a = a[~mask]``.
 
-As of pauliebits version 3.1, masked assignment to pauliebitss is also
+As of pauliebits version 3.1, masked assignment to pauliebits is also
 supported:
 
 .. code-block:: python

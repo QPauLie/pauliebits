@@ -22,7 +22,7 @@ class Node:
 def huff_code(tree):
     """
     Given a Huffman tree, traverse the tree and return the Huffman code, i.e.
-    a dictionary mapping symbols to pauliebitss.
+    a dictionary mapping symbols to pauliebits.
     """
     result = {}
 

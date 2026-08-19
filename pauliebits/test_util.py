@@ -195,7 +195,7 @@ class Random_K_Tests(unittest.TestCase):
         self.assertEqual(total, 2 ** n)
 
     def collect_code_branches(self):
-        # return list of pauliebitss from all code branches of random_k()
+        # return list of pauliebits from all code branches of random_k()
         res = []
         # test small k (no .combine_half())
         res.append(random_k(300, 10))
@@ -206,7 +206,7 @@ class Random_K_Tests(unittest.TestCase):
 
     def test_seed(self):
         # We ensure that after setting a seed value, random_k() will
-        # always return the same random pauliebitss.  However, we do not ensure
+        # always return the same random pauliebits.  However, we do not ensure
         # that these results will not change in future versions of pauliebits.
         a = []
         for val in 654321, 654322, 654321, 654322:
@@ -327,7 +327,7 @@ class Random_P_Tests(unittest.TestCase):
             self.assertTrue(abs(a.count() - n * p) < max(4, 10 * sigma))
 
     def collect_code_branches(self):
-        # return list of pauliebitss from all code branches of random_p()
+        # return list of pauliebits from all code branches of random_p()
         res = []
         # for default p=0.5, random_p uses getrandbits
         res.append(random_p(32))
@@ -342,7 +342,7 @@ class Random_P_Tests(unittest.TestCase):
 
     def test_seed(self):
         # We ensure that after setting a seed value, random_p() will always
-        # return the same random pauliebitss.  However, we do not ensure that
+        # return the same random pauliebits.  However, we do not ensure that
         # these results will not change in future versions of pauliebits.
         a = []
         for val in 123456, 123457, 123456, 123457:
@@ -569,7 +569,7 @@ class StripTests(unittest.TestCase, Util):
             self.assertEqual(c, ones(n))
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = a.copy()
             f = frozenpauliebits(a)
             s = a.to01()
@@ -801,7 +801,7 @@ class BitwiseCountTests(unittest.TestCase, Util):
             self.assertEqual(count_xor(a, b), (a ^ b).count())
 
     def test_misc(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = urandom(n, a.endian)
             # any and
@@ -893,7 +893,7 @@ class BitwiseAnyTests(unittest.TestCase, Util):
             self.check(a, b)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = urandom(n, a.endian)
             self.check(a, b)
@@ -944,7 +944,7 @@ class SubsetTests(unittest.TestCase, Util):
             self.check(pauliebits(a), pauliebits(b), False)
 
     def test_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = a.copy()
             # we set one random bit in b to 1, so a is always a subset of b
             b[randrange(len(a))] = 1
@@ -1233,7 +1233,7 @@ class XoredIndicesTests(unittest.TestCase, Util):
             self.assertEqual(a, b)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             c = 0
             for i, v in enumerate(a):
                 c ^= i * v
@@ -1293,7 +1293,7 @@ class IntervalsTests(unittest.TestCase, Util):
                 self.assertEqual(runs(a), 1)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             n = len(a)
             b = urandom(n)
             for value, start, stop in intervals(a):
@@ -1303,7 +1303,7 @@ class IntervalsTests(unittest.TestCase, Util):
             self.assertEqual(a, b)
 
     def test_list_runs(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             # list of length of runs of alternating bits
             alt_runs = [stop - start for _, start, stop in intervals(a)]
             self.assertEqual(len(alt_runs), runs(a))
@@ -2058,7 +2058,7 @@ class VLFTests(unittest.TestCase, Util):
             self.round_trip(a)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             self.round_trip(a)
 
 # ---------------------------------------------------------------------------
@@ -2081,13 +2081,13 @@ class IntegerizationTests(unittest.TestCase, Util):
         self.assertEQUAL(a, b)
 
     def test_ba2int_frozen(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = frozenpauliebits(a)
             self.assertEqual(ba2int(b), ba2int(a))
             self.assertEQUAL(a, b)
 
     def test_ba2int_random(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = pauliebits(a, 'big')
             self.assertEqual(a, b)
             self.assertEqual(ba2int(b), int(b.to01(), 2))
@@ -2259,7 +2259,7 @@ class IntegerizationTests(unittest.TestCase, Util):
         return -(i & mask) + (i & ~mask)
 
     def test_random_signed(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             i = ba2int(a, signed=True)
             b = int2ba(i, len(a), a.endian, signed=True)
             self.assertEQUAL(a, b)
@@ -2308,7 +2308,7 @@ class MixedTests(unittest.TestCase, Util):
             self.assertEqual(int(t, 16), i)
 
     def test_bitwise(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = urandom(len(a), a.endian)
             aa = a.copy()
             bb = b.copy()
@@ -2328,7 +2328,7 @@ class MixedTests(unittest.TestCase, Util):
             self.assertEQUAL(b, bb)
 
     def test_bitwise_inplace(self):
-        for a in self.randompauliebitss(start=1):
+        for a in self.randompauliebits(start=1):
             b = urandom(len(a), a.endian)
             bb = b.copy()
             i = ba2int(a)
@@ -2439,7 +2439,7 @@ class SerializationTests(unittest.TestCase, Util):
             self.assertEqual(a.endian, endian)
 
     def test_random(self):
-        for a in self.randompauliebitss():
+        for a in self.randompauliebits():
             b = serialize(a)
             c = deserialize(b)
             self.assertEqual(a, c)

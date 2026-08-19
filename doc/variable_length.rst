@@ -1,12 +1,12 @@
 Variable length pauliebits format
 ===============================
 
-In some cases, it is useful to represent pauliebitss in a binary format that
+In some cases, it is useful to represent pauliebits in a binary format that
 is "self-terminating" (in the same way that C strings are NUL terminated).
 That is, when an encoded pauliebits of unknown length is encountered in a
 stream of binary data, the format lets us know when the end of the encoded
 pauliebits is reached.
-Such a "variable-length format" (most memory-efficient for small pauliebitss)
+Such a "variable-length format" (most memory-efficient for small pauliebits)
 is implemented in ``vl_encode()`` and ``vl_decode()``:
 
 .. code-block:: python
@@ -27,7 +27,7 @@ is implemented in ``vl_encode()`` and ``vl_decode()``:
     b'other stuff'
 
 The variable-length format is similar to LEB128.  A single byte can store
-pauliebitss up to 4 elements; every additional byte stores up to 7 more elements.
+pauliebits up to 4 elements; every additional byte stores up to 7 more elements.
 The most significant bit of each byte indicates whether more bytes follow.
 In addition, the first byte contains 3 bits which indicate the number of
 padding bits at the end of the stream.  Here is an example of

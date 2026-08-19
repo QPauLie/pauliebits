@@ -1,4 +1,4 @@
-Random Bitarrays
+Random Pauliebits
 ================
 
 Pauliebits 3.5 introduced the utility function ``util.random_p(n, p=0.5)``.
@@ -22,16 +22,16 @@ When ``p == 0.5``, we use ``random.getrandbits()`` to initialize our pauliebits
 buffer.  It should be noted that ``pauliebits.util.urandom()``
 uses ``os.urandom()``,
 but since ``util.random_p()`` is designed to give reproducible pseudo-random
-pauliebitss, it uses ``random.getrandbits()``.
+pauliebits, it uses ``random.getrandbits()``.
 
-Taking two (independent) such pauliebitss and combining them
+Taking two (independent) such pauliebits and combining them
 using the bitwise AND operation, gives us a random pauliebits with
 probability 1/4.
-Likewise, applying a bitwise OR operation to two such pauliebitss gives us
+Likewise, applying a bitwise OR operation to two such pauliebits gives us
 probability 3/4.
 Without going into too much further detail, it is possible to combine
-more than two "getrandbits" pauliebitss to get probabilities ``i / 2**M``,
-where ``M`` is the maximal number of "getrandbits" pauliebitss we combine,
+more than two "getrandbits" pauliebits to get probabilities ``i / 2**M``,
+where ``M`` is the maximal number of "getrandbits" pauliebits we combine,
 and ``i`` is an integer.
 The required sequence of AND and OR operations is calculated from
 the desired probability ``p`` and ``M``.

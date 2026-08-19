@@ -219,7 +219,7 @@ bytereverse(char *p, Py_ssize_t n)
 /* The following two functions operate on first n bytes in buffer.
    Within this region, they shift all bits by k positions to right,
    i.e. towards higher addresses.
-   They operate on little-endian and big-endian pauliebitss respectively.
+   They operate on little-endian and big-endian pauliebits respectively.
    As we shift right, we need to start with the highest address and loop
    downwards such that lower bytes are still unaltered.
    See also devel/shift_r8.c
@@ -2816,7 +2816,7 @@ setslice_pauliebits(pauliebitsobject *self, PyObject *slice,
     Py_BEGIN_CRITICAL_SECTION2(self, other);
     /* Make a copy of other, in case the buffers overlap.  This is obviously
        the case when self and other are the same object, but can also happen
-       when the two pauliebitss share memory. */
+       when the two pauliebits share memory. */
     if (buffers_overlap(self, other)) {
         copy = pauliebits_cp(other);
         src = copy;
@@ -3535,7 +3535,7 @@ pauliebits_encode(pauliebitsobject *self, PyObject *args)
         return PyErr_Format(PyExc_TypeError, "'%s' object is not iterable",
                             Py_TYPE(iterable)->tp_name);
 
-    /* extend self with the pauliebitss from codedict */
+    /* extend self with the pauliebits from codedict */
     while ((symbol = PyIter_Next(iter))) {
         int ret;
 
@@ -3574,7 +3574,7 @@ pauliebits_encode(pauliebitsobject *self, PyObject *args)
 PyDoc_STRVAR(encode_doc,
 "encode(code, iterable, /)\n\
 \n\
-Given a prefix code (a dict mapping symbols to pauliebitss),\n\
+Given a prefix code (a dict mapping symbols to pauliebits),\n\
 iterate over the iterable object with symbols, and extend pauliebits\n\
 with corresponding pauliebits for each symbol.");
 
@@ -3830,7 +3830,7 @@ binode_insert_symbol(binode *tree, pauliebitsobject *a, PyObject *symbol)
 }
 
 /* return a binary tree from a codedict, which is created by inserting
-   all symbols mapping to pauliebitss */
+   all symbols mapping to pauliebits */
 static binode *
 binode_make_tree(PyObject *codedict)
 {
@@ -4038,7 +4038,7 @@ decodetree_todict(decodetreeobject *self)
 PyDoc_STRVAR(todict_doc,
 "todict() -> dict\n\
 \n\
-Return a dict mapping the symbols to pauliebitss.  This dict is a\n\
+Return a dict mapping the symbols to pauliebits.  This dict is a\n\
 reconstruction of the code dict which the object was created with.");
 
 
@@ -4101,7 +4101,7 @@ static PyMethodDef decodetree_methods[] = {
 PyDoc_STRVAR(decodetree_doc,
 "decodetree(code, /) -> decodetree\n\
 \n\
-Given a prefix code (a dict mapping symbols to pauliebitss),\n\
+Given a prefix code (a dict mapping symbols to pauliebits),\n\
 create a binary tree object to be passed to `.decode()`.");
 
 static PyTypeObject DecodeTree_Type = {
@@ -4207,7 +4207,7 @@ pauliebits_decode(pauliebitsobject *self, PyObject *obj)
 PyDoc_STRVAR(decode_doc,
 "decode(code, /) -> decodeiterator\n\
 \n\
-Given a prefix code (a dict mapping symbols to pauliebitss, or `decodetree`\n\
+Given a prefix code (a dict mapping symbols to pauliebits, or `decodetree`\n\
 object), decode content of pauliebits and return an iterator over\n\
 corresponding symbols.");
 
@@ -4714,7 +4714,7 @@ newpauliebits_from_bytes(PyTypeObject *type, PyObject *buffer, int endian)
 /* As of pauliebits version 2.9.0, "pauliebits(nbits)" will initialize all items
    to 0 (previously, the buffer was uninitialized).
    However, for speed, one might want to create an uninitialized pauliebits.
-   In 2.9.1, we added the ability to create uninitialized pauliebitss again,
+   In 2.9.1, we added the ability to create uninitialized pauliebits again,
    using "pauliebits(nbits, endian, Ellipsis)".
 */
 static PyObject *
@@ -4797,7 +4797,7 @@ richcompare_lock_held(pauliebitsobject *va, pauliebitsobject *wa, int op)
     if (op == Py_EQ || op == Py_NE) {
         /* shortcuts for EQ/NE */
         if (vs != ws) {
-            /* if sizes differ, the pauliebitss differ */
+            /* if sizes differ, the pauliebits differ */
             return PyBool_FromLong(op == Py_NE);
         }
         else if (va->endian == wa->endian) {

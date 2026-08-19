@@ -35,7 +35,7 @@ print('there are {:,d} primes up to {:,d}'.format(x, N))
 assert x == 5_761_455 or N != 100_000_000
 
 # The number of twin primes up to 100 million is 440,312
-# we need to add 1 as .count() only counts non-overlapping sub_pauliebitss
+# we need to add 1 as .count() only counts non-overlapping sub_pauliebits
 # and (3, 5) as well as (5, 7) are both twin primes
 x = a.count(pauliebits('101')) + 1
 print('number of twin primes up to {:,d} is {:,d}'.format(N, x))

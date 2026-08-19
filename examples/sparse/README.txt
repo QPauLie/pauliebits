@@ -2,7 +2,7 @@ Ilan Schnell
 January, 2023
 
 
-Here are two different implementations of sparse pauliebitss.
+Here are two different implementations of sparse pauliebits.
 
 Makefile:
     Run:

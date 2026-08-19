@@ -294,7 +294,7 @@ setup_misc_tables(void) {
     setup_table(xor_table[1], 'X');
 }
 
-/* Internal function, similar to sum_indices(), but pauliebitss are limited
+/* Internal function, similar to sum_indices(), but pauliebits are limited
    in size.  For details see: devel/test_sum_indices.py
 */
 static uint64_t
@@ -1743,7 +1743,7 @@ PyDoc_STRVAR(sc_encode_doc,
 \n\
 Compress a pauliebits using sparse encoding and return its binary\n\
 representation.  This representation is useful for efficiently storing\n\
-sparse pauliebitss.  Use `sc_decode()` for decompressing (decoding).");
+sparse pauliebits.  Use `sc_decode()` for decompressing (decoding).");
 
 
 /* read header from 'iter' and set 'endian' and 'nbits', return 0 on success

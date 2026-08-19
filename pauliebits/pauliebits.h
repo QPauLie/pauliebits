@@ -317,19 +317,19 @@ conv_pybit(PyObject *value, int *vi)
     return 1;
 }
 
-/* Return 0 if pauliebitss have equal length and bit-endianness.
+/* Return 0 if pauliebits have equal length and bit-endianness.
    Otherwise, set exception and return -1. */
 static inline int
 ensure_eq_size_endian(pauliebitsobject *a, pauliebitsobject *b)
 {
     if (a->nbits != b->nbits) {
         PyErr_SetString(PyExc_ValueError,
-                        "pauliebitss of equal length expected");
+                        "pauliebits of equal length expected");
         return -1;
     }
     if (a->endian != b->endian) {
         PyErr_SetString(PyExc_ValueError,
-                        "pauliebitss of equal bit-endianness expected");
+                        "pauliebits of equal bit-endianness expected");
         return -1;
     }
     return 0;

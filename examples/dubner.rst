@@ -10,7 +10,7 @@ A proof of this stronger conjecture would imply not only Goldbach's
 conjecture but also the twin prime conjecture.  For more details,
 see `Dubner's conjecture <https://oeis.org/A007534/a007534.pdf>`__.
 
-In this document, we want to show how pauliebitss can be used to calculate
+In this document, we want to show how pauliebits can be used to calculate
 twin primes and "middle numbers" very efficiently, and with very little
 code.  We start by calculating all primes up to a limit ``N`` using
 the `Sieve of Eratosthenes <../examples/sieve.py>`__:
