@@ -5260,7 +5260,7 @@ static PyModuleDef moduledef = {
 };
 
 PyMODINIT_FUNC
-PyInit__pauliebits(void)
+PyInit_pauliebits(void)
 {
     PyObject *m;
 
