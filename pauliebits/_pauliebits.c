@@ -1508,7 +1508,6 @@ pauliebits_reduce(pauliebitsobject *self)
 
 PyDoc_STRVAR(reduce_doc, "Internal. Used for pickling support.");
 
-
 static PyObject *
 pauliebits_repr(pauliebitsobject *self)
 {
@@ -1524,17 +1523,17 @@ pauliebits_repr(pauliebitsobject *self)
     if (nbits == 0)
         return PyUnicode_FromString("pauliebits()");
 
-    strsize = nbits + 12;  /* 12 is length of "pauliebits('')" */
+    strsize = nbits + 14;  /* ИСПРАВЛЕНО: 14 — это длина "pauliebits('')" */
     str = PyMem_New(char, strsize);
     if (str == NULL)
         return PyErr_NoMemory();
 
-    strcpy(str, "pauliebits('");  /* has length 10 */
+    strcpy(str, "pauliebits('");  /* ИСПРАВЛЕНО: теперь длина этого префикса равна 12 */
 
     Py_BEGIN_CRITICAL_SECTION(self);
     if (self->nbits == nbits) {
         for (i = 0; i < nbits; i++)
-            str[i + 10] = getbit(self, i) + '0';
+            str[i + 12] = getbit(self, i) + '0'; /* ИСПРАВЛЕНО: смещение 12 вместо 10 */
         err = 0;
     }
     Py_END_CRITICAL_SECTION();
@@ -5256,11 +5255,11 @@ register_abc(void)
 }
 
 static PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT, "pauliebits", 0, -1, module_functions,
+    PyModuleDef_HEAD_INIT, "_pauliebits", 0, -1, module_functions,
 };
 
 PyMODINIT_FUNC
-PyInit_pauliebits(void)
+PyInit__pauliebits(void)
 {
     PyObject *m;
 

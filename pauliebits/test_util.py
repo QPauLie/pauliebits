@@ -490,7 +490,7 @@ class PPrintTests(unittest.TestCase):
                 pprint(a, stream=f, group=n, width=width)
                 r = f.getvalue()
                 self.assertEqual(eval(r), a)
-                s = r.strip("bitary(')\n")
+                s = r.strip("pauliebitsry(')\n")
                 for group in s.split()[:-1]:
                     self.assertEqual(len(group), n)
                 for line in s.split('\n'):

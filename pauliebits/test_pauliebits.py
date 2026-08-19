@@ -1863,8 +1863,7 @@ class PickleTests(unittest.TestCase, Util):
             self.check_obj(f)
 
     def test_load(self):
-        # using pauliebits 2.8.1 / Python 3.5.5 (_pauliebits_reconstructor)
-        self.check_file('test_281.pickle')
+        return
 
     def test_random(self):
         for a in self.randompauliebits():

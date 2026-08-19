@@ -56,7 +56,7 @@ setup(
     package_data = {"pauliebits": ["*.h", "*.pickle",
                                  "py.typed",  # see PEP 561
                                  "*.pyi"]},
-    ext_modules = [Extension(name = "pauliebits.pauliebits",
+    ext_modules = [Extension(name = "pauliebits._pauliebits",
                              define_macros = macros,
                              sources = ["pauliebits/_pauliebits.c"]),
                    Extension(name = "pauliebits._util",
