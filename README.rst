@@ -1,20 +1,20 @@
 pauliebits: efficient arrays of booleans
 ======================================
 
-This library extends `bitarray`(https://github.com/ilanschnell/bitarray) with methods to accelerate operations on Pauli strings.
+This library extends bitarray (https://github.com/ilanschnell/bitarray) with methods to accelerate operations on Pauli strings.
 
 
 Extension methods
 ------------------
 
-* encode_ixyz(paulie) - it accelerates the creation of a bit representation for strings composed of I, X, Y, and Z characters. Each character consists of two bits: I ñ (0,0), X ñ (1,0), Y ñ (1,1), Z ñ (0,1).
+* encode_ixyz(paulie) - it accelerates the creation of a bit representation for strings composed of I, X, Y, and Z characters. Each character consists of two bits: I ‚Äì (0,0), X ‚Äì (1,0), Y ‚Äì (1,1), Z ‚Äì (0,1).
 * decode_ixyz() - conversion of IXYZ bit values to strings
 * count_non_trivially() - count_or(bits_even, bits_odd)
 * diagonal_index() - ba2int(bits_odd) if ba2int(bits_even) == 0 else -1
 * complex_conjugate() - count_and(bits_odd, bits_even)
 * not_identity_mask() - bits_even | bits_odd
 * phase(other) - the exponent f in phase = i^f 
-* commutes_with(other) - Òheck for commutativity
+* commutes_with(other) - —Åheck for commutativity
 
 =======================================
 This library provides an object type which efficiently represents an array
