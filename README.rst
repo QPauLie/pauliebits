@@ -14,7 +14,7 @@ Extension methods
 * complex_conjugate() - count_and(bits_odd, bits_even)
 * not_identity_mask() - bits_even | bits_odd
 * phase(other) - the exponent f in phase = i^f 
-* commutes_with(other) - сheck for commutativity
+* commutes_with(other) check for commutativity
 
 =======================================
 This library provides an object type which efficiently represents an array
