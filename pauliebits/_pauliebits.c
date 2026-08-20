@@ -3592,6 +3592,10 @@ pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
 
     Py_ssize_t len = PyUnicode_GET_LENGTH(str_obj);
     if (len == 0) {
+        if (resize(self, 0) < 0) {
+            return NULL;
+        }
+        self->endian = 1; // Дефолтный Big Endian для пустой строки
         Py_RETURN_NONE;
     }
 
@@ -3607,7 +3611,7 @@ pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
     Py_ssize_t byte_idx = 0;
     Py_ssize_t i = 0;
 
-    // --- Fast processing in 4-character blocks (1 full byte) ---
+    // --- Быстрая обработка блоками по 4 символа (заполняем ровно 1 байт) ---
     Py_ssize_t fast_len = len - (len % 4); 
     for (; i < fast_len; i += 4) {
         char b0 = 0, b1 = 0, b2 = 0, b3 = 0;
@@ -3617,22 +3621,21 @@ pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
         Py_UCS4 c2 = PyUnicode_READ_CHAR(str_obj, i + 2);
         Py_UCS4 c3 = PyUnicode_READ_CHAR(str_obj, i + 3);
 
-        // Mapping: I=0, Z=1, X=2, Y=3
+        // Маппинг: I=0, Z=1, X=2, Y=3 (младший бит — even, старший — odd)
         b0 = (c0 == 'Z') ? 1 : (c0 == 'X') ? 2 : (c0 == 'Y') ? 3 : 0;
         b1 = (c1 == 'Z') ? 1 : (c1 == 'X') ? 2 : (c1 == 'Y') ? 3 : 0;
         b2 = (c2 == 'Z') ? 1 : (c2 == 'X') ? 2 : (c2 == 'Y') ? 3 : 0;
         b3 = (c3 == 'Z') ? 1 : (c3 == 'X') ? 2 : (c3 == 'Y') ? 3 : 0;
 
-        // 
+        // Пакуем в стиле Big Endian (первый символ в старшие биты байта)
         buffer[byte_idx++] = (b0 << 6) | (b1 << 4) | (b2 << 2) | b3;
     }
 
-    // --- Processing the remainder of the string (if the length is not a multiple of 4) --- ---
+    // --- Обработка остатка строки (если длина не кратна 4) ---
     int bit_shift = 6;
     for (; i < len; i++) {
         Py_UCS4 ch = PyUnicode_READ_CHAR(str_obj, i);
         
-        // Mapping: I=0, Z=1, X=2, Y=3
         char val = (ch == 'Z') ? 1 : (ch == 'X') ? 2 : (ch == 'Y') ? 3 : 0;
 
         buffer[byte_idx] |= (val << bit_shift);
@@ -3643,13 +3646,26 @@ pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
         }
     }
 
+    // Изменяем размер исходного объекта под новые данные
     if (resize(self, nbits) < 0) {
         PyMem_Free(buffer);
         return NULL;
     }
 
+    // ПРИНУДИТЕЛЬНО выставляем endian = 1 (Big Endian), так как наш буфер упакован именно так!
+    self->endian = 1;
+
+    // Копируем подготовленные байты во внутренний буфер объекта
     memcpy(self->ob_item, buffer, nbytes);
     PyMem_Free(buffer);
+
+    // Гарантированная очистка «хвоста» последнего байта (стандарт bitarray для предотвращения мусора)
+    if (nbits & 7) {
+        size_t last_byte_idx = (size_t)(nbits >> 3);
+        int bits_in_last_byte = (int)(nbits & 7);
+        uint8_t mask = (uint8_t)(0xFF << (8 - bits_in_last_byte));
+        ((unsigned char *)self->ob_item)[last_byte_idx] &= mask;
+    }
 
     Py_RETURN_NONE;
 }
