@@ -3772,30 +3772,35 @@ Checking two strings for commutativity");
 static PyObject *
 pauliebits_count_non_trivially(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
 {
-    if (self->nbits == 0) {
+    // Количество пар битов
+    size_t num_pairs = (size_t)(self->nbits / 2);
+    if (num_pairs == 0) {
         return PyLong_FromLong(0);
     }
 
     size_t total_count = 0;
-    const uint8_t EVEN_MASK = 0x55; 
-    
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    uint8_t *buffer = (uint8_t *)self->ob_item;
 
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t b = buffer[i];
-        
-        uint8_t combined = (b | (b >> 1)) & EVEN_MASK;
-        
-#if defined(__GNUC__) || defined(__clang__)
-        total_count += __builtin_popcount(combined);
-#elif defined(_MSC_VER)
-        total_count += __popcnt(combined);
-#else
-        combined = (combined & 0x55) + ((combined >> 1) & 0x55);
-        combined = (combined & 0x33) + ((combined >> 2) & 0x33);
-        total_count += (combined & 0x0F) + (combined >> 4);
-#endif
+    // Вспомогательный макрос чтения бита с учетом Big/Little Endian
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
+
+    // Идем по каждой паре битов
+    for (size_t i = 0; i < num_pairs; i++) {
+        size_t even_idx = i * 2;
+        size_t odd_idx = i * 2 + 1;
+
+        // Извлекаем четный и нечетный бит из буфера
+        int even_bit = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
+        int odd_bit  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
+
+        // Если хотя бы один из битов в паре равен 1 (операция OR), инкрементируем счетчик
+        if (even_bit | odd_bit) {
+            total_count++;
+        }
     }
 
     return PyLong_FromSize_t(total_count);
