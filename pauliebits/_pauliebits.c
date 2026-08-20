@@ -4059,40 +4059,49 @@ even | odd");
 static PyObject *
 pauliebits_decode_ixyz(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
 {
-    size_t length = self->nbits / 2;
+    // Длина результирующей строки равна количеству ПАР битов
+    size_t length = (size_t)(self->nbits / 2);
     if (length == 0) {
         return PyUnicode_FromString("");
     }
 
+    // Создаем Python-строку нужной длины
     PyObject *res_string = PyUnicode_New(length, 127);
     if (res_string == NULL) {
         return NULL;
     }
     
     Py_UCS1 *str_buf = PyUnicode_1BYTE_DATA(res_string);
+    char *buffer = self->ob_item;
 
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    uint8_t *buffer = (uint8_t *)self->ob_item;
-
+    // Массив подстановок согласно вашей таблице DECODEC:
+    // Индекс: (odd_bit << 1) | even_bit
+    // 0: (0,0)->I, 1: (1,0)->X, 2: (0,1)->Z, 3: (1,1)->Y
     const char DECODE_MAP[4] = {'I', 'X', 'Z', 'Y'};
 
-    size_t char_idx = 0;
+    // Вспомогательный макрос для чтения конкретного логического бита.
+    // Он проверяет поле self->endian и правильно лезет в байт.
+    // Если в вашем файле макрос называется по-другому (например, BIT), используйте его.
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? /* big endian */ \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
 
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t b = buffer[i];
+    for (size_t i = 0; i < length; i++) {
+        size_t even_idx = i * 2;
+        size_t odd_idx = i * 2 + 1;
 
-        for (int step = 0; step < 8; step += 2) {
-            if ((i * 8 + step + 1) >= self->nbits) {
-                break;
-            }
+        // Извлекаем значения битов (0 или 1) с учетом порядка битов в вашем pauliebits
+        uint8_t even_bit = GET_BIT(buffer, even_idx, self->endian) ? 1 : 0;
+        uint8_t odd_bit  = GET_BIT(buffer, odd_idx, self->endian) ? 1 : 0;
 
-            uint8_t even_bit = (b >> step) & 1;
-            uint8_t odd_bit = (b >> (step + 1)) & 1;
+        // Рассчитываем индекс в таблице DECODEC
+        uint8_t lookup_idx = (odd_bit << 1) | even_bit;
 
-            uint8_t lookup_idx = (odd_bit << 1) | even_bit;
-
-            str_buf[char_idx++] = (Py_UCS1)DECODE_MAP[lookup_idx];
-        }
+        // Записываем символ прямо в строку Python
+        str_buf[i] = (Py_UCS1)DECODE_MAP[lookup_idx];
     }
 
     return res_string;
