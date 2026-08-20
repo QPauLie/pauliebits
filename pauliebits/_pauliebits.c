@@ -3936,40 +3936,30 @@ phase");
 static PyObject *
 pauliebits_complex_conjugate(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
 {
-    // Если массив пустой, общих единиц гарантированно 0
-    if (self->nbits == 0) {
+    size_t num_pairs = (size_t)(self->nbits / 2);
+    if (num_pairs == 0) {
         return PyLong_FromLong(0);
     }
 
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    uint8_t *buffer = (uint8_t *)self->ob_item;
-
-    const uint8_t EVEN_MASK = 0x55; // 01010101 в двоичной системе
     size_t total_ys = 0;
 
-    // Проходим по всем байтам буфера за один цикл
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t b = buffer[i];
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
 
-        // Оставляем только четные биты (0, 2, 4, 6)
-        uint8_t s_even = b & EVEN_MASK;
-        
-        // Сдвигаем нечетные биты (1, 3, 5, 7) на место четных
-        uint8_t s_odd_shifted = (b >> 1) & EVEN_MASK;
+    for (size_t i = 0; i < num_pairs; i++) {
+        size_t even_idx = i * 2;
+        size_t odd_idx = i * 2 + 1;
 
-        // Находим их пересечение (побитовое И)
-        uint8_t and_result = s_even & s_odd_shifted;
+        int even_bit = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
+        int odd_bit  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
-        // Аппаратный или программный подсчет выставленных битов
-#if defined(__GNUC__) || defined(__clang__)
-        total_ys += __builtin_popcount(and_result);
-#elif defined(_MSC_VER)
-        total_ys += __popcnt(and_result);
-#else
-        and_result = (and_result & 0x55) + ((and_result >> 1) & 0x55);
-        and_result = (and_result & 0x33) + ((and_result >> 2) & 0x33);
-        total_ys += (and_result & 0x0F) + (and_result >> 4);
-#endif
+        if (even_bit & odd_bit) {
+            total_ys++;
+        }
     }
 
     return PyLong_FromSize_t(total_ys);
