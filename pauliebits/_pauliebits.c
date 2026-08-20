@@ -3854,13 +3854,16 @@ diagonal index");
 static PyObject *
 pauliebits_phase(pauliebitsobject *self, PyObject *arg)
 {
-    if (!PyObject_TypeCheck(arg, Py_TYPE(self))) {
+    if (!PyObject_TypeCheck(arg, Py_TYPE(self)) && 
+        strcmp(Py_TYPE(arg)->tp_name, Py_TYPE(self)->tp_name) != 0) {
         PyErr_SetString(PyExc_TypeError, "Argument must be a pauliebits object");
         return NULL;
     }
     
+    // Приводим аргумент к вашему типу pauliebitsobject
     pauliebitsobject *other = (pauliebitsobject *)arg;
 
+    // Проверка на совпадение длин
     if (self->nbits != other->nbits) {
         PyErr_SetString(PyExc_ValueError, "pauliebits objects must have the same length");
         return NULL;
@@ -3870,57 +3873,42 @@ pauliebits_phase(pauliebitsobject *self, PyObject *arg)
         return PyLong_FromLong(0);
     }
 
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    uint8_t *s_buf = (uint8_t *)self->ob_item;
-    uint8_t *o_buf = (uint8_t *)other->ob_item;
+    // 2. ИСПРАВЛЕНИЕ: Переписываем логику подсчета под корректный Endianness (Big/Little)
+    // Используем надежный макрос GET_BIT, чтобы результаты count_and точно совпадали с Python
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
 
-    const uint8_t EVEN_MASK = 0x55; // 01010101
-
-    size_t sum_1 = 0; // count_and(self_bits_even, other_bits_odd)
-    size_t sum_2 = 0; // count_and(self_bits_odd, self_bits_even)
+    size_t sum_1 = 0; // count_and(bits_even, other_bits_odd)
+    size_t sum_2 = 0; // count_and(bits_odd, bits_even)
     size_t sum_3 = 0; // count_and(other_bits_odd, other_bits_even)
-    size_t sum_4 = 0; // count_and(self_bits_even ^ other_bits_even, self_bits_odd ^ other_bits_odd)
+    size_t sum_4 = 0; // count_and(bits_even ^ other_bits_even, bits_odd ^ other_bits_odd)
 
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t s = s_buf[i];
-        uint8_t o = o_buf[i];
+    size_t res_bits = (size_t)(self->nbits / 2);
 
-        uint8_t s_even = s & EVEN_MASK;
-        uint8_t o_even = o & EVEN_MASK;
+    for (size_t i = 0; i < res_bits; i++) {
+        size_t even_idx = i * 2;
+        size_t odd_idx = i * 2 + 1;
 
-        uint8_t s_odd_shifted = (s >> 1) & EVEN_MASK;
-        uint8_t o_odd_shifted = (o >> 1) & EVEN_MASK;
+        // Извлекаем биты для self
+        int s_even = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
+        int s_odd  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
-        uint8_t and_1 = s_even & o_odd_shifted;
-        uint8_t and_2 = s_odd_shifted & s_even;
-        uint8_t and_3 = o_odd_shifted & o_even;
-        uint8_t and_4 = (s_even ^ o_even) & (s_odd_shifted ^ o_odd_shifted);
+        // Извлекаем биты для other
+        int o_even = GET_BIT(other->ob_item, even_idx, other->endian) ? 1 : 0;
+        int o_odd  = GET_BIT(other->ob_item, odd_idx, other->endian) ? 1 : 0;
 
-#if defined(__GNUC__) || defined(__clang__)
-        sum_1 += __builtin_popcount(and_1);
-        sum_2 += __builtin_popcount(and_2);
-        sum_3 += __builtin_popcount(and_3);
-        sum_4 += __builtin_popcount(and_4);
-#elif defined(_MSC_VER)
-        sum_1 += __popcnt(and_1);
-        sum_2 += __popcnt(and_2);
-        sum_3 += __popcnt(and_3);
-        sum_4 += __popcnt(and_4);
-#else
-        #define POPCNT8(x) (((x) * 0x01010101ULL & 0x0102040801020408ULL) % 0xFF)
-        #define ACCUM_POPCNT(var, val) { \
-            uint8_t v = val; \
-            v = (v & 0x55) + ((v >> 1) & 0x55); \
-            v = (v & 0x33) + ((v >> 2) & 0x33); \
-            var += (v & 0x0F) + (v >> 4); \
-        }
-        ACCUM_POPCNT(sum_1, and_1);
-        ACCUM_POPCNT(sum_2, and_2);
-        ACCUM_POPCNT(sum_3, and_3);
-        ACCUM_POPCNT(sum_4, and_4);
-#endif
+        // Вычисляем пересечения (AND) согласно формуле
+        if (s_even & o_odd)  sum_1++;
+        if (s_odd  & s_even) sum_2++;
+        if (o_odd  & o_even) sum_3++;
+        if ((s_even ^ o_even) & (s_odd ^ o_odd)) sum_4++;
     }
 
+    // 3. Вычисляем финальное значение формулы: f = 2 * sum_1 + sum_2 + sum_3 - sum_4
     long long final_result = (2 * (long long)sum_1) + (long long)sum_2 + (long long)sum_3 - (long long)sum_4;
 
     return PyLong_FromLongLong(final_result);
