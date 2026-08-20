@@ -3984,20 +3984,19 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
 {
     size_t res_bits = (size_t)(self->nbits / 2);
     
-    // 1. Выделяем память через tp_alloc типа объекта.
-    // Это автоматически обнуляет базовые заголовки Python (PyObject_VAR_HEAD)
+    // 1. Выделяем память под объект pauliebits
     pauliebitsobject *res = (pauliebitsobject *)Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0);
     if (res == NULL) {
         return NULL;
     }
 
-    // 2. Инициализируем абсолютно все кастомные поля структуры
+    // Инициализируем поля структуры
     res->nbits = (Py_ssize_t)res_bits;
     res->endian = self->endian;         // Наследуем порядок бит (Big/Little Endian)
-    res->ob_exports = 0;               // Экспортов буфера пока нет
-    res->weakreflist = NULL;           // Список слабых ссылок пуст
-    res->buffer = NULL;                // Импортированный буфер отсутствует
-    res->readonly = 0;                 // Новый буфер доступен для записи
+    res->ob_exports = 0;
+    res->weakreflist = NULL;
+    res->buffer = NULL;
+    res->readonly = 0;
 
     if (res_bits == 0) {
         res->ob_item = NULL;
@@ -4005,47 +4004,54 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
         return (PyObject *)res;
     }
 
-    size_t num_bytes = (size_t)((self->nbits + 7) >> 3);
-    size_t res_bytes = (size_t)((res_bits + 7) >> 3);
+    size_t res_bytes = (res_bits + 7) >> 3;
 
-    // Выделяем память под сам буфер бит
+    // Выделяем буфер под результирующие биты
     res->ob_item = (char *)PyMem_Malloc(res_bytes);
     if (res->ob_item == NULL) {
-        Py_DECREF(res); // tp_alloc требует уменьшения счетчика ссылок при ошибке
+        Py_DECREF(res);
         return PyErr_NoMemory();
     }
     memset(res->ob_item, 0, res_bytes);
-    
-    // Обязательно указываем размер выделенного буфера, иначе free() упадет
     res->allocated = (Py_ssize_t)res_bytes; 
 
-    uint8_t *s_buf = (uint8_t *)self->ob_item;
-    uint8_t *r_buf = (uint8_t *)res->ob_item;
+    // Вспомогательные макросы для корректной работы с Big и Little Endian
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
 
-    const uint8_t EVEN_MASK = 0x55;
-    size_t bit_idx = 0;
+    #ifndef SET_BIT_ON
+    #define SET_BIT_ON(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((unsigned char *)(ptr))[(index) >> 3] |= (0x80 >> ((index) & 7))) : \
+         (((unsigned char *)(ptr))[(index) >> 3] |= (0x01 << ((index) & 7))))
+    #endif
 
-    // 3. Основной вычислительный цикл
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t b = s_buf[i];
-        uint8_t combined = (b | (b >> 1)) & EVEN_MASK;
+    // 2. Идем по логическим индексам пар и выполняем операцию OR
+    for (size_t i = 0; i < res_bits; i++) {
+        size_t even_idx = i * 2;
+        size_t odd_idx = i * 2 + 1;
 
-        for (int step = 0; step < 8; step += 2) {
-            // Безопасное сравнение типов (устраняет warning C4018)
-            if (((size_t)i * 8 + (size_t)step) >= (size_t)self->nbits) {
-                break;
-            }
+        // Извлекаем четный и нечетный биты исходного массива
+        int even_bit = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
+        int odd_bit  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
-            if (combined & (1 << step)) {
-                r_buf[bit_idx >> 3] |= (1 << (bit_idx & 7));
-            }
-            bit_idx++;
+        // Если хотя бы один из них равен 1 (операция OR), выставляем бит в результирующем массиве
+        if (even_bit | odd_bit) {
+            SET_BIT_ON(res->ob_item, i, res->endian);
         }
     }
 
-    // Зануляем неиспользуемый хвост последнего байта
-    if (bit_idx & 7) {
-        r_buf[bit_idx >> 3] &= (1 << (bit_idx & 7)) - 1;
+    // Принудительно очищаем неиспользуемый хвост последнего байта в соответствии со стандартами bitarray
+    if (res_bits & 7) {
+        if (res->endian == 1) { /* big endian */
+            ((unsigned char *)res->ob_item)[res_bits >> 3] &= ~( (0x80 >> (res_bits & 7)) - 1 );
+        } else {                /* little endian */
+            ((unsigned char *)res->ob_item)[res_bits >> 3] &= (1 << (res_bits & 7)) - 1;
+        }
     }
 
     return (PyObject *)res;
