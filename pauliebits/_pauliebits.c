@@ -3818,48 +3818,42 @@ pauliebits_diagonal_index(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
         return PyLong_FromLong(0);
     }
 
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    uint8_t *buffer = (uint8_t *)self->ob_item;
+    size_t num_pairs = (size_t)(self->nbits / 2);
 
-    const uint8_t EVEN_MASK = 0x55; 
-    const uint8_t ODD_MASK  = 0xAA; 
+    #ifndef GET_BIT
+    #define GET_BIT(ptr, index, endian) \
+        ((endian == 1) ? \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x80 >> ((index) & 7))) : \
+         (((const unsigned char *)(ptr))[(index) >> 3] & (0x01 << ((index) & 7))))
+    #endif
 
-    for (size_t i = 0; i < num_bytes; i++) {
-        if (buffer[i] & EVEN_MASK) {
-            return PyLong_FromLong(-1);
+    for (size_t i = 0; i < num_pairs; i++) {
+        if (GET_BIT(self->ob_item, i * 2, self->endian)) {
+            return PyLong_FromLong(-1); 
         }
     }
 
-    size_t result_bits = self->nbits / 2;
-    if (result_bits == 0) {
+    if (num_pairs == 0) {
         return PyLong_FromLong(0);
     }
 
-    size_t res_bytes = (result_bits + 7) >> 3;
-    
+    size_t res_bytes = (num_pairs + 7) >> 3;
     uint8_t *res_buffer = (uint8_t *)PyMem_Malloc(res_bytes);
     if (res_buffer == NULL) {
         return PyErr_NoMemory();
     }
     memset(res_buffer, 0, res_bytes);
-    size_t bit_idx = 0;
-    for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t b = buffer[i];
-        
-        for (int step = 1; step < 8; step += 2) {
-            if (((size_t)i * 8 + (size_t)step) >= (size_t)self->nbits) {
-                break;
-            }
 
-            if (b & (1 << step)) {
-                res_buffer[bit_idx >> 3] |= (1 << (bit_idx & 7));
-            }
-            bit_idx++;
+    for (size_t i = 0; i < num_pairs; i++) {
+        if (GET_BIT(self->ob_item, i * 2 + 1, self->endian)) {
+            size_t target_bit_idx = num_pairs - 1 - i;
+            res_buffer[target_bit_idx >> 3] |= (1 << (target_bit_idx & 7));
         }
     }
+
     PyObject *result = _PyLong_FromByteArray(res_buffer, res_bytes, 
-                                            1,
-                                            0 );
+                                            1, 
+                                            0  );
 
     PyMem_Free(res_buffer);
     return result;
