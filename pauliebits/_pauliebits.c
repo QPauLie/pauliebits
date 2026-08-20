@@ -4879,7 +4879,7 @@ static PyMethodDef pauliebits_methods[] = {
     {"diagonal_index", (PyCFunction)pauliebits_diagonal_index, METH_VARARGS,
      diagonal_index_doc},
 
-    {"phase", (PyCFunction)pauliebits_phase, METH_VARARGS,
+    {"phase", (PyCFunction)pauliebits_phase, METH_O,
      phase_doc},
 
     {"complex_conjugate", (PyCFunction)pauliebits_complex_conjugate, METH_VARARGS,
