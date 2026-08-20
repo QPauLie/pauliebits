@@ -3753,6 +3753,343 @@ PyDoc_STRVAR(commutes_with_doc,
 Checking two strings for commutativity");
 
 
+static PyObject *
+pauliebits_count_non_trivially(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
+{
+    if (self->nbits == 0) {
+        return PyLong_FromLong(0);
+    }
+
+    size_t total_count = 0;
+    const uint8_t EVEN_MASK = 0x55; 
+    
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    uint8_t *buffer = (uint8_t *)self->ob_item;
+
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t b = buffer[i];
+        
+        uint8_t combined = (b | (b >> 1)) & EVEN_MASK;
+        
+#if defined(__GNUC__) || defined(__clang__)
+        total_count += __builtin_popcount(combined);
+#elif defined(_MSC_VER)
+        total_count += __popcnt(combined);
+#else
+        combined = (combined & 0x55) + ((combined >> 1) & 0x55);
+        combined = (combined & 0x33) + ((combined >> 2) & 0x33);
+        total_count += (combined & 0x0F) + (combined >> 4);
+#endif
+    }
+
+    return PyLong_FromSize_t(total_count);
+}
+
+PyDoc_STRVAR(count_non_trivially_doc,
+"count_non_trivially(pauliebits)\n\
+\n\
+count_or for even odd bits");
+
+static PyObject *
+pauliebits_diagonal_index(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
+{
+    if (self->nbits == 0) {
+        return PyLong_FromLong(0);
+    }
+
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    uint8_t *buffer = (uint8_t *)self->ob_item;
+
+    const uint8_t EVEN_MASK = 0x55; 
+    const uint8_t ODD_MASK  = 0xAA; 
+
+    for (size_t i = 0; i < num_bytes; i++) {
+        if (buffer[i] & EVEN_MASK) {
+            return PyLong_FromLong(-1);
+        }
+    }
+
+    size_t result_bits = self->nbits / 2;
+    if (result_bits == 0) {
+        return PyLong_FromLong(0);
+    }
+
+    size_t res_bytes = (result_bits + 7) >> 3;
+    
+    uint8_t *res_buffer = (uint8_t *)PyMem_Malloc(res_bytes);
+    if (res_buffer == NULL) {
+        return PyErr_NoMemory();
+    }
+    memset(res_buffer, 0, res_bytes);
+    size_t bit_idx = 0;
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t b = buffer[i];
+        
+        for (int step = 1; step < 8; step += 2) {
+            if (((size_t)i * 8 + (size_t)step) >= (size_t)self->nbits) {
+                break;
+            }
+
+            if (b & (1 << step)) {
+                res_buffer[bit_idx >> 3] |= (1 << (bit_idx & 7));
+            }
+            bit_idx++;
+        }
+    }
+    PyObject *result = _PyLong_FromByteArray(res_buffer, res_bytes, 
+                                            1,
+                                            0 );
+
+    PyMem_Free(res_buffer);
+    return result;
+}
+
+
+
+PyDoc_STRVAR(diagonal_index_doc,
+"diagonal_index(pauliebits)\n\
+\n\
+diagonal index");
+
+static PyObject *
+pauliebits_phase(pauliebitsobject *self, PyObject *arg)
+{
+    if (!PyObject_TypeCheck(arg, Py_TYPE(self))) {
+        PyErr_SetString(PyExc_TypeError, "Argument must be a pauliebits object");
+        return NULL;
+    }
+    
+    pauliebitsobject *other = (pauliebitsobject *)arg;
+
+    if (self->nbits != other->nbits) {
+        PyErr_SetString(PyExc_ValueError, "pauliebits objects must have the same length");
+        return NULL;
+    }
+
+    if (self->nbits == 0) {
+        return PyLong_FromLong(0);
+    }
+
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    uint8_t *s_buf = (uint8_t *)self->ob_item;
+    uint8_t *o_buf = (uint8_t *)other->ob_item;
+
+    const uint8_t EVEN_MASK = 0x55; // 01010101
+
+    size_t sum_1 = 0; // count_and(self_bits_even, other_bits_odd)
+    size_t sum_2 = 0; // count_and(self_bits_odd, self_bits_even)
+    size_t sum_3 = 0; // count_and(other_bits_odd, other_bits_even)
+    size_t sum_4 = 0; // count_and(self_bits_even ^ other_bits_even, self_bits_odd ^ other_bits_odd)
+
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t s = s_buf[i];
+        uint8_t o = o_buf[i];
+
+        uint8_t s_even = s & EVEN_MASK;
+        uint8_t o_even = o & EVEN_MASK;
+
+        uint8_t s_odd_shifted = (s >> 1) & EVEN_MASK;
+        uint8_t o_odd_shifted = (o >> 1) & EVEN_MASK;
+
+        uint8_t and_1 = s_even & o_odd_shifted;
+        uint8_t and_2 = s_odd_shifted & s_even;
+        uint8_t and_3 = o_odd_shifted & o_even;
+        uint8_t and_4 = (s_even ^ o_even) & (s_odd_shifted ^ o_odd_shifted);
+
+#if defined(__GNUC__) || defined(__clang__)
+        sum_1 += __builtin_popcount(and_1);
+        sum_2 += __builtin_popcount(and_2);
+        sum_3 += __builtin_popcount(and_3);
+        sum_4 += __builtin_popcount(and_4);
+#elif defined(_MSC_VER)
+        sum_1 += __popcnt(and_1);
+        sum_2 += __popcnt(and_2);
+        sum_3 += __popcnt(and_3);
+        sum_4 += __popcnt(and_4);
+#else
+        #define POPCNT8(x) (((x) * 0x01010101ULL & 0x0102040801020408ULL) % 0xFF)
+        #define ACCUM_POPCNT(var, val) { \
+            uint8_t v = val; \
+            v = (v & 0x55) + ((v >> 1) & 0x55); \
+            v = (v & 0x33) + ((v >> 2) & 0x33); \
+            var += (v & 0x0F) + (v >> 4); \
+        }
+        ACCUM_POPCNT(sum_1, and_1);
+        ACCUM_POPCNT(sum_2, and_2);
+        ACCUM_POPCNT(sum_3, and_3);
+        ACCUM_POPCNT(sum_4, and_4);
+#endif
+    }
+
+    long long final_result = (2 * (long long)sum_1) + (long long)sum_2 + (long long)sum_3 - (long long)sum_4;
+
+    return PyLong_FromLongLong(final_result);
+}
+
+PyDoc_STRVAR(phase_doc,
+"phase(pauliebits)\n\
+\n\
+phase");
+
+
+static PyObject *
+pauliebits_complex_conjugate(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
+{
+    // Если массив пустой, общих единиц гарантированно 0
+    if (self->nbits == 0) {
+        return PyLong_FromLong(0);
+    }
+
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    uint8_t *buffer = (uint8_t *)self->ob_item;
+
+    const uint8_t EVEN_MASK = 0x55; // 01010101 в двоичной системе
+    size_t total_ys = 0;
+
+    // Проходим по всем байтам буфера за один цикл
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t b = buffer[i];
+
+        // Оставляем только четные биты (0, 2, 4, 6)
+        uint8_t s_even = b & EVEN_MASK;
+        
+        // Сдвигаем нечетные биты (1, 3, 5, 7) на место четных
+        uint8_t s_odd_shifted = (b >> 1) & EVEN_MASK;
+
+        // Находим их пересечение (побитовое И)
+        uint8_t and_result = s_even & s_odd_shifted;
+
+        // Аппаратный или программный подсчет выставленных битов
+#if defined(__GNUC__) || defined(__clang__)
+        total_ys += __builtin_popcount(and_result);
+#elif defined(_MSC_VER)
+        total_ys += __popcnt(and_result);
+#else
+        and_result = (and_result & 0x55) + ((and_result >> 1) & 0x55);
+        and_result = (and_result & 0x33) + ((and_result >> 2) & 0x33);
+        total_ys += (and_result & 0x0F) + (and_result >> 4);
+#endif
+    }
+
+    return PyLong_FromSize_t(total_ys);
+}
+
+PyDoc_STRVAR(complex_conjugate_doc,
+"complex_conjugate(pauliebits)\n\
+\n\
+complex conjugate");
+
+static PyObject *
+pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
+{
+    size_t res_bits = self->nbits / 2;
+    
+    pauliebitsobject *res = PyObject_New(pauliebitsobject, Py_TYPE(self));
+
+    if (res == NULL) {
+        return NULL;
+    }
+
+    res->nbits = res_bits;
+    if (res_bits == 0) {
+        res->ob_item = NULL;
+        return (PyObject *)res;
+    }
+
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    size_t res_bytes = (res_bits + 7) >> 3;
+
+    res->ob_item = (char *)PyMem_Malloc(res_bytes);
+    if (res->ob_item == NULL) {
+        Py_DECREF(res);
+        return PyErr_NoMemory();
+    }
+    memset(res->ob_item, 0, res_bytes);
+
+    uint8_t *s_buf = (uint8_t *)self->ob_item;
+    uint8_t *r_buf = (uint8_t *)res->ob_item;
+
+    const uint8_t EVEN_MASK = 0x55;
+
+    size_t bit_idx = 0;
+
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t b = s_buf[i];
+
+        uint8_t combined = (b | (b >> 1)) & EVEN_MASK;
+
+        for (int step = 0; step < 8; step += 2) {
+            if ((i * 8 + step) >= self->nbits) {
+                break;
+            }
+
+            if (combined & (1 << step)) {
+                r_buf[bit_idx >> 3] |= (1 << (bit_idx & 7));
+            }
+            bit_idx++;
+        }
+    }
+
+    if (bit_idx & 7) {
+        r_buf[bit_idx >> 3] &= (1 << (bit_idx & 7)) - 1;
+    }
+
+    return (PyObject *)res;
+}
+
+PyDoc_STRVAR(not_identity_mask_doc,
+"not_identity_mask(pauliebits)\n\
+\n\
+even | odd");
+
+static PyObject *
+pauliebits_decode_ixyz(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
+{
+    size_t length = self->nbits / 2;
+    if (length == 0) {
+        return PyUnicode_FromString("");
+    }
+
+    PyObject *res_string = PyUnicode_New(length, 127);
+    if (res_string == NULL) {
+        return NULL;
+    }
+    
+    Py_UCS1 *str_buf = PyUnicode_1BYTE_DATA(res_string);
+
+    size_t num_bytes = (self->nbits + 7) >> 3;
+    uint8_t *buffer = (uint8_t *)self->ob_item;
+
+    const char DECODE_MAP[4] = {'I', 'X', 'Z', 'Y'};
+
+    size_t char_idx = 0;
+
+    for (size_t i = 0; i < num_bytes; i++) {
+        uint8_t b = buffer[i];
+
+        for (int step = 0; step < 8; step += 2) {
+            if ((i * 8 + step + 1) >= self->nbits) {
+                break;
+            }
+
+            uint8_t even_bit = (b >> step) & 1;
+            uint8_t odd_bit = (b >> (step + 1)) & 1;
+
+            uint8_t lookup_idx = (odd_bit << 1) | even_bit;
+
+            str_buf[char_idx++] = (Py_UCS1)DECODE_MAP[lookup_idx];
+        }
+    }
+
+    return res_string;
+}
+
+PyDoc_STRVAR(decode_ixyz_doc,
+"decode_ixyz(pauliebits)\n\
+\n\
+decode ixyz");
+
+
 /* ----------------------- binary tree (C-level) ----------------------- */
 
 /* a node has either children or a symbol, NEVER both */
@@ -4526,6 +4863,24 @@ static PyMethodDef pauliebits_methods[] = {
 
     {"commutes_with", (PyCFunction)pauliebits_commutes_with, METH_VARARGS,
      commutes_with_doc},
+
+    {"count_non_trivially", (PyCFunction)pauliebits_count_non_trivially, METH_VARARGS,
+     count_non_trivially_doc},
+
+    {"diagonal_index", (PyCFunction)pauliebits_diagonal_index, METH_VARARGS,
+     diagonal_index_doc},
+
+    {"phase", (PyCFunction)pauliebits_phase, METH_VARARGS,
+     phase_doc},
+
+    {"complex_conjugate", (PyCFunction)pauliebits_complex_conjugate, METH_VARARGS,
+     complex_conjugate_doc},
+
+    {"not_identity_mask", (PyCFunction)pauliebits_not_identity_mask, METH_VARARGS,
+     not_identity_mask_doc},
+
+    {"decode_ixyz", (PyCFunction)pauliebits_decode_ixyz, METH_VARARGS,
+     decode_ixyz_doc},
 
     {"extend",       (PyCFunction) pauliebits_extend,      METH_O,
      extend_doc},
