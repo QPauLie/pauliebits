@@ -3982,44 +3982,57 @@ complex conjugate");
 static PyObject *
 pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored))
 {
-    size_t res_bits = self->nbits / 2;
+    size_t res_bits = (size_t)(self->nbits / 2);
     
-    pauliebitsobject *res = PyObject_New(pauliebitsobject, Py_TYPE(self));
-
+    // 1. Выделяем память через tp_alloc типа объекта.
+    // Это автоматически обнуляет базовые заголовки Python (PyObject_VAR_HEAD)
+    pauliebitsobject *res = (pauliebitsobject *)Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0);
     if (res == NULL) {
         return NULL;
     }
 
-    res->nbits = res_bits;
+    // 2. Инициализируем абсолютно все кастомные поля структуры
+    res->nbits = (Py_ssize_t)res_bits;
+    res->endian = self->endian;         // Наследуем порядок бит (Big/Little Endian)
+    res->ob_exports = 0;               // Экспортов буфера пока нет
+    res->weakreflist = NULL;           // Список слабых ссылок пуст
+    res->buffer = NULL;                // Импортированный буфер отсутствует
+    res->readonly = 0;                 // Новый буфер доступен для записи
+
     if (res_bits == 0) {
         res->ob_item = NULL;
+        res->allocated = 0;
         return (PyObject *)res;
     }
 
-    size_t num_bytes = (self->nbits + 7) >> 3;
-    size_t res_bytes = (res_bits + 7) >> 3;
+    size_t num_bytes = (size_t)((self->nbits + 7) >> 3);
+    size_t res_bytes = (size_t)((res_bits + 7) >> 3);
 
+    // Выделяем память под сам буфер бит
     res->ob_item = (char *)PyMem_Malloc(res_bytes);
     if (res->ob_item == NULL) {
-        Py_DECREF(res);
+        Py_DECREF(res); // tp_alloc требует уменьшения счетчика ссылок при ошибке
         return PyErr_NoMemory();
     }
     memset(res->ob_item, 0, res_bytes);
+    
+    // Обязательно указываем размер выделенного буфера, иначе free() упадет
+    res->allocated = (Py_ssize_t)res_bytes; 
 
     uint8_t *s_buf = (uint8_t *)self->ob_item;
     uint8_t *r_buf = (uint8_t *)res->ob_item;
 
     const uint8_t EVEN_MASK = 0x55;
-
     size_t bit_idx = 0;
 
+    // 3. Основной вычислительный цикл
     for (size_t i = 0; i < num_bytes; i++) {
         uint8_t b = s_buf[i];
-
         uint8_t combined = (b | (b >> 1)) & EVEN_MASK;
 
         for (int step = 0; step < 8; step += 2) {
-            if ((i * 8 + step) >= self->nbits) {
+            // Безопасное сравнение типов (устраняет warning C4018)
+            if (((size_t)i * 8 + (size_t)step) >= (size_t)self->nbits) {
                 break;
             }
 
@@ -4030,6 +4043,7 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
         }
     }
 
+    // Зануляем неиспользуемый хвост последнего байта
     if (bit_idx & 7) {
         r_buf[bit_idx >> 3] &= (1 << (bit_idx & 7)) - 1;
     }
