@@ -3855,15 +3855,13 @@ static PyObject *
 pauliebits_phase(pauliebitsobject *self, PyObject *arg)
 {
     if (!PyObject_TypeCheck(arg, Py_TYPE(self)) && 
-        strcmp(Py_TYPE(arg)->tp_name, Py_TYPE(self)->tp_name) != 0) {
+        Py_TYPE(arg)->tp_basicsize != Py_TYPE(self)->tp_basicsize) {
         PyErr_SetString(PyExc_TypeError, "Argument must be a pauliebits object");
         return NULL;
     }
     
-    // Приводим аргумент к вашему типу pauliebitsobject
     pauliebitsobject *other = (pauliebitsobject *)arg;
 
-    // Проверка на совпадение длин
     if (self->nbits != other->nbits) {
         PyErr_SetString(PyExc_ValueError, "pauliebits objects must have the same length");
         return NULL;
@@ -3873,8 +3871,6 @@ pauliebits_phase(pauliebitsobject *self, PyObject *arg)
         return PyLong_FromLong(0);
     }
 
-    // 2. ИСПРАВЛЕНИЕ: Переписываем логику подсчета под корректный Endianness (Big/Little)
-    // Используем надежный макрос GET_BIT, чтобы результаты count_and точно совпадали с Python
     #ifndef GET_BIT
     #define GET_BIT(ptr, index, endian) \
         ((endian == 1) ? \
@@ -3893,22 +3889,18 @@ pauliebits_phase(pauliebitsobject *self, PyObject *arg)
         size_t even_idx = i * 2;
         size_t odd_idx = i * 2 + 1;
 
-        // Извлекаем биты для self
         int s_even = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
         int s_odd  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
-        // Извлекаем биты для other
         int o_even = GET_BIT(other->ob_item, even_idx, other->endian) ? 1 : 0;
         int o_odd  = GET_BIT(other->ob_item, odd_idx, other->endian) ? 1 : 0;
 
-        // Вычисляем пересечения (AND) согласно формуле
         if (s_even & o_odd)  sum_1++;
         if (s_odd  & s_even) sum_2++;
         if (o_odd  & o_even) sum_3++;
         if ((s_even ^ o_even) & (s_odd ^ o_odd)) sum_4++;
     }
 
-    // 3. Вычисляем финальное значение формулы: f = 2 * sum_1 + sum_2 + sum_3 - sum_4
     long long final_result = (2 * (long long)sum_1) + (long long)sum_2 + (long long)sum_3 - (long long)sum_4;
 
     return PyLong_FromLongLong(final_result);
