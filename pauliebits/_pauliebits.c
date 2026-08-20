@@ -3964,15 +3964,13 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
 {
     size_t res_bits = (size_t)(self->nbits / 2);
     
-    // 1. Выделяем память под объект pauliebits
     pauliebitsobject *res = (pauliebitsobject *)Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0);
     if (res == NULL) {
         return NULL;
     }
 
-    // Инициализируем поля структуры
     res->nbits = (Py_ssize_t)res_bits;
-    res->endian = self->endian;         // Наследуем порядок бит (Big/Little Endian)
+    res->endian = self->endian;
     res->ob_exports = 0;
     res->weakreflist = NULL;
     res->buffer = NULL;
@@ -3986,7 +3984,6 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
 
     size_t res_bytes = (res_bits + 7) >> 3;
 
-    // Выделяем буфер под результирующие биты
     res->ob_item = (char *)PyMem_Malloc(res_bytes);
     if (res->ob_item == NULL) {
         Py_DECREF(res);
@@ -3995,7 +3992,6 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
     memset(res->ob_item, 0, res_bytes);
     res->allocated = (Py_ssize_t)res_bytes; 
 
-    // Вспомогательные макросы для корректной работы с Big и Little Endian
     #ifndef GET_BIT
     #define GET_BIT(ptr, index, endian) \
         ((endian == 1) ? \
@@ -4010,27 +4006,28 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
          (((unsigned char *)(ptr))[(index) >> 3] |= (0x01 << ((index) & 7))))
     #endif
 
-    // 2. Идем по логическим индексам пар и выполняем операцию OR
     for (size_t i = 0; i < res_bits; i++) {
         size_t even_idx = i * 2;
         size_t odd_idx = i * 2 + 1;
 
-        // Извлекаем четный и нечетный биты исходного массива
         int even_bit = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
         int odd_bit  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
-        // Если хотя бы один из них равен 1 (операция OR), выставляем бит в результирующем массиве
         if (even_bit | odd_bit) {
             SET_BIT_ON(res->ob_item, i, res->endian);
         }
     }
 
-    // Принудительно очищаем неиспользуемый хвост последнего байта в соответствии со стандартами bitarray
     if (res_bits & 7) {
+        size_t last_byte_idx = res_bits >> 3;
+        int bits_in_last_byte = res_bits & 7;
+        
         if (res->endian == 1) { /* big endian */
-            ((unsigned char *)res->ob_item)[res_bits >> 3] &= ~( (0x80 >> (res_bits & 7)) - 1 );
+            uint8_t mask = (uint8_t)(0xFF << (8 - bits_in_last_byte));
+            ((unsigned char *)res->ob_item)[last_byte_idx] &= mask;
         } else {                /* little endian */
-            ((unsigned char *)res->ob_item)[res_bits >> 3] &= (1 << (res_bits & 7)) - 1;
+            uint8_t mask = (uint8_t)((1 << bits_in_last_byte) - 1);
+            ((unsigned char *)res->ob_item)[last_byte_idx] &= mask;
         }
     }
 
