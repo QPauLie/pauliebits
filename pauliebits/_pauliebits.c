@@ -3975,34 +3975,39 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
 {
     size_t res_bits = (size_t)(self->nbits / 2);
     
+    // 1. Создаем пустой объект pauliebits через системный аллокатор типов
     pauliebitsobject *res = (pauliebitsobject *)Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0);
     if (res == NULL) {
         return NULL;
     }
 
-    res->nbits = (Py_ssize_t)res_bits;
-    res->endian = self->endian;
+    // Инициализируем базовые поля структуры
+    res->nbits = 0;
+    res->ob_item = NULL;
+    res->allocated = 0;
+    res->endian = 1; // Устанавливаем дефолтный Big Endian, как у всех срезов
     res->ob_exports = 0;
     res->weakreflist = NULL;
     res->buffer = NULL;
     res->readonly = 0;
 
     if (res_bits == 0) {
-        res->ob_item = NULL;
-        res->allocated = 0;
         return (PyObject *)res;
     }
 
-    size_t res_bytes = (res_bits + 7) >> 3;
-
-    res->ob_item = (char *)PyMem_Malloc(res_bytes);
-    if (res->ob_item == NULL) {
+    // 2. Используем внутреннюю функцию библиотеки для выделения памяти.
+    // Она сама выставит правильное значение res->allocated и подготовит res->ob_item.
+    // (Убедитесь, что функция resize доступна в вашей области видимости)
+    if (resize(res, (Py_ssize_t)res_bits) < 0) {
         Py_DECREF(res);
-        return PyErr_NoMemory();
+        return NULL;
     }
-    memset(res->ob_item, 0, res_bytes);
-    res->allocated = (Py_ssize_t)res_bytes; 
 
+    // Дополнительно гарантированно очищаем выделенный буфер
+    size_t res_bytes = (size_t)res->allocated;
+    memset(res->ob_item, 0, res_bytes);
+
+    // Вспомогательные макросы для корректной работы с Big и Little Endian
     #ifndef GET_BIT
     #define GET_BIT(ptr, index, endian) \
         ((endian == 1) ? \
@@ -4017,29 +4022,27 @@ pauliebits_not_identity_mask(pauliebitsobject *self, PyObject *Py_UNUSED(ignored
          (((unsigned char *)(ptr))[(index) >> 3] |= (0x01 << ((index) & 7))))
     #endif
 
+    // 3. Заполняем результирующий массив
     for (size_t i = 0; i < res_bits; i++) {
         size_t even_idx = i * 2;
         size_t odd_idx = i * 2 + 1;
 
+        // Читаем из self с его оригинальным endian
         int even_bit = GET_BIT(self->ob_item, even_idx, self->endian) ? 1 : 0;
         int odd_bit  = GET_BIT(self->ob_item, odd_idx, self->endian) ? 1 : 0;
 
+        // Записываем в res строго в режиме Big Endian (1)
         if (even_bit | odd_bit) {
-            SET_BIT_ON(res->ob_item, i, res->endian);
+            SET_BIT_ON(res->ob_item, i, 1);
         }
     }
 
+    // 4. Математически точная очистка неиспользуемых бит в последнем байте
     if (res_bits & 7) {
         size_t last_byte_idx = res_bits >> 3;
         int bits_in_last_byte = res_bits & 7;
-        
-        if (res->endian == 1) { /* big endian */
-            uint8_t mask = (uint8_t)(0xFF << (8 - bits_in_last_byte));
-            ((unsigned char *)res->ob_item)[last_byte_idx] &= mask;
-        } else {                /* little endian */
-            uint8_t mask = (uint8_t)((1 << bits_in_last_byte) - 1);
-            ((unsigned char *)res->ob_item)[last_byte_idx] &= mask;
-        }
+        uint8_t mask = (uint8_t)(0xFF << (8 - bits_in_last_byte));
+        ((unsigned char *)res->ob_item)[last_byte_idx] &= mask;
     }
 
     return (PyObject *)res;
