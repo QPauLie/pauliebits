@@ -13,7 +13,7 @@ Extension methods
 * diagonal_index() - ba2int(bits_odd) if ba2int(bits_even) == 0 else -1
 * complex_conjugate() - count_and(bits_odd, bits_even)
 * not_identity_mask() - bits_even | bits_odd
-* phase(other) - the exponent f in phase = i^f 
+* phase(other) - the exponent f in phase = i^f
 * commutes_with(other) check for commutativity
 
 =======================================
@@ -74,7 +74,7 @@ Once you have installed the package, you may want to test it:
 
     $ python -c 'import pauliebits; pauliebits.test()'
     pauliebits is installed in: /Users/ilan/pauliebits/pauliebits
-    pauliebits version: 3.9.1
+    pauliebits version: 0.0.1
     sys.version: 3.14.5 (main, May 20 2026) [Clang 20.1.8]
     sys.prefix: /Users/ilan/miniforge
     sys.abiflags: ''
@@ -339,7 +339,7 @@ and can therefore be used as a dictionary key:
 Reference
 =========
 
-pauliebits version: 3.9.1 -- `change log <https://github.com/QPauLie/pauliebits/blob/master/doc/changelog.rst>`__
+pauliebits version: 0.0.1 -- `change log <https://github.com/QPauLie/pauliebits/blob/master/doc/changelog.rst>`__
 
 In the following, ``item`` and ``value`` are usually a single bit -
 an integer 0 or 1.
@@ -425,6 +425,14 @@ pauliebits methods:
    New in version 1.4
 
 
+``commutes_with(pauliebits)``
+   Checking two strings for commutativity
+
+
+``complex_conjugate(pauliebits)``
+   complex conjugate
+
+
 ``copy()`` -> pauliebits
    Return copy of pauliebits (with same bit-endianness).
 
@@ -444,6 +452,10 @@ pauliebits methods:
    New in version 2.9: add non-overlapping sub-pauliebits count
 
 
+``count_non_trivially(pauliebits)``
+   count_or for even odd bits
+
+
 ``decode(code, /)`` -> decodeiterator
    Given a prefix code (a dict mapping symbols to pauliebits, or ``decodetree``
    object), decode content of pauliebits and return an iterator over
@@ -456,10 +468,22 @@ pauliebits methods:
    New in version 3.9: returns public ``decodeiterator`` object
 
 
+``decode_ixyz(pauliebits)``
+   decode ixyz
+
+
+``diagonal_index(pauliebits)``
+   diagonal index
+
+
 ``encode(code, iterable, /)``
    Given a prefix code (a dict mapping symbols to pauliebits),
    iterate over the iterable object with symbols, and extend pauliebits
    with corresponding pauliebits for each symbol.
+
+
+``encode_ixyz(str)``
+   Optimized 2-bit-per-symbol encoding of IXYZ strings.
 
 
 ``extend(iterable, /)``
@@ -521,6 +545,10 @@ pauliebits methods:
    New in version 1.5.3: optional index argument
 
 
+``not_identity_mask(pauliebits)``
+   even | odd
+
+
 ``pack(bytes, /)``
    Extend pauliebits from a bytes-like object, where each byte corresponds
    to a single bit.  The byte ``b'\x00'`` maps to bit 0 and all other bytes
@@ -531,6 +559,10 @@ pauliebits methods:
    example NumPy's ndarray object) which have a different memory view.
 
    New in version 2.5.0: allow bytes-like argument
+
+
+``phase(pauliebits)``
+   phase
 
 
 ``pop(index=-1, /)`` -> item
@@ -566,6 +598,9 @@ pauliebits methods:
    The indices are iterated in ascending order (from lowest to highest),
    unless ``right=True``, which will iterate in descending order (starting with
    rightmost match).
+
+   For example, ``a.search(1)`` is the easiest (and most efficient) way
+   to create an iterator over all active indices in ``a``.
 
    See also: `pauliebits 3 transition <https://github.com/QPauLie/pauliebits/blob/master/doc/pauliebits3.rst>`__
 
@@ -736,7 +771,7 @@ This sub-module was added in version 1.2.
 
 
 ``base2ba(n, asciistr, /, endian=None)`` -> pauliebits
-   pauliebits of base ``n`` ASCII representation.
+   Pauliebits of base ``n`` ASCII representation.
    Allowed values for ``n`` are 2, 4, 8, 16, 32 and 64.
    For ``n=32`` the RFC 4648 Base32 alphabet is used, and for ``n=64`` the
    standard base 64 alphabet is used.  Whitespace is ignored.
@@ -843,7 +878,7 @@ This sub-module was added in version 1.2.
 
 
 ``hex2ba(hexstr, /, endian=None)`` -> pauliebits
-   pauliebits of hexadecimal representation.  hexstr may contain any number
+   Pauliebits of hexadecimal representation.  hexstr may contain any number
    (including odd numbers) of hex digits (upper or lower case).
    Whitespace is ignored.
 
