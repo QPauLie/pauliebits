@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pauliebits"
 version = "0.0.1"  
-description = "Fork of pauliebits with custom C-implemented IXYZ codec and commutes_with"
+description = "Fork of bitarray with a C-implemented IXYZ codec and commutes_with for Pauli strings"
 readme = "README.rst"
 requires-python = ">=3.9"
 license = { text = "PSF" }
