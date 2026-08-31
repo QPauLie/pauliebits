@@ -198,7 +198,7 @@ is setting ranges:
 
 As of pauliebits version 2.8, indices may also be lists of arbitrary
 indices (like in NumPy), or pauliebits that are treated as masks,
-see `pauliebits indexing <https://github.com/ilanschnell/pauliebits/blob/master/doc/indexing.rst>`__.
+see `pauliebits indexing <https://github.com/QPauLie/pauliebits/blob/master/doc/indexing.rst>`__.
 
 
 Bitwise operators
@@ -252,7 +252,7 @@ using ``.tobytes()``, ``.frombytes()``, ``.tofile()`` or ``.fromfile()``,
 importing and exporting buffers.  Also, a number of utility functions
 in ``pauliebits.util`` will return different results depending on
 bit-endianness, such as ``ba2hex()`` or ``ba2int``.
-To better understand this topic, please read `bit-endianness <https://github.com/ilanschnell/pauliebits/blob/master/doc/endianness.rst>`__.
+To better understand this topic, please read `bit-endianness <https://github.com/QPauLie/pauliebits/blob/master/doc/endianness.rst>`__.
 
 
 Buffer protocol
@@ -260,8 +260,8 @@ Buffer protocol
 
 pauliebits objects support the buffer protocol.  They can both export their
 own buffer, as well as import another object's buffer.  To learn more about
-this topic, please read `buffer protocol <https://github.com/ilanschnell/pauliebits/blob/master/doc/buffer.rst>`__.  There is also an example that shows how
-to memory-map a file to a pauliebits: `mmapped-file.py <https://github.com/ilanschnell/pauliebits/blob/master/examples/mmapped-file.py>`__
+this topic, please read `buffer protocol <https://github.com/QPauLie/pauliebits/blob/master/doc/buffer.rst>`__.  There is also an example that shows how
+to memory-map a file to a pauliebits: `mmapped-file.py <https://github.com/QPauLie/pauliebits/blob/master/examples/mmapped-file.py>`__
 
 
 Variable bit length prefix codes
@@ -339,7 +339,7 @@ and can therefore be used as a dictionary key:
 Reference
 =========
 
-pauliebits version: 3.9.1 -- `change log <https://github.com/ilanschnell/pauliebits/blob/master/doc/changelog.rst>`__
+pauliebits version: 3.9.1 -- `change log <https://github.com/QPauLie/pauliebits/blob/master/doc/changelog.rst>`__
 
 In the following, ``item`` and ``value`` are usually a single bit -
 an integer 0 or 1.
@@ -449,7 +449,7 @@ pauliebits methods:
    object), decode content of pauliebits and return an iterator over
    corresponding symbols.
 
-   See also: `pauliebits 3 transition <https://github.com/ilanschnell/pauliebits/blob/master/doc/pauliebits3.rst>`__
+   See also: `pauliebits 3 transition <https://github.com/QPauLie/pauliebits/blob/master/doc/pauliebits3.rst>`__
 
    New in version 3.0: returns iterator (equivalent to past ``.iterdecode()``)
 
@@ -567,7 +567,7 @@ pauliebits methods:
    unless ``right=True``, which will iterate in descending order (starting with
    rightmost match).
 
-   See also: `pauliebits 3 transition <https://github.com/ilanschnell/pauliebits/blob/master/doc/pauliebits3.rst>`__
+   See also: `pauliebits 3 transition <https://github.com/QPauLie/pauliebits/blob/master/doc/pauliebits3.rst>`__
 
    New in version 2.9: optional start and stop arguments - add optional keyword argument ``right``
 
@@ -713,7 +713,7 @@ This sub-module was added in version 1.2.
    When grouped, the string ``sep`` is inserted between groups
    of ``group`` characters, default is a space.
 
-   See also: `pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.9
 
@@ -741,7 +741,7 @@ This sub-module was added in version 1.2.
    For ``n=32`` the RFC 4648 Base32 alphabet is used, and for ``n=64`` the
    standard base 64 alphabet is used.  Whitespace is ignored.
 
-   See also: `pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.9
 
@@ -768,7 +768,7 @@ This sub-module was added in version 1.2.
    where ``count`` is a sequence containing the number of symbols of each length
    and ``symbol`` is a sequence of symbols in canonical order.
 
-   See also: `Canonical Huffman Coding <https://github.com/ilanschnell/pauliebits/blob/master/doc/canonical.rst>`__
+   See also: `Canonical Huffman Coding <https://github.com/QPauLie/pauliebits/blob/master/doc/canonical.rst>`__
 
    New in version 2.5
 
@@ -783,7 +783,7 @@ This sub-module was added in version 1.2.
 
    Note: the two lists may be used as input for ``canonical_decode()``.
 
-   See also: `Canonical Huffman Coding <https://github.com/ilanschnell/pauliebits/blob/master/doc/canonical.rst>`__
+   See also: `Canonical Huffman Coding <https://github.com/QPauLie/pauliebits/blob/master/doc/canonical.rst>`__
 
    New in version 2.5
 
@@ -822,7 +822,7 @@ This sub-module was added in version 1.2.
    Return a pauliebits given a bytes-like representation such as returned
    by ``serialize()``.
 
-   See also: `pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.8
 
@@ -917,7 +917,7 @@ This sub-module was added in version 1.2.
    library function ``random.binomialvariate()``.  Raises ``NotImplementedError``
    when Python version is too low.
 
-   See also: `Random pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
+   See also: `Random pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/random_p.rst>`__
 
    New in version 3.5
 
@@ -928,7 +928,7 @@ This sub-module was added in version 1.2.
    This function consumes only one pauliebits and leaves the remaining stream
    untouched.  Use ``sc_encode()`` for compressing (encoding).
 
-   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -938,7 +938,7 @@ This sub-module was added in version 1.2.
    representation.  This representation is useful for efficiently storing
    sparse pauliebits.  Use ``sc_decode()`` for decompressing (decoding).
 
-   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -948,7 +948,7 @@ This sub-module was added in version 1.2.
    ``deserialize()``.  It efficiently represents the pauliebits object (including
    its bit-endianness) and is guaranteed not to change in future releases.
 
-   See also: `pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.8
 
@@ -986,7 +986,7 @@ This sub-module was added in version 1.2.
    return the decoded pauliebits.  This function consumes only one pauliebits and
    leaves the remaining stream untouched.  Use ``vl_encode()`` for encoding.
 
-   See also: `Variable length pauliebits format <https://github.com/ilanschnell/pauliebits/blob/master/doc/variable_length.rst>`__
+   See also: `Variable length pauliebits format <https://github.com/QPauLie/pauliebits/blob/master/doc/variable_length.rst>`__
 
    New in version 2.2
 
@@ -996,7 +996,7 @@ This sub-module was added in version 1.2.
    This representation is useful for efficiently storing small pauliebits
    in a binary stream.  Use ``vl_decode()`` for decoding.
 
-   See also: `Variable length pauliebits format <https://github.com/ilanschnell/pauliebits/blob/master/doc/variable_length.rst>`__
+   See also: `Variable length pauliebits format <https://github.com/QPauLie/pauliebits/blob/master/doc/variable_length.rst>`__
 
    New in version 2.2
 

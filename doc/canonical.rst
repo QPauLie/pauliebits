@@ -90,4 +90,4 @@ decode function (``canonical_decode()``) unsuitable for DEFLATE decompression,
 or at least inefficient as we would have to create a new iterator for
 decoding each symbol.  A more efficient implementation can be found
 in  `examples/puff
-<https://github.com/ilanschnell/pauliebits/tree/master/examples/puff/>`__
+<https://github.com/QPauLie/pauliebits/tree/master/examples/puff/>`__

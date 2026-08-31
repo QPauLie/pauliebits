@@ -7,7 +7,10 @@ from io import StringIO
 import pauliebits.util
 
 
-BASE_URL = "https://github.com/ilanschnell/pauliebits"
+BASE_URL = "https://github.com/QPauLie/pauliebits"
+
+# issue and commit references in CHANGE_LOG are upstream bitarray history
+UPSTREAM_URL = "https://github.com/ilanschnell/bitarray"
 
 NEW_IN = {
     'pauliebits':              ['2.3: optional `buffer` argument',
@@ -244,7 +247,7 @@ Also, ``sub_pauliebits`` refers to either a pauliebits, or an ``item``.
 
 
 The pauliebits object:
---------------------
+----------------------
 
 """ % (pauliebits.__version__, BASE_URL + "/blob/master/doc/changelog.rst"))
     write_doc(fo, 'pauliebits')
@@ -258,12 +261,12 @@ The pauliebits object:
     write_doc(fo, 'decodetree')
 
     fo.write("Functions defined in the `pauliebits` module:\n"
-             "-------------------------------------------\n\n")
+             "---------------------------------------------\n\n")
     for func in sorted(['test', 'bits2bytes', 'get_default_endian']):
         write_doc(fo, func)
 
     fo.write("Functions defined in `pauliebits.util` module:\n"
-             "--------------------------------------------\n\n"
+             "----------------------------------------------\n\n"
              "This sub-module was added in version 1.2.\n\n")
     for func in sorted(pauliebits.util.__all__):
         write_doc(fo, 'util.%s' % func)
@@ -305,15 +308,15 @@ def write_changelog(fo):
         if len(group1) >= 7:
             if len(group1) != 8:
                 print("Warning: commit hash length != 8, got", len(group1))
-            url = "%s/commit/%s" % (BASE_URL, group1)
+            url = "%s/commit/%s" % (UPSTREAM_URL, group1)
         else:
-            url = "%s/issues/%d" % (BASE_URL, int(group1))
+            url = "%s/issues/%d" % (UPSTREAM_URL, int(group1))
         return "`%s <%s>`__" % (match.group(0), url)
 
     fo.write("Change log\n"
              "==========\n\n")
 
-    for line in open('./CHANGE_LOG'):
+    for line in open('./CHANGE_LOG', encoding='utf-8'):
         line = line.rstrip()
         match = ver_pat.match(line)
         if match:

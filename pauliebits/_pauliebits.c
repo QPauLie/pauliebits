@@ -3682,7 +3682,7 @@ pauliebits_encode_ixyz(pauliebitsobject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(encode_ixyz_doc,
-"encode(str)\n\
+"encode_ixyz(str)\n\
 \n\
 Optimized 2-bit-per-symbol encoding of IXYZ strings.");
 
