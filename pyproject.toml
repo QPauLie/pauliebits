@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pauliebits"
-version = "0.0.1"  
+dynamic = ["version"]
 description = "Fork of bitarray with a C-implemented IXYZ codec and commutes_with for Pauli strings"
 readme = "README.rst"
 requires-python = ">=3.9"
