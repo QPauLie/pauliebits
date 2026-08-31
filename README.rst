@@ -1,5 +1,5 @@
 pauliebits: efficient arrays of booleans
-======================================
+========================================
 
 This library extends bitarray (https://github.com/ilanschnell/bitarray) with methods to accelerate operations on Pauli strings.
 
@@ -17,6 +17,7 @@ Extension methods
 * commutes_with(other) check for commutativity
 
 =======================================
+
 This library provides an object type which efficiently represents an array
 of booleans.  pauliebits are sequence types and behave very much like usual
 lists.  Eight bits are represented by one byte in a contiguous block of
@@ -317,7 +318,7 @@ to pauliebits's ``.decode()`` method.
 
 
 Frozenpauliebits
----------------
+----------------
 
 A ``frozenpauliebits`` object is very similar to the pauliebits object.
 The difference is that this a ``frozenpauliebits`` is immutable, and hashable,
@@ -347,7 +348,7 @@ Also, ``sub_pauliebits`` refers to either a pauliebits, or an ``item``.
 
 
 The pauliebits object:
---------------------
+----------------------
 
 ``pauliebits(initializer=0, /, endian='big', buffer=None)`` -> pauliebits
    Return a new pauliebits object whose items are bits initialized from
@@ -374,7 +375,7 @@ The pauliebits object:
 
 
 pauliebits methods:
------------------
+-------------------
 
 ``all()`` -> bool
    Return ``True`` when all bits in pauliebits are 1.
@@ -615,7 +616,7 @@ pauliebits methods:
 
 
 pauliebits data descriptors:
---------------------------
+----------------------------
 
 Data descriptors were added in version 2.6.
 
@@ -675,7 +676,7 @@ Other objects:
 
 
 Functions defined in the `pauliebits` module:
--------------------------------------------
+---------------------------------------------
 
 ``bits2bytes(n, /)`` -> int
    Return the number of bytes necessary to store n bits.
@@ -692,7 +693,7 @@ Functions defined in the `pauliebits` module:
 
 
 Functions defined in `pauliebits.util` module:
---------------------------------------------
+----------------------------------------------
 
 This sub-module was added in version 1.2.
 

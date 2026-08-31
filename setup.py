@@ -31,9 +31,9 @@ setup(
     name = "pauliebits",
     author = "Ilan Schnell",
     author_email = "ilanschnell@gmail.com",
-    url = "https://github.com/ilanschnell/pauliebits",
+    url = "https://github.com/QPauLie/pauliebits",
     license = "PSF-2.0",
-    python_requires = ">=3.7",
+    python_requires = ">=3.9",
     classifiers = [
         "Development Status :: 6 - Mature",
         "Intended Audience :: Developers",
