@@ -1,7 +1,7 @@
 Reference
 =========
 
-pauliebits version: 3.9.1 -- `change log <https://github.com/ilanschnell/pauliebits/blob/master/doc/changelog.rst>`__
+pauliebits version: 0.0.1 -- `change log <https://github.com/QPauLie/pauliebits/blob/master/doc/changelog.rst>`__
 
 In the following, ``item`` and ``value`` are usually a single bit -
 an integer 0 or 1.
@@ -10,7 +10,7 @@ Also, ``sub_pauliebits`` refers to either a pauliebits, or an ``item``.
 
 
 The pauliebits object:
---------------------
+----------------------
 
 ``pauliebits(initializer=0, /, endian='big', buffer=None)`` -> pauliebits
    Return a new pauliebits object whose items are bits initialized from
@@ -37,7 +37,7 @@ The pauliebits object:
 
 
 pauliebits methods:
------------------
+-------------------
 
 ``all()`` -> bool
    Return ``True`` when all bits in pauliebits are 1.
@@ -87,6 +87,14 @@ pauliebits methods:
    New in version 1.4
 
 
+``commutes_with(pauliebits)``
+   Checking two strings for commutativity
+
+
+``complex_conjugate(pauliebits)``
+   complex conjugate
+
+
 ``copy()`` -> pauliebits
    Return copy of pauliebits (with same bit-endianness).
 
@@ -106,22 +114,38 @@ pauliebits methods:
    New in version 2.9: add non-overlapping sub-pauliebits count
 
 
+``count_non_trivially(pauliebits)``
+   count_or for even odd bits
+
+
 ``decode(code, /)`` -> decodeiterator
    Given a prefix code (a dict mapping symbols to pauliebits, or ``decodetree``
    object), decode content of pauliebits and return an iterator over
    corresponding symbols.
 
-   See also: `Pauliebits 3 transition <https://github.com/ilanschnell/pauliebits/blob/master/doc/pauliebits3.rst>`__
+   See also: `pauliebits 3 transition <https://github.com/QPauLie/pauliebits/blob/master/doc/pauliebits3.rst>`__
 
    New in version 3.0: returns iterator (equivalent to past ``.iterdecode()``)
 
    New in version 3.9: returns public ``decodeiterator`` object
 
 
+``decode_ixyz(pauliebits)``
+   decode ixyz
+
+
+``diagonal_index(pauliebits)``
+   diagonal index
+
+
 ``encode(code, iterable, /)``
    Given a prefix code (a dict mapping symbols to pauliebits),
    iterate over the iterable object with symbols, and extend pauliebits
    with corresponding pauliebits for each symbol.
+
+
+``encode_ixyz(str)``
+   Optimized 2-bit-per-symbol encoding of IXYZ strings.
 
 
 ``extend(iterable, /)``
@@ -183,6 +207,10 @@ pauliebits methods:
    New in version 1.5.3: optional index argument
 
 
+``not_identity_mask(pauliebits)``
+   even | odd
+
+
 ``pack(bytes, /)``
    Extend pauliebits from a bytes-like object, where each byte corresponds
    to a single bit.  The byte ``b'\x00'`` maps to bit 0 and all other bytes
@@ -193,6 +221,10 @@ pauliebits methods:
    example NumPy's ndarray object) which have a different memory view.
 
    New in version 2.5.0: allow bytes-like argument
+
+
+``phase(pauliebits)``
+   phase
 
 
 ``pop(index=-1, /)`` -> item
@@ -229,7 +261,10 @@ pauliebits methods:
    unless ``right=True``, which will iterate in descending order (starting with
    rightmost match).
 
-   See also: `Pauliebits 3 transition <https://github.com/ilanschnell/pauliebits/blob/master/doc/pauliebits3.rst>`__
+   For example, ``a.search(1)`` is the easiest (and most efficient) way
+   to create an iterator over all active indices in ``a``.
+
+   See also: `pauliebits 3 transition <https://github.com/QPauLie/pauliebits/blob/master/doc/pauliebits3.rst>`__
 
    New in version 2.9: optional start and stop arguments - add optional keyword argument ``right``
 
@@ -278,7 +313,7 @@ pauliebits methods:
 
 
 pauliebits data descriptors:
---------------------------
+----------------------------
 
 Data descriptors were added in version 2.6.
 
@@ -338,7 +373,7 @@ Other objects:
 
 
 Functions defined in the `pauliebits` module:
--------------------------------------------
+---------------------------------------------
 
 ``bits2bytes(n, /)`` -> int
    Return the number of bytes necessary to store n bits.
@@ -355,7 +390,7 @@ Functions defined in the `pauliebits` module:
 
 
 Functions defined in `pauliebits.util` module:
---------------------------------------------
+----------------------------------------------
 
 This sub-module was added in version 1.2.
 
@@ -375,7 +410,7 @@ This sub-module was added in version 1.2.
    When grouped, the string ``sep`` is inserted between groups
    of ``group`` characters, default is a space.
 
-   See also: `Pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.9
 
@@ -403,7 +438,7 @@ This sub-module was added in version 1.2.
    For ``n=32`` the RFC 4648 Base32 alphabet is used, and for ``n=64`` the
    standard base 64 alphabet is used.  Whitespace is ignored.
 
-   See also: `Pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.9
 
@@ -430,7 +465,7 @@ This sub-module was added in version 1.2.
    where ``count`` is a sequence containing the number of symbols of each length
    and ``symbol`` is a sequence of symbols in canonical order.
 
-   See also: `Canonical Huffman Coding <https://github.com/ilanschnell/pauliebits/blob/master/doc/canonical.rst>`__
+   See also: `Canonical Huffman Coding <https://github.com/QPauLie/pauliebits/blob/master/doc/canonical.rst>`__
 
    New in version 2.5
 
@@ -445,7 +480,7 @@ This sub-module was added in version 1.2.
 
    Note: the two lists may be used as input for ``canonical_decode()``.
 
-   See also: `Canonical Huffman Coding <https://github.com/ilanschnell/pauliebits/blob/master/doc/canonical.rst>`__
+   See also: `Canonical Huffman Coding <https://github.com/QPauLie/pauliebits/blob/master/doc/canonical.rst>`__
 
    New in version 2.5
 
@@ -484,7 +519,7 @@ This sub-module was added in version 1.2.
    Return a pauliebits given a bytes-like representation such as returned
    by ``serialize()``.
 
-   See also: `Pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.8
 
@@ -579,7 +614,7 @@ This sub-module was added in version 1.2.
    library function ``random.binomialvariate()``.  Raises ``NotImplementedError``
    when Python version is too low.
 
-   See also: `Random pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/random_p.rst>`__
+   See also: `Random pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/random_p.rst>`__
 
    New in version 3.5
 
@@ -590,7 +625,7 @@ This sub-module was added in version 1.2.
    This function consumes only one pauliebits and leaves the remaining stream
    untouched.  Use ``sc_encode()`` for compressing (encoding).
 
-   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -600,7 +635,7 @@ This sub-module was added in version 1.2.
    representation.  This representation is useful for efficiently storing
    sparse pauliebits.  Use ``sc_decode()`` for decompressing (decoding).
 
-   See also: `Compression of sparse pauliebits <https://github.com/ilanschnell/pauliebits/blob/master/doc/sparse_compression.rst>`__
+   See also: `Compression of sparse pauliebits <https://github.com/QPauLie/pauliebits/blob/master/doc/sparse_compression.rst>`__
 
    New in version 2.7
 
@@ -610,7 +645,7 @@ This sub-module was added in version 1.2.
    ``deserialize()``.  It efficiently represents the pauliebits object (including
    its bit-endianness) and is guaranteed not to change in future releases.
 
-   See also: `Pauliebits representations <https://github.com/ilanschnell/pauliebits/blob/master/doc/represent.rst>`__
+   See also: `pauliebits representations <https://github.com/QPauLie/pauliebits/blob/master/doc/represent.rst>`__
 
    New in version 1.8
 
@@ -648,7 +683,7 @@ This sub-module was added in version 1.2.
    return the decoded pauliebits.  This function consumes only one pauliebits and
    leaves the remaining stream untouched.  Use ``vl_encode()`` for encoding.
 
-   See also: `Variable length pauliebits format <https://github.com/ilanschnell/pauliebits/blob/master/doc/variable_length.rst>`__
+   See also: `Variable length pauliebits format <https://github.com/QPauLie/pauliebits/blob/master/doc/variable_length.rst>`__
 
    New in version 2.2
 
@@ -658,7 +693,7 @@ This sub-module was added in version 1.2.
    This representation is useful for efficiently storing small pauliebits
    in a binary stream.  Use ``vl_decode()`` for decoding.
 
-   See also: `Variable length pauliebits format <https://github.com/ilanschnell/pauliebits/blob/master/doc/variable_length.rst>`__
+   See also: `Variable length pauliebits format <https://github.com/QPauLie/pauliebits/blob/master/doc/variable_length.rst>`__
 
    New in version 2.2
 

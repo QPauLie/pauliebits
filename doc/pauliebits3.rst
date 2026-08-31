@@ -1,5 +1,5 @@
 Pauliebits 3 transition
-=====================
+=======================
 
 The pauliebits version 3 release is pauliebits's farewell to Python 2.
 Apart from removing Python 2 support, this release also migrates

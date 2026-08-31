@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pauliebits"
-version = "0.0.1"  
-description = "Fork of pauliebits with custom C-implemented IXYZ codec and commutes_with"
-readme = "README.md"
+dynamic = ["version"]
+description = "Fork of bitarray with a C-implemented IXYZ codec and commutes_with for Pauli strings"
+readme = "README.rst"
 requires-python = ">=3.9"
 license = { text = "PSF" }
 authors = [
@@ -24,6 +24,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Utilities",
 ]
+
+[project.urls]
+Repository = "https://github.com/QPauLie/pauliebits"
+Issues = "https://github.com/QPauLie/pauliebits/issues"
 
 [tool.setuptools]
 packages = ["pauliebits"]

@@ -29,11 +29,12 @@ if platform.python_implementation() == 'PyPy':
 
 setup(
     name = "pauliebits",
-    author = "Ilan Schnell",
-    author_email = "ilanschnell@gmail.com",
-    url = "https://github.com/ilanschnell/pauliebits",
+    # author/author_email come from pyproject.toml.  This package is a fork of
+    # bitarray by Ilan Schnell (https://github.com/ilanschnell/bitarray); the
+    # upstream copyright and PSF license are kept in LICENSE.
+    url = "https://github.com/QPauLie/pauliebits",
     license = "PSF-2.0",
-    python_requires = ">=3.7",
+    python_requires = ">=3.9",
     classifiers = [
         "Development Status :: 6 - Mature",
         "Intended Audience :: Developers",

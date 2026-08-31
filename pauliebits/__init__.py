@@ -5,7 +5,7 @@ a pauliebits.  pauliebits are sequence types and behave very much like lists.
 
 Please find a description of this package at:
 
-    https://github.com/ilanschnell/pauliebits
+    https://github.com/QPauLie/pauliebits
 
 Author: Ilan Schnell
 """

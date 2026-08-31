@@ -1,12 +1,34 @@
 Change log
 ==========
 
+2026-08-XX
+
+* a fork was created and the name was changed to paulibits.
+* bitwise operation methods for Pauli string representations have been added.
+    - encode_ixyz(paulie) - it accelerates the creation of a bit representation for strings composed of I, X, Y, and Z characters. Each character consists of two bits: I – (0,0), X – (1,0), Y – (1,1), Z – (0,1).
+    - decode_ixyz() - conversion of IXYZ bit values to strings
+    - count_non_trivially() - count_or(bits_even, bits_odd)
+    - diagonal_index() - ba2int(bits_odd) if ba2int(bits_even) == 0 else -1
+    - complex_conjugate() - count_and(bits_odd, bits_even)
+    - not_identity_mask() - bits_even | bits_odd
+    - phase(other) - the exponent f in phase = i^f
+    - commutes_with(other) check for commutativity
+
+
+2026-XX-XX   3.9.2:
+
+* add more critical sections in Python-facing operations
+* move tests for internal ``_ssqi()`` to ``devel/test_sum_indices.py``
+* remove all occurrences of ``PySlice_GetIndicesEx`` (deprecated since
+  Python 3.6.1)
+
+
 **3.9.1** (2026-07-19):
 
 * improving free-threading readiness, see also `#251 <https://github.com/ilanschnell/bitarray/issues/251>`__:
     - initialize tables at module import, not lazily
     - remove caching imported Python objects (which are already caches)
-    - added 75 critial sections in Python-facing operations
+    - added 75 critical sections in Python-facing operations
     - updated Trove Classifier to ``Free Threading :: 2 - Beta``
 * clip arguments in ``.bytereverse()`` instead of raising ``IndexError``
 * remove ``ssize_richcompare()`` in favor of ``Py_RETURN_RICHCOMPARE`` macro
